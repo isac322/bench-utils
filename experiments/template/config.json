@@ -1,0 +1,37 @@
+{
+	"workloads": [
+		{
+			"name": "kmeans",
+			"num_of_threads": 12,
+			"binding_cores": "0-11",
+			"numa_nodes": "0",
+			"cpu_freq": 2.1
+		},
+		{
+			"name": "streamcluster",
+			"num_of_threads": 12,
+			"binding_cores": "0-11",
+			"numa_nodes": "0",
+			"cpu_freq": 2.1
+		},
+		{
+			"name": "streamcluster",
+			"num_of_threads": 12,
+			"binding_cores": "0-11",
+			"numa_nodes": "0",
+			"cpu_freq": 2.1
+		}
+	],
+	"perf": {
+		"extra_events": [
+			"cache-references"
+		]
+	},
+	"launcher": {
+		"hyper-threading": false,
+		"stops_with_the_first": false,
+		"post_scripts": [
+			"avg_csv.py"
+		]
+	}
+}
