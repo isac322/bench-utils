@@ -4,11 +4,13 @@
 import argparse
 import asyncio
 import contextlib
+import glob
 import importlib
 import json
 import signal
+import sys
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 from benchmark.benchmark import Benchmark
 from configs.bench_config import BenchConfig
@@ -28,7 +30,7 @@ def parse_workload_cfg(wl_configs: List[Dict[str, Any]]) -> Tuple[BenchConfig, .
     )
 
 
-def parse_perf_cfg(global_cfg: Dict[str, Any], local_cfg: Dict[str, Any]) -> PerfConfig:
+def parse_perf_cfg(global_cfg: Dict[str, Any], local_cfg: Optional[Dict[str, Any]]) -> PerfConfig:
     events = tuple(
             PerfEvent(elem, elem)
             if type(elem) is str else
@@ -43,12 +45,12 @@ def parse_rabbit_mq_cfg(rabbit_cfg: Dict[str, Any]) -> RabbitMQConfig:
     return RabbitMQConfig(rabbit_cfg['host'], rabbit_cfg['queue_name']['workload_creation'])
 
 
-def parse_launcher_cfg(launcher_cfg: Dict[str, Union[bool, List[str]]]) -> LauncherConfig:
+def parse_launcher_cfg(launcher_cfg: Optional[Dict[str, Union[bool, List[str]]]]) -> LauncherConfig:
+    if launcher_cfg is None:
+        return LauncherConfig([], False, False)
+
     cwd = Path(__file__).parent
     post_scripts = cwd / 'post_scripts'
-
-    if not post_scripts.exists():
-        post_scripts.mkdir()
 
     postscripts: List[Path] = []
 
@@ -60,7 +62,7 @@ def parse_launcher_cfg(launcher_cfg: Dict[str, Union[bool, List[str]]]) -> Launc
         elif not script_path.is_file():
             raise ValueError(f'post script {script_path} is not a file')
 
-        postscripts.append(script_path)
+        postscripts.append(Path('post_scripts') / script)
 
     return LauncherConfig(postscripts,
                           launcher_cfg.get('hyper-threading', False),
@@ -166,33 +168,47 @@ def set_hyper_threading(flag: bool):
     pass
 
 
-GLOBAL_CFG_PATH = Path(__file__).absolute().parent.parent / 'config.json'
+GLOBAL_CFG_PATH = Path(__file__).resolve().parent.parent / 'config.json'
 
 
-def launch(loop: asyncio.AbstractEventLoop, workspace: Path, no_log: bool, no_metric_log: bool):
+def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, print_metric_log: bool):
+    was_successful = True
+
+    config_file = workspace / 'config.json'
+
+    if not workspace.exists():
+        print(f'{workspace.resolve()} is not exist.', file=sys.stderr)
+        return False
+    elif not config_file.exists():
+        print(f'{config_file.resolve()} is not exist.', file=sys.stderr)
+        return False
+
     result_file = workspace / 'result.json'
     if result_file.exists():
         result_file.unlink()
 
-    with open(workspace / 'config.json') as local_config_fp, \
+    with open(config_file) as local_config_fp, \
             open(GLOBAL_CFG_PATH) as global_config_fp:
         local_cfg_source: Dict[str, Any] = json.load(local_config_fp)
         global_cfg_source: Dict[str, Any] = json.load(global_config_fp)
 
         bench_cfges = parse_workload_cfg(local_cfg_source['workloads'])
-        perf_cfg = parse_perf_cfg(global_cfg_source['perf'], local_cfg_source['perf'])
+        perf_cfg = parse_perf_cfg(global_cfg_source['perf'], local_cfg_source.get('perf', {'extra_events': []}))
         rabbit_cfg = parse_rabbit_mq_cfg(global_cfg_source['rabbitMQ'])
-        launcher_cfg = parse_launcher_cfg(local_cfg_source['launcher'])
+        launcher_cfg = parse_launcher_cfg(local_cfg_source.get('launcher'))
 
     task_map: Dict[asyncio.Task, Benchmark] = dict()
 
-    def stop_all(_=None):
-        # FIXME: logging
-        print('stopping all benchmarks...')
+    def stop_all(arg: Optional[asyncio.Task] = None):
+        print('force stop all tasks...', file=sys.stderr)
         for a_task, a_bench in task_map.items():
             if not a_task.done() and a_bench.is_running:
                 a_bench.stop()
             a_task.remove_done_callback(stop_all)
+
+        if arg is None:
+            nonlocal was_successful
+            was_successful = False
 
     def store_runtime(a_task: asyncio.Task):
         a_bench = task_map[a_task]
@@ -221,7 +237,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, no_log: bool, no_me
         a_task.remove_done_callback(store_runtime)
 
     for bench in create_benchmarks(bench_cfges, perf_cfg, rabbit_cfg, workspace):
-        task: asyncio.Task = loop.create_task(bench.create_and_run(no_metric_log))
+        task: asyncio.Task = loop.create_task(bench.create_and_run(print_log, print_metric_log))
         if launcher_cfg.stops_with_the_first:
             task.add_done_callback(stop_all)
         task.add_done_callback(store_runtime)
@@ -245,22 +261,33 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, no_log: bool, no_me
         script_module = importlib.import_module(name.replace('/', '.'))
         script_module.run(workspace, GLOBAL_CFG_PATH)
 
+    return was_successful
+
 
 def main():
     parser = argparse.ArgumentParser(description='Launch benchmark written in config file.')
     parser.add_argument('config_dir', metavar='PARENT_DIR_OF_CONFIG_FILE', type=str, nargs='+',
-                        help='Directory path where the config file (config.json) exist')
-    parser.add_argument('-L', '--no-log', action='store_true', help='Do not print any log to stdout. (implies -M)')
-    parser.add_argument('-M', '--no-metric-log', action='store_true',
-                        help='Do not print any metric related log to stdout.')
+                        help='Directory path where the config file (config.json) exist. (support wildcard *)')
+    parser.add_argument('-L', '--print-log', action='store_true', help='Print all logs to stdout. (implies -M)')
+    parser.add_argument('-M', '--print-metric-log', action='store_true',
+                        help='Print all metric related logs to stdout.')
     args = parser.parse_args()
 
-    loop = asyncio.get_event_loop()
-    no_log = args.no_log
-    no_metric_log = args.no_metric_log
+    dirs = list()
 
-    for workspace in args.config_dir:
-        launch(loop, Path(workspace), no_log, no_metric_log)
+    for path in args.config_dir:  # type: str
+        if not path.endswith('/'):
+            path += '/'
+
+        dirs += glob.glob(path)
+
+    loop = asyncio.get_event_loop()
+    print_log = args.print_log
+    print_metric_log = args.print_metric_log
+
+    for workspace in dirs:
+        if not launch(loop, Path(workspace), print_log, print_metric_log):
+            break
 
     loop.close()
 

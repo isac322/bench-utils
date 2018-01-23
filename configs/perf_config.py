@@ -1,6 +1,6 @@
 # coding: UTF-8
 
-from typing import Iterable, Tuple
+from typing import Any, Generator, Tuple
 
 
 class PerfEvent:
@@ -31,8 +31,8 @@ class PerfConfig:
         return self._events
 
     @property
-    def event_names(self) -> Iterable[str]:
-        return map(lambda x: x.alias, self._events)
+    def event_names(self) -> Generator[str, Any, None]:
+        return (event.alias for event in self._events)
 
     @property
     def event_str(self) -> str:

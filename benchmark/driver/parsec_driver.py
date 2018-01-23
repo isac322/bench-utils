@@ -25,7 +25,6 @@ class ParsecDriver(BenchDriver):
 
         return None
 
-    @asyncio.coroutine
     async def _launch_bench(self) -> asyncio.subprocess.Process:
         if self._numa_cores is None:
             mem_flag = '--localalloc'

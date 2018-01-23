@@ -44,20 +44,14 @@ class BenchDriver(metaclass=ABCMeta):
 
     @property
     def _is_running(self) -> bool:
-        if not self.is_launched or self._async_proc.returncode is not None:
-            return False
-
-        return self._find_bench_proc() is not None
+        return self.is_running and self._find_bench_proc() is not None
 
     @property
-    def is_running(self) -> bool:
-        return self._bench_proc_info is not None and self._async_proc.returncode is None
-
-    @property
-    def is_launched(self):
-        return self._async_proc is not None and \
+    def is_running(self):
+        return self._bench_proc_info is not None and \
+               self._async_proc is not None and \
                self._async_proc_info is not None and \
-               self._async_proc.returncode is not None
+               self._async_proc.returncode is None
 
     @property
     def pid(self) -> Optional[int]:
@@ -70,7 +64,6 @@ class BenchDriver(metaclass=ABCMeta):
         else:
             return self._bench_proc_info.pid
 
-    @asyncio.coroutine
     @abstractclassmethod
     async def _launch_bench(self) -> asyncio.subprocess.Process:
         pass
@@ -79,7 +72,6 @@ class BenchDriver(metaclass=ABCMeta):
     def _find_bench_proc(self) -> Optional[psutil.Process]:
         pass
 
-    @asyncio.coroutine
     async def run(self) -> None:
         self._async_proc = await self._launch_bench()
         self._async_proc_info = psutil.Process(self._async_proc.pid)
@@ -90,7 +82,6 @@ class BenchDriver(metaclass=ABCMeta):
                 return
             await asyncio.sleep(0.1)
 
-    @asyncio.coroutine
     async def join(self) -> None:
         if not self._is_running:
             raise RuntimeError(f'The benchmark ({self._name}) is already terminated or never invoked.'
@@ -99,10 +90,12 @@ class BenchDriver(metaclass=ABCMeta):
         await self._async_proc.wait()
 
     def stop(self) -> None:
-        # FIXME: logging
-        print(f'stopping {self._name} ({self.pid})...')
         self._async_proc.kill()
-        self._bench_proc_info.kill()
+        try:
+            self._bench_proc_info.kill()
+            self._async_proc_info.kill()
+        except psutil.NoSuchProcess:
+            pass
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
@@ -110,9 +103,9 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     from benchmark.driver.parsec_driver import ParsecDriver
     from benchmark.driver.rodinia_driver import RodiniaDriver
 
-    _BENCH_SET = (SpecDriver, ParsecDriver, RodiniaDriver)
+    bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver)
 
-    for _bench_driver in _BENCH_SET:
+    for _bench_driver in bench_drivers:
         if _bench_driver.has(workload_name):
             return _bench_driver
 

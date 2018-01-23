@@ -29,7 +29,8 @@ class SpecDriver(BenchDriver):
             if process.name() == exec_name and process.is_running():
                 return process
 
-    @asyncio.coroutine
+        return None
+
     async def _launch_bench(self) -> asyncio.subprocess.Process:
         if self._numa_cores is None:
             mem_flag = '--localalloc'
@@ -52,3 +53,11 @@ class SpecDriver(BenchDriver):
 
         return await asyncio.create_subprocess_exec(
                 'numactl', *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
+
+    def stop(self) -> None:
+        self._find_bench_proc().kill()
+        self._async_proc.kill()
+        try:
+            self._async_proc_info.kill()
+        except psutil.NoSuchProcess:
+            pass
