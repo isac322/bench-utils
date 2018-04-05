@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 # coding: UTF-8
 
 import argparse
@@ -7,6 +7,7 @@ import contextlib
 import glob
 import importlib
 import json
+import logging
 import signal
 import sys
 from pathlib import Path
@@ -199,16 +200,15 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
     task_map: Dict[asyncio.Task, Benchmark] = dict()
 
-    def stop_all(arg: Optional[asyncio.Task] = None):
+    def stop_all():
         print('force stop all tasks...', file=sys.stderr)
-        for a_task, a_bench in task_map.items():
-            if not a_task.done() and a_bench.is_running:
-                a_bench.stop()
-            a_task.remove_done_callback(stop_all)
 
-        if arg is None:
-            nonlocal was_successful
-            was_successful = False
+        for a_task, a_bench in task_map.items():
+            if not a_task.done():
+                a_task.cancel()
+
+        nonlocal was_successful
+        was_successful = False
 
     def store_runtime(a_task: asyncio.Task):
         a_bench = task_map[a_task]
@@ -236,19 +236,29 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
         a_task.remove_done_callback(store_runtime)
 
-    for bench in create_benchmarks(bench_cfges, perf_cfg, rabbit_cfg, workspace):
-        task: asyncio.Task = loop.create_task(bench.create_and_run(print_log, print_metric_log))
-        if launcher_cfg.stops_with_the_first:
-            task.add_done_callback(stop_all)
-        task.add_done_callback(store_runtime)
-        task_map[task] = bench
+    benches = tuple(create_benchmarks(bench_cfges, perf_cfg, rabbit_cfg, workspace))
 
+    # FIXME: handle exceptions that occur when press CTRL + C
     loop.add_signal_handler(signal.SIGHUP, stop_all)
     loop.add_signal_handler(signal.SIGTERM, stop_all)
     loop.add_signal_handler(signal.SIGINT, stop_all)
 
     with power_monitor(workspace):
-        loop.run_until_complete(asyncio.wait(task_map.keys()))
+        # invoke benchmark loaders in parallel and wait for launching actual benchmarks
+        loop.run_until_complete(asyncio.wait(tuple(bench.start_and_pause(print_log) for bench in benches)))
+
+        for bench in benches:
+            bench.resume()
+
+        for bench in benches:
+            task: asyncio.Task = loop.create_task(bench.monitor(print_metric_log))
+            task.add_done_callback(store_runtime)
+            task_map[task] = bench
+
+        # start monitoring
+        return_when = asyncio.FIRST_COMPLETED if launcher_cfg.stops_with_the_first else asyncio.ALL_COMPLETED
+        finished, unfinished = loop.run_until_complete(asyncio.wait(task_map.keys(), return_when=return_when))
+        # TODO: handle unfinished
 
     loop.remove_signal_handler(signal.SIGHUP)
     loop.remove_signal_handler(signal.SIGTERM)
@@ -265,6 +275,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
 
 def main():
+    logging.getLogger('asyncio').setLevel(logging.WARNING)
     parser = argparse.ArgumentParser(description='Launch benchmark written in config file.')
     parser.add_argument('config_dir', metavar='PARENT_DIR_OF_CONFIG_FILE', type=str, nargs='+',
                         help='Directory path where the config file (config.json) exist. (support wildcard *)')
@@ -282,14 +293,16 @@ def main():
         dirs += glob.glob(path)
 
     loop = asyncio.get_event_loop()
-    print_log = args.print_log
-    print_metric_log = args.print_metric_log
+    try:
+        print_log = args.print_log
+        print_metric_log = args.print_metric_log
 
-    for workspace in dirs:
-        if not launch(loop, Path(workspace), print_log, print_metric_log):
-            break
+        for workspace in dirs:
+            if not launch(loop, Path(workspace), print_log, print_metric_log):
+                break
 
-    loop.close()
+    finally:
+        loop.close()
 
 
 if __name__ == '__main__':

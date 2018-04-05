@@ -3,6 +3,7 @@
 import asyncio
 import os
 import shlex
+from signal import SIGCONT, SIGSTOP
 from typing import Optional, Set
 
 import psutil
@@ -55,9 +56,19 @@ class SpecDriver(BenchDriver):
                 'numactl', *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
 
     def stop(self) -> None:
-        self._find_bench_proc().kill()
         self._async_proc.kill()
+        self._find_bench_proc().kill()
         try:
             self._async_proc_info.kill()
         except psutil.NoSuchProcess:
             pass
+
+    @BenchDriver._Decorators.ensure_running
+    def pause(self) -> None:
+        self._async_proc.send_signal(SIGSTOP)
+        self._find_bench_proc().suspend()
+
+    @BenchDriver._Decorators.ensure_running
+    def resume(self) -> None:
+        self._async_proc.send_signal(SIGCONT)
+        self._find_bench_proc().resume()

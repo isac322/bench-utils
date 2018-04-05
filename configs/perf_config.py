@@ -1,12 +1,12 @@
 # coding: UTF-8
 
-from typing import Any, Generator, Tuple
+from typing import Any, Generator, Optional, Tuple
 
 
 class PerfEvent:
-    def __init__(self, event: str, alias: str):
+    def __init__(self, event: str, alias: Optional[str] = None):
         self._event: str = event
-        self._alias: str = alias
+        self._alias: str = alias if alias is not None else event
 
     @property
     def event(self) -> str:

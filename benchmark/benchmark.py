@@ -1,17 +1,21 @@
 # coding: UTF-8
 
 import asyncio
+import functools
 import json
 import logging
 import time
+from concurrent.futures import CancelledError
 from itertools import chain
-from logging import Formatter, Handler, LogRecord
+from logging import Formatter, Handler, LogRecord, Logger
 from pathlib import Path
-from typing import Any, Generator, Optional
+from signal import SIGCONT, SIGSTOP
+from typing import Any, Callable, Generator, Optional
 
 import pika
 import rdtsc
 from coloredlogs import ColoredFormatter
+from pika.adapters.blocking_connection import BlockingChannel
 
 from benchmark.driver.base_driver import BenchDriver
 from configs.bench_config import BenchConfig
@@ -20,19 +24,49 @@ from configs.rabbit_mq_config import RabbitMQConfig
 
 
 class Benchmark:
+    class _Decorators:
+        @staticmethod
+        def ensure_running(func: Callable[['Benchmark', Any], Any]):
+            @functools.wraps(func)
+            def decorator(self: 'Benchmark', *args, **kwargs):
+                if not self.is_running:
+                    raise RuntimeError(f'The benchmark ({self._identifier}) has already ended or never been invoked.'
+                                       ' Run benchmark first via invoking `run()`!')
+                return func(self, *args, **kwargs)
+
+            return decorator
+
+        @staticmethod
+        def ensure_not_running(func: Callable[['Benchmark', Any], Any]):
+            @functools.wraps(func)
+            def decorator(self: 'Benchmark', *args, **kwargs):
+                if self.is_running:
+                    raise RuntimeError(f'benchmark {self._bench_driver.pid} is already in running.')
+                return func(self, *args, **kwargs)
+
+            return decorator
+
+        @staticmethod
+        def ensure_invoked(func: Callable[['Benchmark', Any], Any]):
+            @functools.wraps(func)
+            def decorator(self: 'Benchmark', *args, **kwargs):
+                if not self._bench_driver.has_invoked:
+                    raise RuntimeError(f'benchmark {self._identifier} is never invoked.')
+                return func(self, *args, **kwargs)
+
+            return decorator
+
     _file_formatter = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
-    _stream_formatter = ColoredFormatter(
-            '%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
+    _stream_formatter = ColoredFormatter('%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
 
     def __init__(self, identifier: str, bench_config: BenchConfig,
                  perf_config: PerfConfig, rabbit_mq_config: RabbitMQConfig, workspace: Path):
         self._identifier: str = identifier
-        self._run_config: BenchConfig = bench_config
         self._perf_config: PerfConfig = perf_config
         self._rabbit_mq_config: RabbitMQConfig = rabbit_mq_config
 
-        self._bench_driver: Optional[BenchDriver] = None
+        self._bench_driver: BenchDriver = bench_config.generate_driver()
         self._perf: Optional[asyncio.subprocess.Process] = None
         self._end_time: Optional[float] = None
 
@@ -48,17 +82,19 @@ class Benchmark:
 
         self._log_path: Path = log_parent / f'{identifier}.log'
 
+        # setup for loggers
+
         logger = logging.getLogger(self._identifier)
         logger.setLevel(logging.DEBUG)
 
         metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')
         metric_logger.setLevel(logging.DEBUG)
 
-    async def create_and_run(self, print_log: bool = False, print_metric_log: bool = False):
-        if self._bench_driver is not None and self._bench_driver.is_running:
-            raise RuntimeError(f'benchmark {self._bench_driver.pid} is already in running.')
+    @_Decorators.ensure_not_running
+    async def start_and_pause(self, print_log: bool = False):
+        self._remove_logger_handlers()
 
-        # setup for logger
+        # setup for loggers
 
         logger = logging.getLogger(self._identifier)
 
@@ -66,79 +102,114 @@ class Benchmark:
         fh.setFormatter(Benchmark._file_formatter)
         logger.addHandler(fh)
 
-        if print_log and len(logger.handlers) is 1:
+        if print_log:
             stream_handler = logging.StreamHandler()
             stream_handler.setFormatter(Benchmark._stream_formatter)
             logger.addHandler(stream_handler)
-        elif not print_log and len(logger.handlers) is 2:
-            logger.removeHandler(logger.handlers[1])
 
         # launching benchmark
-
-        self._bench_driver = self._run_config.generate_driver()
 
         logger.info('Starting benchmark...')
         await self._bench_driver.run()
         logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
 
-        # launching perf
+        self._pause_bench()
 
-        self._perf = perf = await asyncio.create_subprocess_exec(
-                'perf', 'stat', '-e', self._perf_config.event_str,
-                '-p', str(self._bench_driver.pid), '-x', ',', '-I', str(self._perf_config.interval),
-                stderr=asyncio.subprocess.PIPE)
+    @_Decorators.ensure_running
+    async def monitor(self, print_metric_log: bool = False):
+        try:
+            # launching perf
+            self._perf = await asyncio.create_subprocess_exec(
+                    'perf', 'stat', '-e', self._perf_config.event_str,
+                    '-p', str(self._bench_driver.pid), '-x', ',', '-I', str(self._perf_config.interval),
+                    stderr=asyncio.subprocess.PIPE)
 
-        # setup for metric logger
+            # setup for metric logger
 
-        rabbit_mq_handler = RabbitMQHandler(self._rabbit_mq_config, self._bench_driver, perf)
-        rabbit_mq_handler.setFormatter(RabbitMQFormatter(self._perf_config.event_names))
+            rabbit_mq_handler = RabbitMQHandler(self._rabbit_mq_config, self._identifier, self._bench_driver.pid,
+                                                self._perf.pid, self._perf_config.interval)
+            rabbit_mq_handler.setFormatter(RabbitMQFormatter(self._perf_config.event_names))
 
-        metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')
-        metric_logger.addHandler(rabbit_mq_handler)
+            metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')
+            metric_logger.addHandler(rabbit_mq_handler)
 
-        if print_metric_log:
-            metric_logger.addHandler(logging.StreamHandler())
+            if print_metric_log:
+                metric_logger.addHandler(logging.StreamHandler())
 
-        with open(self._perf_csv, 'w') as fp:
-            fp.write(','.join(chain(self._perf_config.event_names, ('wall-cycles',))) + '\n')
-        metric_logger.addHandler(logging.FileHandler(self._perf_csv))
+            with open(self._perf_csv, 'w') as fp:
+                # print csv header
+                fp.write(','.join(chain(self._perf_config.event_names, ('wall-cycles',))) + '\n')
+            metric_logger.addHandler(logging.FileHandler(self._perf_csv))
 
-        # perf polling loop
+            # perf polling loop
 
-        num_of_events = len(self._perf_config.events)
-        stderr: asyncio.StreamReader = perf.stderr
+            num_of_events = len(self._perf_config.events)
 
-        prev_tsc = rdtsc.get_cycles()
-        while self._bench_driver.is_running and perf.returncode is None:
-            record = []
-            ignore_flag = False
+            prev_tsc = rdtsc.get_cycles()
+            while self._bench_driver.is_running and self._perf.returncode is None:
+                record = []
+                ignore_flag = False
 
-            for _ in range(num_of_events):
-                raw_line = await stderr.readline()
+                for _ in range(num_of_events):
+                    raw_line = await self._perf.stderr.readline()
 
-                line = raw_line.decode().strip()
-                try:
-                    value = line.split(',')[1]
-                    float(value)
-                    record.append(value)
-                except (IndexError, ValueError):
-                    ignore_flag = True
+                    line = raw_line.decode().strip()
+                    try:
+                        value = line.split(',')[1]
+                        float(value)
+                        record.append(value)
+                    except (IndexError, ValueError):
+                        ignore_flag = True
 
-            tmp = rdtsc.get_cycles()
-            record.append(str(tmp - prev_tsc))
-            prev_tsc = tmp
+                tmp = rdtsc.get_cycles()
+                record.append(str(tmp - prev_tsc))
+                prev_tsc = tmp
 
-            if not ignore_flag:
-                metric_logger.info(','.join(record))
+                if not ignore_flag:
+                    metric_logger.info(','.join(record))
 
-        self._end_time = time.time()
-        logger.info('The benchmark is ended.')
+            logging.getLogger(self._identifier).info('end of loop')
 
-        if self._perf.returncode is None:
+        except CancelledError as e:
+            self._stop()
+            raise
+
+        finally:
+            self._remove_logger_handlers()
+            self._end_time = time.time()
+            logging.getLogger(self._identifier).info('The benchmark is ended.')
+
+    def _pause_bench(self):
+        logging.getLogger(self._identifier).info('pausing...')
+
+        self._bench_driver.pause()
+
+    def pause(self):
+        self._pause_bench()
+        self._perf.send_signal(SIGSTOP)
+
+    @_Decorators.ensure_running
+    def resume(self):
+        logging.getLogger(self._identifier).info('resuming...')
+
+        self._bench_driver.resume()
+        if self._perf is not None and self._perf.returncode is None:
+            self._perf.send_signal(SIGCONT)
+
+    def _stop(self):
+        logging.getLogger(self._identifier).info('stopping...')
+
+        if self._perf is not None and self._perf.returncode is None:
             self._perf.kill()
+        self._perf = None
 
-        handlers = tuple(metric_logger.handlers)
-        for handler in handlers:  # type: Handler
+        self._bench_driver.stop()
+
+    def _remove_logger_handlers(self):
+        logger = logging.getLogger(self._identifier)  # type: Logger
+        metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')  # type: Logger
+
+        for handler in tuple(metric_logger.handlers):  # type: Handler
             logger.debug(f'removing metric handler {handler}')
             metric_logger.removeHandler(handler)
             try:
@@ -147,30 +218,18 @@ class Benchmark:
             except:
                 logger.exception('Exception has happened while removing handler form metric logger.')
 
-        handlers = tuple(logger.handlers)
-        for handler in handlers:  # type: Handler
+        for handler in tuple(logger.handlers):  # type: Handler
             logger.removeHandler(handler)
             handler.flush()
             handler.close()
 
-    def stop(self):
-        if self._bench_driver is None or not self._bench_driver.is_running:
-            raise RuntimeError(f'benchmark {self._identifier} is already stopped.')
-
-        logger = logging.getLogger(self._identifier)
-        logger.info('stopping...')
-
-        self._bench_driver.stop()
-        self._perf.kill()
-
+    @property
+    @_Decorators.ensure_invoked
     def launched_time(self) -> float:
-        if self._bench_driver is None:
-            raise RuntimeError(f'benchmark {self._identifier} is never invoked.')
-
         return self._bench_driver.created_time
 
     @property
-    def identifier(self):
+    def identifier(self) -> str:
         return self._identifier
 
     @property
@@ -181,28 +240,31 @@ class Benchmark:
     def runtime(self) -> Optional[float]:
         if self._end_time is None:
             return None
+        elif self._end_time < self.launched_time:
+            return None
         else:
-            return self._end_time - self.launched_time()
+            return self._end_time - self.launched_time
 
     @property
-    def is_running(self):
-        return self._bench_driver is not None and self._bench_driver.is_running
+    def is_running(self) -> bool:
+        return self._bench_driver.is_running and (self._perf is None or self._perf.returncode is None)
 
 
 class RabbitMQHandler(Handler):
-    def __init__(self, rabbit_mq_config: RabbitMQConfig, bench_driver: BenchDriver, perf: asyncio.subprocess.Process):
+    def __init__(self, rabbit_mq_config: RabbitMQConfig,
+                 bench_name: str, bench_pid: int, perf_pid: int, perf_interval: int):
         super().__init__()
         # TODO: upgrade to async version
         self._connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_mq_config.host_name))
-        self._channel = self._connection.channel()
+        self._channel: BlockingChannel = self._connection.channel()
 
-        self._queue_name: str = f'{bench_driver.name}({bench_driver.pid})'
+        self._queue_name: str = f'{bench_name}({bench_pid})'
         self._channel.queue_declare(queue=self._queue_name)
 
         # Notify creation of this benchmark to scheduler
         self._channel.queue_declare(queue=rabbit_mq_config.creation_q_name)
         self._channel.basic_publish(exchange='', routing_key=rabbit_mq_config.creation_q_name,
-                                    body=f'{bench_driver.name},{bench_driver.pid},{perf.pid}')
+                                    body=f'{bench_name},{bench_pid},{perf_pid},{perf_interval}')
 
     def emit(self, record: LogRecord):
         formatted: str = self.format(record)
@@ -210,9 +272,12 @@ class RabbitMQHandler(Handler):
         self._channel.basic_publish(exchange='', routing_key=self._queue_name, body=formatted)
 
     def close(self):
-        self._channel.queue_delete(self._queue_name)
-        self._connection.close()
         super().close()
+        try:
+            self._channel.queue_delete(self._queue_name)
+        except:
+            pass
+        self._connection.close()
 
     def __repr__(self):
         level = logging.getLevelName(self.level)
