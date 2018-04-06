@@ -7,11 +7,11 @@ import contextlib
 import glob
 import importlib
 import json
-import logging
 import signal
+import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
 from benchmark.benchmark import Benchmark
 from configs.bench_config import BenchConfig
@@ -93,6 +93,16 @@ _ENERGY_FILE_NAME = 'energy_uj'
 
 @contextlib.contextmanager
 def power_monitor(work_space: Path):
+    """
+    Saves power consumption to `work_space`/result.json when exit `with` scope.
+
+    Example:
+    ::
+        with power_monitor(Path('experiment_1')):
+            # run benchmark and join
+
+    :param work_space: parent directory of result.json
+    """
     base_dir = Path('/sys/class/powercap/intel-rapl')
 
     monitors: Dict[Path, Tuple[int, Dict[Path, int]]] = dict()
@@ -105,7 +115,7 @@ def power_monitor(work_space: Path):
             with open(socket_monitor / _ENERGY_FILE_NAME) as fp:
                 socket_power = int(fp.readline())
 
-            socket_dict: Dict[Path, int] = {}
+            socket_dict: Dict[Path, int] = dict()
             monitors[socket_monitor] = (socket_power, socket_dict)
 
             while True:
@@ -123,14 +133,14 @@ def power_monitor(work_space: Path):
 
     yield
 
-    ret: List[Dict[str, Union[str, List[Dict[str, int]]]]] = list()
+    ret: List[Dict[str, Union[str, int, Dict[str, int]]]] = list()
 
     for socket_path, (prev_socket_power, socket) in monitors.items():
         with open(socket_path / 'name') as name_fp, open(socket_path / _ENERGY_FILE_NAME) as power_fp:
             sub_name = name_fp.readline().strip()
             after = int(power_fp.readline())
 
-        ret_dict: Dict[str, Union[str, List[Dict[str, int]]]] = {
+        ret_dict: Dict[str, Union[str, int, Dict[str, int]]] = {
             'package_name': sub_name,
             'power': after - prev_socket_power,
             'domains': dict()
@@ -164,17 +174,45 @@ def power_monitor(work_space: Path):
             json.dump({'power': ret}, fp, indent=4)
 
 
-# TODO
-def set_hyper_threading(flag: bool):
-    pass
+@contextlib.contextmanager
+def hyper_threading_guard(ht_flag: bool):
+    online_core: Set[int] = set()
+
+    core_id = 1
+    while True:
+        path = Path(f'/sys/devices/system/cpu/cpu{core_id}')
+
+        if not path.is_dir():
+            break
+        else:
+            if (path / 'online').is_file():
+                online_core.add(core_id)
+
+        core_id += 1
+
+    if not ht_flag:
+        logical_cores: Set[int] = set()
+
+        for core_id in online_core:
+            with open(f'/sys/devices/system/cpu/cpu{core_id}/topology/thread_siblings_list') as fp:
+                for core in fp.readline().strip().split(',')[1:]:
+                    logical_cores.add(int(core))
+
+        for core_id in logical_cores:
+            subprocess.run(('sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/online'),
+                           input="0", encoding='UTF-8', stdout=subprocess.DEVNULL)
+
+    yield
+
+    for core_id in online_core:
+        subprocess.run(('sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/online'),
+                       input="1", encoding='UTF-8', stdout=subprocess.DEVNULL)
 
 
 GLOBAL_CFG_PATH = Path(__file__).resolve().parent.parent / 'config.json'
 
 
 def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, print_metric_log: bool):
-    was_successful = True
-
     config_file = workspace / 'config.json'
 
     if not workspace.exists():
@@ -183,10 +221,6 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
     elif not config_file.exists():
         print(f'{config_file.resolve()} is not exist.', file=sys.stderr)
         return False
-
-    result_file = workspace / 'result.json'
-    if result_file.exists():
-        result_file.unlink()
 
     with open(config_file) as local_config_fp, \
             open(GLOBAL_CFG_PATH) as global_config_fp:
@@ -200,10 +234,16 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
     task_map: Dict[asyncio.Task, Benchmark] = dict()
 
+    was_successful = True
+
+    result_file = workspace / 'result.json'
+    if result_file.exists():
+        result_file.unlink()
+
     def stop_all():
         print('force stop all tasks...', file=sys.stderr)
 
-        for a_task, a_bench in task_map.items():
+        for a_task in task_map:
             if not a_task.done():
                 a_task.cancel()
 
@@ -238,12 +278,11 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
     benches = tuple(create_benchmarks(bench_cfges, perf_cfg, rabbit_cfg, workspace))
 
-    # FIXME: handle exceptions that occur when press CTRL + C
     loop.add_signal_handler(signal.SIGHUP, stop_all)
     loop.add_signal_handler(signal.SIGTERM, stop_all)
     loop.add_signal_handler(signal.SIGINT, stop_all)
 
-    with power_monitor(workspace):
+    with power_monitor(workspace), hyper_threading_guard(launcher_cfg.hyper_threading):
         # invoke benchmark loaders in parallel and wait for launching actual benchmarks
         loop.run_until_complete(asyncio.wait(tuple(bench.start_and_pause(print_log) for bench in benches)))
 
@@ -258,12 +297,17 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
         # start monitoring
         return_when = asyncio.FIRST_COMPLETED if launcher_cfg.stops_with_the_first else asyncio.ALL_COMPLETED
         finished, unfinished = loop.run_until_complete(asyncio.wait(task_map.keys(), return_when=return_when))
-        # TODO: handle unfinished
+
+        for task in unfinished:
+            task.cancel()
+
+        loop.run_until_complete(asyncio.gather(*unfinished))
 
     loop.remove_signal_handler(signal.SIGHUP)
     loop.remove_signal_handler(signal.SIGTERM)
     loop.remove_signal_handler(signal.SIGINT)
 
+    # run post scripts
     for script in launcher_cfg.post_scripts:
         name = str(script)
         if name.endswith('.py'):
@@ -275,7 +319,6 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
 
 def main():
-    logging.getLogger('asyncio').setLevel(logging.WARNING)
     parser = argparse.ArgumentParser(description='Launch benchmark written in config file.')
     parser.add_argument('config_dir', metavar='PARENT_DIR_OF_CONFIG_FILE', type=str, nargs='+',
                         help='Directory path where the config file (config.json) exist. (support wildcard *)')
@@ -300,8 +343,10 @@ def main():
         for workspace in dirs:
             if not launch(loop, Path(workspace), print_log, print_metric_log):
                 break
+            loop.stop()
 
     finally:
+        loop.stop()
         loop.close()
 
 

@@ -117,6 +117,8 @@ class Benchmark:
 
     @_Decorators.ensure_running
     async def monitor(self, print_metric_log: bool = False):
+        logger = logging.getLogger(self._identifier)
+
         try:
             # launching perf
             self._perf = await asyncio.create_subprocess_exec(
@@ -168,16 +170,17 @@ class Benchmark:
                 if not ignore_flag:
                     metric_logger.info(','.join(record))
 
-            logging.getLogger(self._identifier).info('end of loop')
+            logger.info('end of monitoring loop')
 
-        except CancelledError as e:
+            self._kill_perf()
+
+        except CancelledError:
             self._stop()
-            raise
 
         finally:
             self._remove_logger_handlers()
             self._end_time = time.time()
-            logging.getLogger(self._identifier).info('The benchmark is ended.')
+            logger.info('The benchmark is ended.')
 
     def _pause_bench(self):
         logging.getLogger(self._identifier).info('pausing...')
@@ -196,13 +199,15 @@ class Benchmark:
         if self._perf is not None and self._perf.returncode is None:
             self._perf.send_signal(SIGCONT)
 
-    def _stop(self):
-        logging.getLogger(self._identifier).info('stopping...')
-
+    def _kill_perf(self):
         if self._perf is not None and self._perf.returncode is None:
             self._perf.kill()
         self._perf = None
 
+    def _stop(self):
+        logging.getLogger(self._identifier).info('stopping...')
+
+        self._kill_perf()
         self._bench_driver.stop()
 
     def _remove_logger_handlers(self):

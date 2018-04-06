@@ -140,7 +140,6 @@ class BenchDriver(metaclass=ABCMeta):
     async def join(self) -> None:
         await self._async_proc.wait()
 
-    @_Decorators.ensure_running
     def stop(self) -> None:
         self._async_proc.kill()
         try:
