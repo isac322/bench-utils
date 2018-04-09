@@ -61,7 +61,10 @@ class BenchDriver(metaclass=ABCMeta):
 
     def __del__(self):
         if self._is_running:
-            self.stop()
+            try:
+                self.stop()
+            except (psutil.NoSuchProcess, ProcessLookupError):
+                pass
 
     @staticmethod
     @abstractmethod
@@ -142,11 +145,8 @@ class BenchDriver(metaclass=ABCMeta):
 
     def stop(self) -> None:
         self._async_proc.kill()
-        try:
-            self._bench_proc_info.kill()
-            self._async_proc_info.kill()
-        except psutil.NoSuchProcess:
-            pass
+        self._bench_proc_info.kill()
+        self._async_proc_info.kill()
 
     @_Decorators.ensure_running
     def pause(self) -> None:

@@ -13,6 +13,7 @@ from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Generator, Optional
 
 import pika
+import psutil
 import rdtsc
 from coloredlogs import ColoredFormatter
 from pika.adapters.blocking_connection import BlockingChannel
@@ -160,8 +161,9 @@ class Benchmark:
                         value = line.split(',')[1]
                         float(value)
                         record.append(value)
-                    except (IndexError, ValueError):
+                    except (IndexError, ValueError) as e:
                         ignore_flag = True
+                        logger.debug('a line that perf printed was ignored due to following exception', e)
 
                 tmp = rdtsc.get_cycles()
                 record.append(str(tmp - prev_tsc))
@@ -174,13 +176,14 @@ class Benchmark:
 
             self._kill_perf()
 
-        except CancelledError:
+        except CancelledError as e:
             self._stop()
+            logger.debug('The task cancelled', e)
 
         finally:
+            logger.info('The benchmark is ended.')
             self._remove_logger_handlers()
             self._end_time = time.time()
-            logger.info('The benchmark is ended.')
 
     def _pause_bench(self):
         logging.getLogger(self._identifier).info('pausing...')
@@ -205,14 +208,18 @@ class Benchmark:
         self._perf = None
 
     def _stop(self):
-        logging.getLogger(self._identifier).info('stopping...')
+        logger = logging.getLogger(self._identifier)
+        logger.info('stopping...')
 
-        self._kill_perf()
-        self._bench_driver.stop()
+        try:
+            self._kill_perf()
+            self._bench_driver.stop()
+        except (psutil.NoSuchProcess, ProcessLookupError) as e:
+            logger.debug('Process already killed', e)
 
     def _remove_logger_handlers(self):
-        logger = logging.getLogger(self._identifier)  # type: Logger
-        metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')  # type: Logger
+        logger = logging.getLogger(self._identifier)
+        metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')
 
         for handler in tuple(metric_logger.handlers):  # type: Handler
             logger.debug(f'removing metric handler {handler}')

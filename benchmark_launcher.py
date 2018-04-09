@@ -11,7 +11,9 @@ import signal
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
+from typing import Any, Coroutine, Dict, Generator, List, Optional, Set, Tuple, Union
+
+import aiofiles
 
 from benchmark.benchmark import Benchmark
 from configs.bench_config import BenchConfig
@@ -175,8 +177,15 @@ def power_monitor(work_space: Path):
 
 
 @contextlib.contextmanager
-def hyper_threading_guard(ht_flag: bool):
-    online_core: Set[int] = set()
+def hyper_threading_guard(loop: asyncio.AbstractEventLoop, ht_flag):
+    async def _gather_online_core(online_file: Path, core_id: int):
+        if online_file.is_file():
+            async with aiofiles.open(online_file) as fp:
+                line = await fp.readline()
+                if line.strip() == '1':
+                    return core_id
+
+    jobs: List[Coroutine] = []
 
     core_id = 1
     while True:
@@ -184,29 +193,34 @@ def hyper_threading_guard(ht_flag: bool):
 
         if not path.is_dir():
             break
+
         else:
-            if (path / 'online').is_file():
-                online_core.add(core_id)
+            jobs.append(_gather_online_core(path / 'online', core_id))
 
         core_id += 1
 
+    online_core: Set[int] = set(loop.run_until_complete(asyncio.gather(*jobs)))
+
     if not ht_flag:
+        print('disabling Hyper-Threading...')
+
         logical_cores: Set[int] = set()
 
-        for core_id in online_core:
+        for core_id in online_core | {0}:
             with open(f'/sys/devices/system/cpu/cpu{core_id}/topology/thread_siblings_list') as fp:
                 for core in fp.readline().strip().split(',')[1:]:
                     logical_cores.add(int(core))
 
-        for core_id in logical_cores:
-            subprocess.run(('sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/online'),
-                           input="0", encoding='UTF-8', stdout=subprocess.DEVNULL)
+        files_to_write = map('/sys/devices/system/cpu/cpu{}/online'.format, logical_cores)
+        subprocess.run(('sudo', 'tee', *files_to_write), input="0", encoding='UTF-8', stdout=subprocess.DEVNULL)
+
+        print('Hyper-Threading is disabled.')
 
     yield
 
-    for core_id in online_core:
-        subprocess.run(('sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/online'),
-                       input="1", encoding='UTF-8', stdout=subprocess.DEVNULL)
+    files_to_write = map('/sys/devices/system/cpu/cpu{}/online'.format, online_core)
+
+    subprocess.run(('sudo', 'tee', *files_to_write), input="1", encoding='UTF-8', stdout=subprocess.DEVNULL)
 
 
 GLOBAL_CFG_PATH = Path(__file__).resolve().parent.parent / 'config.json'
@@ -282,7 +296,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
     loop.add_signal_handler(signal.SIGTERM, stop_all)
     loop.add_signal_handler(signal.SIGINT, stop_all)
 
-    with power_monitor(workspace), hyper_threading_guard(launcher_cfg.hyper_threading):
+    with power_monitor(workspace), hyper_threading_guard(loop, launcher_cfg.hyper_threading):
         # invoke benchmark loaders in parallel and wait for launching actual benchmarks
         loop.run_until_complete(asyncio.wait(tuple(bench.start_and_pause(print_log) for bench in benches)))
 
