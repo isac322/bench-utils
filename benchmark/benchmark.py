@@ -1,17 +1,17 @@
 # coding: UTF-8
 
 import asyncio
-import functools
 import json
 import logging
 import time
 from concurrent.futures import CancelledError
 from itertools import chain
-from logging import Formatter, Handler, LogRecord, Logger
+from logging import Formatter, Handler, LogRecord
 from pathlib import Path
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Generator, Optional
 
+import functools
 import pika
 import psutil
 import rdtsc
