@@ -177,8 +177,8 @@ class Benchmark:
             self._kill_perf()
 
         except CancelledError as e:
+            logger.debug(f'The task cancelled : {e}')
             self._stop()
-            logger.debug('The task cancelled', e)
 
         finally:
             logger.info('The benchmark is ended.')
@@ -215,7 +215,7 @@ class Benchmark:
             self._kill_perf()
             self._bench_driver.stop()
         except (psutil.NoSuchProcess, ProcessLookupError) as e:
-            logger.debug('Process already killed', e)
+            logger.debug(f'Process already killed : {e}')
 
     def _remove_logger_handlers(self):
         logger = logging.getLogger(self._identifier)
