@@ -163,7 +163,7 @@ class Benchmark:
                         record.append(value)
                     except (IndexError, ValueError) as e:
                         ignore_flag = True
-                        logger.debug('a line that perf printed was ignored due to following exception', e)
+                        logger.debug(f'a line that perf printed was ignored due to following exception : {e}')
 
                 tmp = rdtsc.get_cycles()
                 record.append(str(tmp - prev_tsc))
