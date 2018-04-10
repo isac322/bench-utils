@@ -199,7 +199,7 @@ def hyper_threading_guard(loop: asyncio.AbstractEventLoop, ht_flag):
 
         core_id += 1
 
-    online_core: Set[int] = set(loop.run_until_complete(asyncio.gather(*jobs)))
+    online_core: Set[int] = set(filter(None.__ne__, loop.run_until_complete(asyncio.gather(*jobs))))
 
     if not ht_flag:
         print('disabling Hyper-Threading...')
