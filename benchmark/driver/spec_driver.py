@@ -56,12 +56,14 @@ class SpecDriver(BenchDriver):
                 'numactl', *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
 
     def stop(self) -> None:
-        self._async_proc.kill()
-        self._find_bench_proc().kill()
         try:
-            self._async_proc_info.kill()
+            proc = self._find_bench_proc()
+            if proc is not None:
+                proc.kill()
         except psutil.NoSuchProcess:
             pass
+
+        super().stop()
 
     @BenchDriver._Decorators.ensure_running
     def pause(self) -> None:
