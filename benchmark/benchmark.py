@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import sys
 import time
 from concurrent.futures import CancelledError
 from itertools import chain
@@ -197,7 +198,12 @@ class Benchmark:
                                      f' and the line is : {line}')
 
                 tmp = rdtsc.get_cycles()
-                record.append(str(tmp - prev_tsc))
+                if tmp < prev_tsc:
+                    tsc_val = sys.maxsize - prev_tsc + tmp
+                else:
+                    tsc_val = tmp - prev_tsc
+                record.append(str(tsc_val))
+
                 record.append(str(await self._read_llc_occupancy()))
                 prev_tsc = tmp
 
