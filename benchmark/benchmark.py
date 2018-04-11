@@ -11,6 +11,7 @@ from pathlib import Path
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Generator, Optional
 
+import aiofiles
 import functools
 import pika
 import psutil
@@ -83,6 +84,9 @@ class Benchmark:
 
         self._log_path: Path = log_parent / f'{identifier}.log'
 
+        # resource group for this benchmark
+        self._res_path = Path(f'/sys/fs/resctrl/{self.identifier}')
+
         # setup for loggers
 
         logger = logging.getLogger(self._identifier)
@@ -114,7 +118,33 @@ class Benchmark:
         await self._bench_driver.run()
         logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
 
+        # create a resource group and register this benchmark to the group
+        await (await asyncio.create_subprocess_exec('sudo', 'mkdir', str(self._res_path))).wait()
+
+        proc = await asyncio.create_subprocess_exec('sudo', 'tee', str(self._res_path / 'tasks'),
+                                                    stdin=asyncio.subprocess.PIPE,
+                                                    stdout=asyncio.subprocess.DEVNULL)
+        await proc.communicate(str(self._bench_driver.pid).encode())
+
         self._pause_bench()
+
+    async def _read_llc_occupancy(self):
+        tot_llc = 0
+
+        # sum all llc_occupancy monitors
+        for mon in (self._res_path / 'mon_data').iterdir():
+            llc_monitor_path = mon / 'llc_occupancy'
+
+            if llc_monitor_path.is_file():
+                async with aiofiles.open(llc_monitor_path) as fp:
+                    line: str = await fp.readline()
+                    tot_llc += int(line)
+
+        return tot_llc
+
+    async def _remove_res_dir(self):
+        proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._res_path))
+        await proc.wait()
 
     @_Decorators.ensure_running
     async def monitor(self, print_metric_log: bool = False):
@@ -141,7 +171,7 @@ class Benchmark:
 
             with open(self._perf_csv, 'w') as fp:
                 # print csv header
-                fp.write(','.join(chain(self._perf_config.event_names, ('wall-cycles',))) + '\n')
+                fp.write(','.join(chain(self._perf_config.event_names, ('wall-cycles', 'llc_occupancy'))) + '\n')
             metric_logger.addHandler(logging.FileHandler(self._perf_csv))
 
             # perf polling loop
@@ -168,6 +198,7 @@ class Benchmark:
 
                 tmp = rdtsc.get_cycles()
                 record.append(str(tmp - prev_tsc))
+                record.append(str(await self._read_llc_occupancy()))
                 prev_tsc = tmp
 
                 if not ignore_flag:
@@ -182,6 +213,13 @@ class Benchmark:
             self._stop()
 
         finally:
+            try:
+                self._kill_perf()
+                self._bench_driver.stop()
+            except (psutil.NoSuchProcess, ProcessLookupError):
+                pass
+
+            await self._remove_res_dir()
             logger.info('The benchmark is ended.')
             self._remove_logger_handlers()
             self._end_time = time.time()
@@ -300,7 +338,7 @@ class RabbitMQHandler(Handler):
 class RabbitMQFormatter(Formatter):
     def __init__(self, events: Generator[str, Any, None]):
         super().__init__()
-        self._event_names = tuple(events) + ('wall_cycles', 'req_num')
+        self._event_names = tuple(events) + ('wall_cycles', 'llc_occupancy', 'req_num')
         self._req_num = 0
 
     @staticmethod

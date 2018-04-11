@@ -3,11 +3,11 @@
 
 import csv
 from collections import OrderedDict
-from functools import reduce
 from pathlib import Path
 from statistics import mean
 from typing import List
 
+from functools import reduce
 from orderedset import OrderedSet
 
 from post_scripts.tools import WorkloadResult, read_result
