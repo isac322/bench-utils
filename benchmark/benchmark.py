@@ -61,8 +61,8 @@ class Benchmark:
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
     _stream_formatter = ColoredFormatter('%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
 
-    def __init__(self, identifier: str, bench_config: BenchConfig,
-                 perf_config: PerfConfig, rabbit_mq_config: RabbitMQConfig, workspace: Path):
+    def __init__(self, identifier: str, bench_config: BenchConfig, perf_config: PerfConfig,
+                 rabbit_mq_config: RabbitMQConfig, workspace: Path, logger_level: int = logging.INFO):
         self._identifier: str = identifier
         self._perf_config: PerfConfig = perf_config
         self._rabbit_mq_config: RabbitMQConfig = rabbit_mq_config
@@ -86,10 +86,10 @@ class Benchmark:
         # setup for loggers
 
         logger = logging.getLogger(self._identifier)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logger_level)
 
         metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')
-        metric_logger.setLevel(logging.DEBUG)
+        metric_logger.setLevel(logger_level)
 
     @_Decorators.ensure_not_running
     async def start_and_pause(self, print_log: bool = False):
@@ -163,7 +163,8 @@ class Benchmark:
                         record.append(value)
                     except (IndexError, ValueError) as e:
                         ignore_flag = True
-                        logger.debug(f'a line that perf printed was ignored due to following exception : {e}')
+                        logger.debug(f'a line that perf printed was ignored due to following exception : {e}'
+                                     f' and the line is : {line}')
 
                 tmp = rdtsc.get_cycles()
                 record.append(str(tmp - prev_tsc))

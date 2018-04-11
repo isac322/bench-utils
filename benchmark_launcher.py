@@ -7,6 +7,7 @@ import contextlib
 import glob
 import importlib
 import json
+import logging
 import signal
 import subprocess
 import sys
@@ -75,7 +76,8 @@ def parse_launcher_cfg(launcher_cfg: Optional[Dict[str, Union[bool, List[str]]]]
 def create_benchmarks(bench_cfgs: Tuple[BenchConfig, ...],
                       perf_cfg: PerfConfig,
                       rabbit_cfg: RabbitMQConfig,
-                      work_space: Path) -> Generator[Benchmark, Any, None]:
+                      work_space: Path,
+                      is_verbose: bool) -> Generator[Benchmark, Any, None]:
     bench_dict: Dict[str, List[BenchConfig]] = dict()
 
     for bench in bench_cfgs:
@@ -85,7 +87,7 @@ def create_benchmarks(bench_cfgs: Tuple[BenchConfig, ...],
 
     return (
         Benchmark(BenchConfig.gen_identifier(bench_cfg, bench_dict[bench_cfg.name]),
-                  bench_cfg, perf_cfg, rabbit_cfg, work_space)
+                  bench_cfg, perf_cfg, rabbit_cfg, work_space, logging.DEBUG if is_verbose else logging.INFO)
         for bench_cfg in bench_cfgs
     )
 
@@ -226,7 +228,7 @@ def hyper_threading_guard(loop: asyncio.AbstractEventLoop, ht_flag):
 GLOBAL_CFG_PATH = Path(__file__).resolve().parent.parent / 'config.json'
 
 
-def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, print_metric_log: bool):
+def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, print_metric_log: bool, verbose: bool):
     config_file = workspace / 'config.json'
 
     if not workspace.exists():
@@ -290,7 +292,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
         a_task.remove_done_callback(store_runtime)
 
-    benches = tuple(create_benchmarks(bench_cfges, perf_cfg, rabbit_cfg, workspace))
+    benches = tuple(create_benchmarks(bench_cfges, perf_cfg, rabbit_cfg, workspace, verbose))
 
     loop.add_signal_handler(signal.SIGHUP, stop_all)
     loop.add_signal_handler(signal.SIGTERM, stop_all)
@@ -336,6 +338,7 @@ def main():
     parser = argparse.ArgumentParser(description='Launch benchmark written in config file.')
     parser.add_argument('config_dir', metavar='PARENT_DIR_OF_CONFIG_FILE', type=str, nargs='+',
                         help='Directory path where the config file (config.json) exist. (support wildcard *)')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Print more detail log')
     parser.add_argument('-L', '--print-log', action='store_true', help='Print all logs to stdout. (implies -M)')
     parser.add_argument('-M', '--print-metric-log', action='store_true',
                         help='Print all metric related logs to stdout.')
@@ -355,9 +358,8 @@ def main():
         print_metric_log = args.print_metric_log
 
         for workspace in dirs:
-            if not launch(loop, Path(workspace), print_log, print_metric_log):
+            if not launch(loop, Path(workspace), print_log, print_metric_log, args.verbose):
                 break
-            loop.stop()
 
     finally:
         loop.stop()
