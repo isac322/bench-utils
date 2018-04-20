@@ -4,10 +4,10 @@
 from pathlib import Path
 from typing import List, Tuple
 
-from configs.bench_config import BenchConfig
-from configs.launcher_config import LauncherConfig
-from configs.perf_config import PerfConfig
-from configs.rabbit_mq_config import RabbitMQConfig
+from containers.bench_config import BenchConfig
+from containers.launcher_config import LauncherConfig
+from containers.perf_config import PerfConfig
+from containers.rabbit_mq_config import RabbitMQConfig
 from post_scripts.tools import WorkloadResult, read_config, read_result
 
 

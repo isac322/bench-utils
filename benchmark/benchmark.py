@@ -21,9 +21,9 @@ from coloredlogs import ColoredFormatter
 from pika.adapters.blocking_connection import BlockingChannel
 
 from benchmark.driver.base_driver import BenchDriver
-from configs.bench_config import BenchConfig
-from configs.perf_config import PerfConfig
-from configs.rabbit_mq_config import RabbitMQConfig
+from containers.bench_config import BenchConfig
+from containers.perf_config import PerfConfig
+from containers.rabbit_mq_config import RabbitMQConfig
 
 
 class Benchmark:

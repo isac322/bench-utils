@@ -17,10 +17,10 @@ from typing import Any, Coroutine, Dict, Generator, List, Optional, Set, Tuple, 
 import aiofiles
 
 from benchmark.benchmark import Benchmark
-from configs.bench_config import BenchConfig
-from configs.launcher_config import LauncherConfig
-from configs.perf_config import PerfConfig, PerfEvent
-from configs.rabbit_mq_config import RabbitMQConfig
+from containers.bench_config import BenchConfig
+from containers.launcher_config import LauncherConfig
+from containers.perf_config import PerfConfig, PerfEvent
+from containers.rabbit_mq_config import RabbitMQConfig
 
 
 def parse_workload_cfg(wl_configs: List[Dict[str, Any]]) -> Tuple[BenchConfig, ...]:
