@@ -10,12 +10,8 @@ from post_scripts.tools import WorkloadResult, read_result
 
 def run(workspace: Path, global_cfg_path: Path):
     results: List[WorkloadResult] = read_result(workspace)
-    output_path = workspace / 'output'
 
-    if not output_path.exists():
-        output_path.mkdir(parents=True)
-
-    error_file = output_path / 'ERROR'
+    error_file = workspace / 'ERROR'
     if error_file.exists():
         error_file.unlink()
 
