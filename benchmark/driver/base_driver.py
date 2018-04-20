@@ -163,8 +163,9 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     from benchmark.driver.spec_driver import SpecDriver
     from benchmark.driver.parsec_driver import ParsecDriver
     from benchmark.driver.rodinia_driver import RodiniaDriver
+    from benchmark.driver.npb_driver import NPBDriver
 
-    bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver)
+    bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver, NPBDriver)
 
     for _bench_driver in bench_drivers:
         if _bench_driver.has(workload_name):
