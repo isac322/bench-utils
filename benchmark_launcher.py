@@ -93,6 +93,7 @@ def create_benchmarks(bench_cfgs: Tuple[BenchConfig, ...],
 
 
 _ENERGY_FILE_NAME = 'energy_uj'
+_MAX_ENERGY_VALUE_FILE_NAME = 'max_energy_range_uj'
 
 
 @contextlib.contextmanager
@@ -144,9 +145,16 @@ def power_monitor(work_space: Path):
             sub_name = name_fp.readline().strip()
             after = int(power_fp.readline())
 
+        if after > prev_socket_power:
+            diff = after - prev_socket_power
+        else:
+            with open(socket_path / _MAX_ENERGY_VALUE_FILE_NAME) as fp:
+                max_value = int(fp.readline())
+                diff = max_value - prev_socket_power + after
+
         ret_dict: Dict[str, Union[str, int, Dict[str, int]]] = {
             'package_name': sub_name,
-            'power': after - prev_socket_power,
+            'power': diff,
             'domains': dict()
         }
 
@@ -155,7 +163,14 @@ def power_monitor(work_space: Path):
                 after = int(energy_fp.readline())
                 name = name_fp.readline().strip()
 
-                ret_dict['domains'][name] = after - before
+                if after > prev_socket_power:
+                    diff = after - before
+                else:
+                    with open(path / _MAX_ENERGY_VALUE_FILE_NAME) as fp:
+                        max_value = int(fp.readline())
+                        diff = max_value - before + after
+
+                ret_dict['domains'][name] = diff
 
         ret.append(ret_dict)
 
