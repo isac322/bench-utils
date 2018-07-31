@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 # coding: UTF-8
 
 import argparse
@@ -21,6 +21,8 @@ from containers.bench_config import BenchConfig
 from containers.launcher_config import LauncherConfig
 from containers.perf_config import PerfConfig, PerfEvent
 from containers.rabbit_mq_config import RabbitMQConfig
+
+MIN_PYTHON = (3, 6)
 
 
 def parse_workload_cfg(wl_configs: List[Dict[str, Any]]) -> Tuple[BenchConfig, ...]:
@@ -382,4 +384,7 @@ def main():
 
 
 if __name__ == '__main__':
+    if sys.version_info < MIN_PYTHON:
+        sys.exit('Python {}.{} or later is required.\n'.format(*MIN_PYTHON))
+
     main()
