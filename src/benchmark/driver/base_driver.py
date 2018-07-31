@@ -12,6 +12,10 @@ import psutil
 
 class BenchDriver(metaclass=ABCMeta):
     class _Decorators:
+        """
+        Decorators for methods of :class:`BenchDriver`
+        """
+
         @staticmethod
         def ensure_running(func: Callable[['BenchDriver', Any], Any]):
             @functools.wraps(func)
@@ -46,8 +50,32 @@ class BenchDriver(metaclass=ABCMeta):
             return decorator
 
     _benches: Set[str] = None
+    """
+    :class:`Set` of benchmark names.
+    
+    All subclasses of :class:`BenchDriver` should override this variable with their own benchmark name.
+    """
+
     _bench_home: str = None
+    """
+    Base directory of the benchmark.
+    
+    All subclasses of :class:`BenchDriver` should override this variable with their own home directory.
+    
+    If the home directory is added on global `config.json` with :const:`bench_name`,
+    you can use :meth:`BenchDriver.get_bench_home`
+    
+    Example::
+    
+        _bench_home: str = BenchDriver.get_bench_home(bench_name)
+    """
+
     bench_name: str = None
+    """
+    Benchmark set name.
+    
+    All subclasses of :class:`BenchDriver` should override this variable with their own benchmark set name.
+    """
 
     def __init__(self, name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]):
         self._name: str = name
@@ -69,6 +97,12 @@ class BenchDriver(metaclass=ABCMeta):
     @staticmethod
     @abstractmethod
     def has(bench_name: str) -> bool:
+        """
+        Test that this driver can handle the benchmark *bench_name*.
+
+        :param bench_name: benchmark name to test
+        :return: ``True`` if this driver can handle
+        """
         pass
 
     @staticmethod
@@ -91,21 +125,21 @@ class BenchDriver(metaclass=ABCMeta):
         """
         Check if this benchmark is running.
 
-        The difference with :func:`benchmark.driver.base_driver.BenchDriver.is_running` is this method is more precise,
+        The difference with :meth:`BenchDriver.is_running` is this method is more precise,
         but has more cost.
 
-        :return: True if running
+        :return: ``True`` if running
         """
         return self.is_running and self._find_bench_proc() is not None
 
     @property
-    def has_invoked(self):
+    def has_invoked(self) -> bool:
         return self._bench_proc_info is not None and \
                self._async_proc is not None and \
                self._async_proc_info is not None
 
     @property
-    def is_running(self):
+    def is_running(self) -> bool:
         return self.has_invoked and self._bench_proc_info.is_running()
 
     @property
@@ -125,6 +159,13 @@ class BenchDriver(metaclass=ABCMeta):
 
     @abstractmethod
     def _find_bench_proc(self) -> Optional[psutil.Process]:
+        """
+        Try to find actual benchmark process (not a wrapper or a launcher of the benchmark set).
+
+        This method will be periodically invoked until return value is not ``None``
+
+        :return: ``None`` if the process not exists, :class:`psutil.Process` object if exists.
+        """
         pass
 
     @_Decorators.ensure_not_running
