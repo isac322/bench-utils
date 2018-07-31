@@ -1,6 +1,5 @@
 aiofiles==0.3.2
 coloredlogs==10.0
-humanfriendly==4.12.1
 pika==0.12.0
 psutil==5.4.6
 rdtsc==0.2.1
