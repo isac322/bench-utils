@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 
-from benchmark.driver.base_driver import BenchDriver, bench_driver
+from benchmark.driver.base_driver import BenchDriver, gen_driver
 
 
 class BenchConfig:
@@ -35,7 +35,7 @@ class BenchConfig:
         return self._cpu_freq
 
     def generate_driver(self) -> BenchDriver:
-        return bench_driver(self._workload_name, self._num_of_threads, self._binding_cores, self._numa_nodes)
+        return gen_driver(self._workload_name, self._num_of_threads, self._binding_cores, self._numa_nodes)
 
     @staticmethod
     def gen_identifier(target: 'BenchConfig', configs: List['BenchConfig']) -> str:
