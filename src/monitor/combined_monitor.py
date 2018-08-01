@@ -3,9 +3,9 @@
 import asyncio
 from typing import Callable, Dict, Iterable, List, Mapping
 
-from monitor.base_monitor import BaseMonitor
+from monitor.base_monitor import BaseMonitor, MonitorData
 from monitor.handlers.base_handler import BaseHandler
-from monitor.oneshot_monitor import MonitorData, OneShotMonitor
+from monitor.oneshot_monitor import OneShotMonitor
 
 
 class CombinedMonitor(BaseMonitor):

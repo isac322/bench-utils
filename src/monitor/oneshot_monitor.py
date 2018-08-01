@@ -2,11 +2,9 @@
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Generic, Mapping, TypeVar
+from typing import Generic, Mapping
 
-from monitor.base_monitor import BaseMonitor
-
-MonitorData = TypeVar('MonitorData', int, float, Mapping)
+from monitor.base_monitor import BaseMonitor, MonitorData
 
 
 class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):

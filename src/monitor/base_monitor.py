@@ -1,9 +1,11 @@
 # coding: UTF-8
 
 from abc import ABCMeta, abstractmethod
-from typing import Iterable
+from typing import Iterable, Mapping, Tuple, TypeVar
 
 from monitor.handlers.base_handler import BaseHandler
+
+MonitorData = TypeVar('MonitorData', int, float, Tuple, Mapping)
 
 
 class BaseMonitor(metaclass=ABCMeta):
@@ -15,11 +17,11 @@ class BaseMonitor(metaclass=ABCMeta):
     async def monitor(self) -> None:
         pass
 
-    def on_init(self) -> None:
+    async def on_init(self) -> None:
         pass
 
-    def on_end(self) -> None:
+    async def on_end(self) -> None:
         pass
 
-    def on_destroy(self) -> None:
+    async def on_destroy(self) -> None:
         pass

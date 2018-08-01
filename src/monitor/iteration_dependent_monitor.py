@@ -5,7 +5,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Iterable, Mapping
 
 from monitor.handlers.base_handler import BaseHandler
-from monitor.oneshot_monitor import MonitorData, OneShotMonitor
+from monitor.oneshot_monitor import OneShotMonitor
+from monitor.base_monitor import MonitorData
 
 
 class IterationDependentMonitor(OneShotMonitor, metaclass=ABCMeta):
