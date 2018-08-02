@@ -207,7 +207,7 @@ def hyphens_2_tuple(hyphen_str: str) -> Tuple[int, ...]:
 
 
 @contextlib.contextmanager
-def hyper_threading_guard(ht_flag):
+def hyper_threading_guard(ht_flag: bool):
     raw_input = Path('/sys/devices/system/cpu/online').read_text().strip()
 
     online_core: Tuple[int, ...] = hyphens_2_tuple(raw_input)
@@ -222,17 +222,14 @@ def hyper_threading_guard(ht_flag):
                 for core in fp.readline().strip().split(',')[1:]:
                     logical_cores.add(int(core))
 
-        files_to_write = ('/sys/devices/system/cpu/cpu{}/online'.format(core_id) for core_id in logical_cores)
+        files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in logical_cores)
         subprocess.run(('sudo', 'tee', *files_to_write), input="0", encoding='UTF-8', stdout=subprocess.DEVNULL)
 
         print('Hyper-Threading is disabled.')
 
     yield
 
-    files_to_write = (
-        '/sys/devices/system/cpu/cpu{}/online'.format(core_id)
-        for core_id in online_core if core_id is not 0
-    )
+    files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_core if core_id is not 0)
 
     subprocess.run(('sudo', 'tee', *files_to_write), input="1", encoding='UTF-8', stdout=subprocess.DEVNULL)
 
