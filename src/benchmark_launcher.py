@@ -210,14 +210,14 @@ def hyphens_2_tuple(hyphen_str: str) -> Tuple[int, ...]:
 def hyper_threading_guard(ht_flag: bool):
     raw_input = Path('/sys/devices/system/cpu/online').read_text().strip()
 
-    online_core: Tuple[int, ...] = hyphens_2_tuple(raw_input)
+    online_cores: Tuple[int, ...] = hyphens_2_tuple(raw_input)
 
     if not ht_flag:
         print('disabling Hyper-Threading...')
 
         logical_cores: Set[int] = set()
 
-        for core_id in online_core:
+        for core_id in online_cores:
             with open(f'/sys/devices/system/cpu/cpu{core_id}/topology/thread_siblings_list') as fp:
                 for core in fp.readline().strip().split(',')[1:]:
                     logical_cores.add(int(core))
@@ -229,7 +229,7 @@ def hyper_threading_guard(ht_flag: bool):
 
     yield
 
-    files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_core if core_id is not 0)
+    files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_cores if core_id is not 0)
 
     subprocess.run(('sudo', 'tee', *files_to_write), input='1', encoding='UTF-8', stdout=subprocess.DEVNULL)
 

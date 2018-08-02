@@ -19,7 +19,7 @@ from aiofile import AIOFile, LineReader
 from coloredlogs import ColoredFormatter
 from pika.adapters.blocking_connection import BlockingChannel
 
-from benchmark.driver.base_driver import BenchDriver
+from benchmark.drivers.base_driver import BenchDriver
 from containers.bench_config import BenchConfig
 from containers.perf_config import PerfConfig
 from containers.rabbit_mq_config import RabbitMQConfig

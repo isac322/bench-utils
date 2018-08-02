@@ -3,7 +3,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Generic, Mapping
 
-from monitor import MonitorData
+from monitors import MonitorData
 
 
 class BaseHandler(Generic[MonitorData], metaclass=ABCMeta):

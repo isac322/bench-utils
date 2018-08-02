@@ -201,10 +201,10 @@ class BenchDriver(metaclass=ABCMeta):
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
-    from benchmark.driver.spec_driver import SpecDriver
-    from benchmark.driver.parsec_driver import ParsecDriver
-    from benchmark.driver.rodinia_driver import RodiniaDriver
-    from benchmark.driver.npb_driver import NPBDriver
+    from benchmark.drivers.spec_driver import SpecDriver
+    from benchmark.drivers.parsec_driver import ParsecDriver
+    from benchmark.drivers.rodinia_driver import RodiniaDriver
+    from benchmark.drivers.npb_driver import NPBDriver
 
     bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver, NPBDriver)
 

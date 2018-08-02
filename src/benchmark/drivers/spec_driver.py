@@ -8,7 +8,7 @@ from typing import Optional, Set
 
 import psutil
 
-from benchmark.driver.base_driver import BenchDriver
+from benchmark.drivers.base_driver import BenchDriver
 
 
 class SpecDriver(BenchDriver):
