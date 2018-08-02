@@ -1,5 +1,6 @@
 # coding: UTF-8
 
+import asyncio
 from abc import ABCMeta, abstractmethod
 from typing import Iterable
 
@@ -23,4 +24,4 @@ class BaseMonitor(metaclass=ABCMeta):
         pass
 
     async def on_destroy(self) -> None:
-        pass
+        await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))

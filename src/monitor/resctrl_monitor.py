@@ -84,5 +84,6 @@ class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
         return dict(resctrl=data)
 
     async def on_destroy(self) -> None:
+        await super().on_destroy()
         proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._group_path))
         await proc.wait()
