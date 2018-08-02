@@ -15,7 +15,7 @@ from typing import Any, Callable, Generator, Optional
 import pika
 import psutil
 import rdtsc
-from aiofile import AIOFile
+from aiofile import AIOFile, LineReader
 from coloredlogs import ColoredFormatter
 from pika.adapters.blocking_connection import BlockingChannel
 
@@ -138,7 +138,7 @@ class Benchmark:
 
             if llc_monitor_path.is_file():
                 async with AIOFile(str(llc_monitor_path)) as afp:
-                    line: str = await afp.read()
+                    line: str = await LineReader(afp).readline()
                     tot_llc += int(line)
 
         return tot_llc

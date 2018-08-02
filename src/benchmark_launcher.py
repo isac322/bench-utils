@@ -223,7 +223,7 @@ def hyper_threading_guard(ht_flag: bool):
                     logical_cores.add(int(core))
 
         files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in logical_cores)
-        subprocess.run(('sudo', 'tee', *files_to_write), input="0", encoding='UTF-8', stdout=subprocess.DEVNULL)
+        subprocess.run(('sudo', 'tee', *files_to_write), input='0', encoding='UTF-8', stdout=subprocess.DEVNULL)
 
         print('Hyper-Threading is disabled.')
 
@@ -231,7 +231,7 @@ def hyper_threading_guard(ht_flag: bool):
 
     files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_core if core_id is not 0)
 
-    subprocess.run(('sudo', 'tee', *files_to_write), input="1", encoding='UTF-8', stdout=subprocess.DEVNULL)
+    subprocess.run(('sudo', 'tee', *files_to_write), input='1', encoding='UTF-8', stdout=subprocess.DEVNULL)
 
 
 GLOBAL_CFG_PATH = Path(__file__).resolve().parent.parent / 'config.json'
