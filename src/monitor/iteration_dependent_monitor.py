@@ -4,9 +4,9 @@ import asyncio
 from abc import ABCMeta, abstractmethod
 from typing import Iterable, Mapping
 
+from monitor import MonitorData
 from monitor.handlers.base_handler import BaseHandler
 from monitor.oneshot_monitor import OneShotMonitor
-from monitor.base_monitor import MonitorData
 
 
 class IterationDependentMonitor(OneShotMonitor, metaclass=ABCMeta):

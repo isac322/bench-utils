@@ -3,7 +3,8 @@
 import asyncio
 from typing import Callable, Dict, Iterable, List, Mapping
 
-from monitor.base_monitor import BaseMonitor, MonitorData
+from monitor import MonitorData
+from monitor.base_monitor import BaseMonitor
 from monitor.handlers.base_handler import BaseHandler
 from monitor.oneshot_monitor import OneShotMonitor
 
