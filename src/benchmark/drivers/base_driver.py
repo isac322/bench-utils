@@ -5,7 +5,7 @@ import functools
 import json
 from abc import ABCMeta, abstractmethod
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Optional, Set, Type
+from typing import Any, Callable, Optional, Set
 
 import psutil
 
@@ -198,24 +198,3 @@ class BenchDriver(metaclass=ABCMeta):
     def resume(self) -> None:
         self._async_proc.send_signal(SIGCONT)
         self._bench_proc_info.resume()
-
-
-def find_driver(workload_name) -> Type[BenchDriver]:
-    from benchmark.drivers.spec_driver import SpecDriver
-    from benchmark.drivers.parsec_driver import ParsecDriver
-    from benchmark.drivers.rodinia_driver import RodiniaDriver
-    from benchmark.drivers.npb_driver import NPBDriver
-
-    bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver, NPBDriver)
-
-    for _bench_driver in bench_drivers:
-        if _bench_driver.has(workload_name):
-            return _bench_driver
-
-    raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
-
-
-def gen_driver(workload_name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]) -> BenchDriver:
-    _bench_driver = find_driver(workload_name)
-
-    return _bench_driver(workload_name, num_threads, binding_cores, numa_cores)
