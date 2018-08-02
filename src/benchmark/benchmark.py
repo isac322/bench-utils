@@ -1,9 +1,9 @@
 # coding: UTF-8
 
 import asyncio
+import functools
 import json
 import logging
-import sys
 import time
 from concurrent.futures import CancelledError
 from itertools import chain
@@ -12,11 +12,10 @@ from pathlib import Path
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Generator, Optional
 
-import aiofiles
-import functools
 import pika
 import psutil
 import rdtsc
+from aiofile import AIOFile
 from coloredlogs import ColoredFormatter
 from pika.adapters.blocking_connection import BlockingChannel
 
@@ -113,18 +112,19 @@ class Benchmark:
             stream_handler.setFormatter(Benchmark._stream_formatter)
             logger.addHandler(stream_handler)
 
-        # launching benchmark
-
-        logger.info('Starting benchmark...')
-        await self._bench_driver.run()
-        logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
-
         # create a resource group and register this benchmark to the group
         await (await asyncio.create_subprocess_exec('sudo', 'mkdir', str(self._res_path))).wait()
 
         proc = await asyncio.create_subprocess_exec('sudo', 'tee', str(self._res_path / 'tasks'),
                                                     stdin=asyncio.subprocess.PIPE,
                                                     stdout=asyncio.subprocess.DEVNULL)
+
+        # launching benchmark
+
+        logger.info('Starting benchmark...')
+        await self._bench_driver.run()
+        logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
+
         await proc.communicate(str(self._bench_driver.pid).encode())
 
         self._pause_bench()
@@ -137,8 +137,8 @@ class Benchmark:
             llc_monitor_path = mon / 'llc_occupancy'
 
             if llc_monitor_path.is_file():
-                async with aiofiles.open(llc_monitor_path) as fp:
-                    line: str = await fp.readline()
+                async with AIOFile(str(llc_monitor_path)) as afp:
+                    line: str = await afp.read()
                     tot_llc += int(line)
 
         return tot_llc
@@ -170,7 +170,7 @@ class Benchmark:
             if print_metric_log:
                 metric_logger.addHandler(logging.StreamHandler())
 
-            with open(self._perf_csv, 'w') as fp:
+            with self._perf_csv.open('w') as fp:
                 # print csv header
                 fp.write(','.join(chain(self._perf_config.event_names, ('wall-cycles', 'llc_occupancy'))) + '\n')
             metric_logger.addHandler(logging.FileHandler(self._perf_csv))
@@ -199,10 +199,10 @@ class Benchmark:
 
                 tmp = rdtsc.get_cycles()
                 if tmp < prev_tsc:
-                    tsc_val = sys.maxsize - prev_tsc + tmp
+                    tsc_val = (1 << 31) - 1 - prev_tsc + tmp
                 else:
                     tsc_val = tmp - prev_tsc
-                record.append(str(tsc_val))
+                record.append(str(tmp - prev_tsc))
 
                 record.append(str(await self._read_llc_occupancy()))
                 prev_tsc = tmp

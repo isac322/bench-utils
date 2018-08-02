@@ -11,10 +11,9 @@ import logging
 import signal
 import subprocess
 import sys
+from itertools import chain
 from pathlib import Path
-from typing import Any, Coroutine, Dict, Generator, List, Optional, Set, Tuple, Union
-
-import aiofiles
+from typing import Any, Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
 
 from benchmark.benchmark import Benchmark
 from containers.bench_config import BenchConfig
@@ -143,14 +142,14 @@ def power_monitor(work_space: Path):
     ret: List[Dict[str, Union[str, int, Dict[str, int]]]] = list()
 
     for socket_path, (prev_socket_power, socket) in monitors.items():
-        with open(socket_path / 'name') as name_fp, open(socket_path / _ENERGY_FILE_NAME) as power_fp:
+        with (socket_path / 'name').open() as name_fp, (socket_path / _ENERGY_FILE_NAME).open() as power_fp:
             sub_name = name_fp.readline().strip()
             after = int(power_fp.readline())
 
         if after > prev_socket_power:
             diff = after - prev_socket_power
         else:
-            with open(socket_path / _MAX_ENERGY_VALUE_FILE_NAME) as fp:
+            with (socket_path / _MAX_ENERGY_VALUE_FILE_NAME).open() as fp:
                 max_value = int(fp.readline())
                 diff = max_value - prev_socket_power + after
 
@@ -161,14 +160,14 @@ def power_monitor(work_space: Path):
         }
 
         for path, before in socket.items():
-            with open(path / _ENERGY_FILE_NAME) as energy_fp, open(path / 'name') as name_fp:
+            with (path / _ENERGY_FILE_NAME).open() as energy_fp, (path / 'name').open() as name_fp:
                 after = int(energy_fp.readline())
                 name = name_fp.readline().strip()
 
                 if after > prev_socket_power:
                     diff = after - before
                 else:
-                    with open(path / _MAX_ENERGY_VALUE_FILE_NAME) as fp:
+                    with (path / _MAX_ENERGY_VALUE_FILE_NAME).open() as fp:
                         max_value = int(fp.readline())
                         diff = max_value - before + after
 
@@ -178,7 +177,7 @@ def power_monitor(work_space: Path):
 
     result_file = work_space / 'result.json'
     if result_file.exists():
-        with open(result_file, mode='r+') as fp:
+        with result_file.open('r+') as fp:
             try:
                 original = json.load(fp)
                 original['power'] = ret
@@ -191,41 +190,34 @@ def power_monitor(work_space: Path):
                 fp.truncate()
                 json.dump({'power': ret}, fp, indent=4)
     else:
-        with open(result_file, mode='w') as fp:
+        with result_file.open('w') as fp:
             json.dump({'power': ret}, fp, indent=4)
 
 
-@contextlib.contextmanager
-def hyper_threading_guard(loop: asyncio.AbstractEventLoop, ht_flag):
-    async def _gather_online_core(online_file: Path, core_id: int):
-        if online_file.is_file():
-            async with aiofiles.open(online_file) as fp:
-                line = await fp.readline()
-                if line.strip() == '1':
-                    return core_id
-
-    jobs: List[Coroutine] = []
-
-    core_id = 1
-    while True:
-        path = Path(f'/sys/devices/system/cpu/cpu{core_id}')
-
-        if not path.is_dir():
-            break
-
+def hyphens_2_tuple(hyphen_str: str) -> Tuple[int, ...]:
+    def group_2_iter(group: str) -> Iterable[int]:
+        if '-' in group:
+            start, end = map(int, group.split('-'))
         else:
-            jobs.append(_gather_online_core(path / 'online', core_id))
+            start = end = int(group)
+        return range(start, end + 1)
 
-        core_id += 1
+    groups = hyphen_str.split(',')
+    return tuple(chain(*map(group_2_iter, groups)))
 
-    online_core: Set[int] = set(filter(None.__ne__, loop.run_until_complete(asyncio.gather(*jobs))))
+
+@contextlib.contextmanager
+def hyper_threading_guard(ht_flag):
+    raw_input = Path('/sys/devices/system/cpu/online').read_text().strip()
+
+    online_core: Tuple[int, ...] = hyphens_2_tuple(raw_input)
 
     if not ht_flag:
         print('disabling Hyper-Threading...')
 
         logical_cores: Set[int] = set()
 
-        for core_id in online_core | {0}:
+        for core_id in online_core:
             with open(f'/sys/devices/system/cpu/cpu{core_id}/topology/thread_siblings_list') as fp:
                 for core in fp.readline().strip().split(',')[1:]:
                     logical_cores.add(int(core))
@@ -237,7 +229,10 @@ def hyper_threading_guard(loop: asyncio.AbstractEventLoop, ht_flag):
 
     yield
 
-    files_to_write = ('/sys/devices/system/cpu/cpu{}/online'.format(core_id) for core_id in online_core)
+    files_to_write = (
+        '/sys/devices/system/cpu/cpu{}/online'.format(core_id)
+        for core_id in online_core if core_id is not 0
+    )
 
     subprocess.run(('sudo', 'tee', *files_to_write), input="1", encoding='UTF-8', stdout=subprocess.DEVNULL)
 
@@ -255,7 +250,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
         print(f'{config_file.resolve()} is not exist.', file=sys.stderr)
         return False
 
-    with open(config_file) as local_config_fp, \
+    with config_file.open() as local_config_fp, \
             open(GLOBAL_CFG_PATH) as global_config_fp:
         local_cfg_source: Dict[str, Any] = json.load(local_config_fp)
         global_cfg_source: Dict[str, Any] = json.load(global_config_fp)
@@ -287,7 +282,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
         a_bench = task_map[a_task]
 
         if result_file.exists():
-            with open(result_file, mode='r+') as fp:
+            with result_file.open('r+') as fp:
                 try:
                     original: Dict[str, Any] = json.load(fp)
 
@@ -304,7 +299,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
                     fp.truncate()
                     json.dump({'runtime': {a_bench.identifier: a_bench.runtime}}, fp, indent=4)
         else:
-            with open(result_file, mode='w') as fp:
+            with result_file.open('w') as fp:
                 json.dump({'runtime': {a_bench.identifier: a_bench.runtime}}, fp, indent=4)
 
         a_task.remove_done_callback(store_runtime)
@@ -315,7 +310,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
     loop.add_signal_handler(signal.SIGTERM, stop_all)
     loop.add_signal_handler(signal.SIGINT, stop_all)
 
-    with power_monitor(workspace), hyper_threading_guard(loop, launcher_cfg.hyper_threading):
+    with power_monitor(workspace), hyper_threading_guard(launcher_cfg.hyper_threading):
         # invoke benchmark loaders in parallel and wait for launching actual benchmarks
         loop.run_until_complete(asyncio.wait(tuple(bench.start_and_pause(print_log) for bench in benches)))
 

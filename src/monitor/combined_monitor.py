@@ -44,6 +44,8 @@ class CombinedMonitor(BaseMonitor):
 
                     if isinstance(v, Mapping) and isinstance(old_v, Mapping):
                         merged[k] = CombinedMonitor._default_merger((old_v, v))
+                    elif isinstance(v, tuple) and isinstance(old_v, tuple):
+                        merged[k] = *old_v, *v
                     else:
                         raise TypeError(f'The resulting data have a duplicate key ({k}) that can not be merged.')
                 else:

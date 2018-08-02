@@ -1,4 +1,4 @@
-aiofiles==0.3.2
+aiofile==1.4.3
 coloredlogs==10.0
 orderedset==2.0.1
 pika==0.12.0
