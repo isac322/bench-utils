@@ -2,10 +2,12 @@
 
 import asyncio
 import re
+from itertools import chain
 from pathlib import Path
-from typing import Iterable, Mapping, Tuple
+from typing import FrozenSet, Iterable, Mapping, Tuple
 
-import aiofiles
+from aiofile import AIOFile, LineReader
+from psutil import Process
 
 from monitor.handlers.base_handler import BaseHandler
 from monitor.oneshot_monitor import OneShotMonitor
@@ -20,35 +22,52 @@ class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
                  grp_name: str = '', parent_pid: int = None) -> None:
         super().__init__(interval, handlers)
         self._group_name = grp_name
-        self._group_path = self.mount_point / self._group_name
+        self._group_path = ResctrlMonitor.mount_point / self._group_name
         self._monitoring_pid = parent_pid
 
         # filter L3 related monitors and sort by name (currently same as socket number)
-        mons = sorted(
+        mon_names = sorted(
                 filter(
-                        lambda m: self._l3_pattern.match(m.name),
-                        (self._group_path / 'mon_data').iterdir()
+                        lambda m: ResctrlMonitor._l3_pattern.match(m.name),
+                        (ResctrlMonitor.mount_point / 'mon_data').iterdir()
                 )
         )
 
         # tuple of each feature monitors for each socket
         self._mons = tuple(
-                tuple(mon / feature for feature in self.mon_features) for mon in mons
+                tuple(self._group_path / 'mon_data' / mon.name / feature for feature in ResctrlMonitor.mon_features)
+                for mon in mon_names
         )
 
+    @staticmethod
+    def _get_all_children(pid: int) -> FrozenSet[int]:
+        target = Process(pid)
+        all_children = ((t.id for t in proc.threads()) for proc in target.children(recursive=True))
+        return frozenset(chain(*all_children, map(lambda t: t.id, target.threads())))
+
     async def on_init(self) -> None:
-        if not self.mount_point.is_dir():
-            raise PermissionError(f'resctrl is not mounted on {self.mount_point.absolute()}')
+        async def write_to_tasks(pid: int) -> None:
+            write_proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(
+                    'sudo', 'tee', str(self._group_path / 'tasks'),
+                    encoding='ASCII',
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.DEVNULL)
+
+            await write_proc.communicate(str(pid).encode())
+
+        if not ResctrlMonitor.mount_point.is_dir():
+            raise PermissionError(f'resctrl is not mounted on {ResctrlMonitor.mount_point.absolute()}')
 
         proc = await asyncio.create_subprocess_exec('sudo', 'mkdir', str(self._group_path), '-p')
         await proc.wait()
 
-        # TODO: fetching all children pid of `self._monitoring_pid` and append to `tasks` file
+        family_pids = ResctrlMonitor._get_all_children(self._monitoring_pid)
+        await asyncio.wait(tuple(map(write_to_tasks, family_pids)))
 
     @staticmethod
     async def _read_file(path: Path) -> Tuple[str, int]:
-        async with aiofiles.open(path) as fp:
-            line: str = await fp.readline()
+        async with AIOFile(str(path)) as afp:
+            line: str = await LineReader(afp).readline()
             return path.name, int(line)
 
     async def monitor_once(self) -> Mapping[str, Tuple[Mapping[str, int], ...]]:
