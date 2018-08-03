@@ -13,7 +13,6 @@ class ParsecDriver(BenchDriver):
     _benches: Set[str] = {'streamcluster', 'canneal', 'swaptions', 'x264', 'ferret', 'bodytrack', 'blackscholes',
                           'dedup', 'facesim', 'fluidanimate', 'freqmine', 'raytrace', 'vips'}
     bench_name: str = 'parsec'
-    _bench_home: str = BenchDriver.get_bench_home(bench_name)
 
     @staticmethod
     def has(bench_name: str) -> bool:

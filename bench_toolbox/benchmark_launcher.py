@@ -15,6 +15,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
 
+from bench_toolbox import GLOBAL_CFG_PATH
 from benchmark.benchmark import Benchmark
 from containers.bench_config import BenchConfig
 from containers.launcher_config import LauncherConfig
@@ -234,9 +235,6 @@ def hyper_threading_guard(ht_flag: bool):
     subprocess.run(('sudo', 'tee', *files_to_write), input='1', encoding='UTF-8', stdout=subprocess.DEVNULL)
 
 
-GLOBAL_CFG_PATH = Path(__file__).resolve().parent.parent / 'config.json'
-
-
 def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, print_metric_log: bool, verbose: bool):
     config_file = workspace / 'config.json'
 
@@ -248,7 +246,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
         return False
 
     with config_file.open() as local_config_fp, \
-            open(GLOBAL_CFG_PATH) as global_config_fp:
+            GLOBAL_CFG_PATH.open() as global_config_fp:
         local_cfg_source: Dict[str, Any] = json.load(local_config_fp)
         global_cfg_source: Dict[str, Any] = json.load(global_config_fp)
 

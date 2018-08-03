@@ -2,7 +2,6 @@
 
 import asyncio
 import functools
-import json
 from abc import ABCMeta, abstractmethod
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Optional, Set
@@ -104,12 +103,6 @@ class BenchDriver(metaclass=ABCMeta):
         :return: ``True`` if this driver can handle
         """
         pass
-
-    @staticmethod
-    def get_bench_home(bench_name: str) -> str:
-        from benchmark_launcher import GLOBAL_CFG_PATH
-        with open(GLOBAL_CFG_PATH) as fp:
-            return json.load(fp)['benchmark'][bench_name]
 
     @property
     def name(self) -> str:

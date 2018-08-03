@@ -14,7 +14,6 @@ from benchmark.drivers.base_driver import BenchDriver
 class SpecDriver(BenchDriver):
     _benches: Set[str] = {'lbm', 'libquantum', 'GemsFDTD', 'sphinx', 'gcc', 'zeusmp', 'sjeng'}
     bench_name: str = 'spec'
-    _bench_home: str = BenchDriver.get_bench_home(bench_name)
 
     @staticmethod
     def has(bench_name: str) -> bool:

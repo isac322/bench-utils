@@ -12,7 +12,6 @@ from benchmark.drivers.base_driver import BenchDriver
 class RodiniaDriver(BenchDriver):
     _benches: Set[str] = {'nn', 'kmeans', 'cfd', 'particlefilter', 'bfs'}
     bench_name: str = 'rodinia'
-    _bench_home: str = BenchDriver.get_bench_home(bench_name)
 
     @staticmethod
     def has(bench_name: str) -> bool:

@@ -12,7 +12,6 @@ from benchmark.drivers.base_driver import BenchDriver
 class NPBDriver(BenchDriver):
     _benches: Set[str] = {'CG', 'IS', 'DC', 'EP', 'MG', 'FT', 'SP', 'BT', 'LU', 'UA'}
     bench_name: str = 'npb'
-    _bench_home: str = BenchDriver.get_bench_home(bench_name)
 
     # TODO: variable data size
     DATA_SET_MAP = {
