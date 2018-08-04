@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import List
 
-from post_scripts.tools import WorkloadResult, read_result
+from .tools import WorkloadResult, read_result
 
 
 def run(workspace: Path, global_cfg_path: Path):

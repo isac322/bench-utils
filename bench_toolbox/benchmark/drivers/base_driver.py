@@ -60,13 +60,6 @@ class BenchDriver(metaclass=ABCMeta):
     Base directory of the benchmark.
     
     All subclasses of :class:`BenchDriver` should override this variable with their own home directory.
-    
-    If the home directory is added on global `config.json` with :const:`bench_name`,
-    you can use :meth:`BenchDriver.get_bench_home`
-    
-    Example::
-    
-        _bench_home: str = BenchDriver.get_bench_home(bench_name)
     """
 
     bench_name: str = None

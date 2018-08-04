@@ -3,10 +3,10 @@
 import asyncio
 from typing import Callable, Dict, Iterable, List, Mapping
 
-from monitors import MonitorData
-from monitors.base_monitor import BaseMonitor
-from monitors.handlers.base_handler import BaseHandler
-from monitors.oneshot_monitor import OneShotMonitor
+from . import MonitorData
+from .base_monitor import BaseMonitor
+from .handlers.base_handler import BaseHandler
+from .oneshot_monitor import OneShotMonitor
 
 
 class CombinedMonitor(BaseMonitor):

@@ -6,7 +6,7 @@ from typing import Optional, Set
 
 import psutil
 
-from benchmark.drivers.base_driver import BenchDriver
+from .base_driver import BenchDriver
 
 
 class RodiniaDriver(BenchDriver):

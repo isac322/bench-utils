@@ -4,11 +4,11 @@ import json
 from typing import Optional, Type
 
 from bench_toolbox import GLOBAL_CFG_PATH
-from benchmark.drivers.base_driver import BenchDriver
-from benchmark.drivers.npb_driver import NPBDriver
-from benchmark.drivers.parsec_driver import ParsecDriver
-from benchmark.drivers.rodinia_driver import RodiniaDriver
-from benchmark.drivers.spec_driver import SpecDriver
+from .base_driver import BenchDriver
+from .npb_driver import NPBDriver
+from .parsec_driver import ParsecDriver
+from .rodinia_driver import RodiniaDriver
+from .spec_driver import SpecDriver
 
 _bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver, NPBDriver)
 
@@ -19,6 +19,9 @@ def _fetch_bench_path():
 
     for _bench_driver in _bench_drivers:
         _bench_driver._bench_home = bench_names[_bench_driver.bench_name]
+
+
+_fetch_bench_path()
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:

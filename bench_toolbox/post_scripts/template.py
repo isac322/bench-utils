@@ -4,11 +4,11 @@
 from pathlib import Path
 from typing import List, Tuple
 
-from containers.bench_config import BenchConfig
-from containers.launcher_config import LauncherConfig
-from containers.perf_config import PerfConfig
-from containers.rabbit_mq_config import RabbitMQConfig
-from post_scripts.tools import WorkloadResult, read_config, read_result
+from .tools import WorkloadResult, read_config, read_result
+from ..containers.bench_config import BenchConfig
+from ..containers.launcher_config import LauncherConfig
+from ..containers.perf_config import PerfConfig
+from ..containers.rabbit_mq_config import RabbitMQConfig
 
 
 def run(workspace: Path, global_cfg_path: Path):

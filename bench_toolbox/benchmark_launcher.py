@@ -15,12 +15,9 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
 
-from bench_toolbox import GLOBAL_CFG_PATH
-from benchmark.benchmark import Benchmark
-from containers.bench_config import BenchConfig
-from containers.launcher_config import LauncherConfig
-from containers.perf_config import PerfConfig, PerfEvent
-from containers.rabbit_mq_config import RabbitMQConfig
+from . import GLOBAL_CFG_PATH
+from .benchmark.benchmark import Benchmark
+from .containers import BenchConfig, LauncherConfig, PerfConfig, PerfEvent, RabbitMQConfig
 
 MIN_PYTHON = (3, 6)
 

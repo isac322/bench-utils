@@ -2,8 +2,8 @@
 
 from typing import List, Optional
 
-from benchmark.drivers import gen_driver
-from benchmark.drivers.base_driver import BenchDriver
+from ..benchmark.drivers import gen_driver
+from ..benchmark.drivers.base_driver import BenchDriver
 
 
 class BenchConfig:

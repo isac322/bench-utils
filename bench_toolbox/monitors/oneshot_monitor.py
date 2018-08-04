@@ -4,8 +4,8 @@ import asyncio
 from abc import ABCMeta, abstractmethod
 from typing import Generic, Mapping
 
-from monitors import MonitorData
-from monitors.base_monitor import BaseMonitor
+from . import MonitorData
+from .base_monitor import BaseMonitor
 
 
 class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):

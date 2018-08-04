@@ -4,7 +4,7 @@ from typing import Mapping
 
 import rdtsc
 
-from monitors.oneshot_monitor import OneShotMonitor
+from .oneshot_monitor import OneShotMonitor
 
 
 class RDTSCMonitor(OneShotMonitor[int]):

@@ -10,7 +10,7 @@ from typing import List
 
 from orderedset import OrderedSet
 
-from post_scripts.tools import WorkloadResult, read_result
+from .tools import WorkloadResult, read_result
 
 
 def run(workspace: Path, global_cfg_path: Path):

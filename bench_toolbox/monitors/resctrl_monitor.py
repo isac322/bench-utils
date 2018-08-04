@@ -9,8 +9,8 @@ from typing import FrozenSet, Iterable, Mapping, Tuple
 from aiofile import AIOFile, LineReader
 from psutil import Process
 
-from monitors.handlers.base_handler import BaseHandler
-from monitors.oneshot_monitor import OneShotMonitor
+from .handlers.base_handler import BaseHandler
+from .oneshot_monitor import OneShotMonitor
 
 
 class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):

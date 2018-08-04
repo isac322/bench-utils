@@ -6,11 +6,11 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from benchmark_launcher import parse_launcher_cfg, parse_perf_cfg, parse_rabbit_mq_cfg, parse_workload_cfg
-from containers.bench_config import BenchConfig
-from containers.launcher_config import LauncherConfig
-from containers.perf_config import PerfConfig
-from containers.rabbit_mq_config import RabbitMQConfig
+from ..benchmark_launcher import parse_launcher_cfg, parse_perf_cfg, parse_rabbit_mq_cfg, parse_workload_cfg
+from ..containers.bench_config import BenchConfig
+from ..containers.launcher_config import LauncherConfig
+from ..containers.perf_config import PerfConfig
+from ..containers.rabbit_mq_config import RabbitMQConfig
 
 
 class WorkloadResult:

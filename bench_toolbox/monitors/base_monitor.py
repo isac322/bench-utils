@@ -4,8 +4,8 @@ import asyncio
 from abc import ABCMeta, abstractmethod
 from typing import Iterable
 
-from monitors import MonitorData
-from monitors.handlers.base_handler import BaseHandler
+from . import MonitorData
+from .handlers.base_handler import BaseHandler
 
 
 class BaseMonitor(metaclass=ABCMeta):
