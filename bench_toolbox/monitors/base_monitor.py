@@ -24,4 +24,5 @@ class BaseMonitor(metaclass=ABCMeta):
         pass
 
     async def on_destroy(self) -> None:
-        await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))
+        if len(self._handlers) is not 0:
+            await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))
