@@ -4,9 +4,10 @@ import asyncio
 import re
 from itertools import chain
 from pathlib import Path
-from typing import FrozenSet, Iterable, Mapping, Tuple
+from typing import Dict, FrozenSet, Iterable, Mapping, Optional, Tuple
 
-from aiofile import AIOFile, LineReader
+import aiofiles
+from aiofiles.base import AiofilesContextManager
 from psutil import Process
 
 from .handlers.base_handler import BaseHandler
@@ -15,8 +16,15 @@ from .oneshot_monitor import OneShotMonitor
 
 class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
     mount_point = Path('/sys/fs/resctrl')
-    _l3_pattern = re.compile('mon_L3_(\d+)')
     mon_features = (mount_point / 'info' / 'L3_MON' / 'mon_features').read_text('ASCII').split()
+
+    # filter L3 related monitors and sort by name (currently same as socket number)
+    _mon_names = sorted(
+            filter(
+                    lambda m: re.match('mon_L3_(\d+)', m.name),
+                    (mount_point / 'mon_data').iterdir()
+            )
+    )
 
     def __init__(self, interval: int, handlers: Iterable[BaseHandler],
                  grp_name: str = '', parent_pid: int = None) -> None:
@@ -25,18 +33,12 @@ class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
         self._group_path = ResctrlMonitor.mount_point / self._group_name
         self._monitoring_pid = parent_pid
 
-        # filter L3 related monitors and sort by name (currently same as socket number)
-        mon_names = sorted(
-                filter(
-                        lambda m: ResctrlMonitor._l3_pattern.match(m.name),
-                        (ResctrlMonitor.mount_point / 'mon_data').iterdir()
-                )
-        )
-
         # tuple of each feature monitors for each socket
-        self._mons = tuple(
-                tuple(self._group_path / 'mon_data' / mon.name / feature for feature in ResctrlMonitor.mon_features)
-                for mon in mon_names
+        self._monitors: Tuple[Dict[Path, Optional[AiofilesContextManager]], ...] = tuple(
+                dict.fromkeys(
+                        self._group_path / 'mon_data' / mon.name / feature for feature in ResctrlMonitor.mon_features
+                )
+                for mon in ResctrlMonitor._mon_names
         )
 
     @staticmethod
@@ -64,20 +66,24 @@ class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
         family_pids = ResctrlMonitor._get_all_children(self._monitoring_pid)
         await asyncio.wait(tuple(map(write_to_tasks, family_pids)))
 
+        async def open_file_async(monitor_dict: Dict[Path, AiofilesContextManager]):
+            for file_path in monitor_dict:
+                monitor_dict[file_path] = await aiofiles.open(file_path)
+
+        await asyncio.wait(tuple(open_file_async(mon) for mon in self._monitors))
+
     @staticmethod
-    async def _read_file(path: Path) -> Tuple[str, int]:
-        async with AIOFile(str(path)) as afp:
-            line: str = await LineReader(afp).readline()
-            return path.name, int(line)
+    async def _read_file(arg: Tuple[Path, AiofilesContextManager]) -> Tuple[str, int]:
+        path, monitor = arg
+        await monitor.seek(0)
+        return path.name, int(await monitor.readline())
 
     async def monitor_once(self) -> Mapping[str, Tuple[Mapping[str, int], ...]]:
         data = tuple(
                 map(dict,
                     await asyncio.gather(*(
-                        asyncio.gather(*(
-                            self._read_file(mon) for mon in mons
-                        ))
-                        for mons in self._mons))
+                        asyncio.gather(*map(ResctrlMonitor._read_file, mons.items()))
+                        for mons in self._monitors))
                     )
         )
 
@@ -85,5 +91,10 @@ class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
 
     async def on_destroy(self) -> None:
         await super().on_destroy()
+
         proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._group_path))
         await proc.wait()
+
+        for mons in self._monitors:
+            for m in mons.values():
+                await m.close()
