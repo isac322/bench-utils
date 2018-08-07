@@ -9,12 +9,22 @@ from .handlers.base_handler import BaseHandler
 
 
 class BaseMonitor(metaclass=ABCMeta):
-    def __init__(self, interval: int, handlers: Iterable[BaseHandler[MonitorData]]) -> None:
-        self._interval: int = interval
+    def __init__(self, handlers: Iterable[BaseHandler[MonitorData]]) -> None:
         self._handlers = tuple(handlers)
 
-    @abstractmethod
     async def monitor(self) -> None:
+        try:
+            await self._monitor()
+
+        except asyncio.CancelledError as e:
+            await self.on_cancel(e)
+            raise
+
+    @abstractmethod
+    async def _monitor(self) -> None:
+        pass
+
+    async def on_cancel(self, cancel_error: asyncio.CancelledError) -> None:
         pass
 
     async def on_init(self) -> None:

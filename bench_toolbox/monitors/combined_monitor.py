@@ -10,12 +10,15 @@ from .oneshot_monitor import OneShotMonitor
 
 
 class CombinedMonitor(BaseMonitor):
-    def __init__(self, interval: int,
-                 monitors: Iterable[OneShotMonitor[MonitorData]],
+    def __init__(self,
                  handlers: Iterable[BaseHandler[MonitorData]],
+                 interval: int,
+                 monitors: Iterable[OneShotMonitor[MonitorData]],
                  data_merger: Callable[[Iterable[Mapping[str, MonitorData]]], Mapping[str, MonitorData]] = None) \
             -> None:
-        super().__init__(interval, handlers)
+        super().__init__(handlers)
+
+        self._interval: int = interval
         self._monitors = tuple(monitors)
 
         if data_merger is None:
@@ -23,7 +26,7 @@ class CombinedMonitor(BaseMonitor):
         else:
             self._data_merger = data_merger
 
-    async def monitor(self) -> None:
+    async def _monitor(self) -> None:
         while True:
             data: List[Mapping[str, MonitorData]] = await asyncio.gather(*(m.monitor_once() for m in self._monitors))
             merged = self._data_merger(data)

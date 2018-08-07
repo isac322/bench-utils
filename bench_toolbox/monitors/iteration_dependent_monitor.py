@@ -10,11 +10,12 @@ from .oneshot_monitor import OneShotMonitor
 
 
 class IterationDependentMonitor(OneShotMonitor, metaclass=ABCMeta):
-    def __init__(self, interval: int, handlers: Iterable[BaseHandler, ...]) -> None:
-        super().__init__(interval, handlers)
+    def __init__(self, handlers: Iterable[BaseHandler, ...], interval: int) -> None:
+        super().__init__(handlers, interval)
+
         self._prev_data: Mapping[str, MonitorData] = None
 
-    async def monitor(self) -> None:
+    async def _monitor(self) -> None:
         while True:
             data = await self.monitor_once()
             diff = self.calc_diff(self._prev_data, data)

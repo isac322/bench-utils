@@ -26,9 +26,10 @@ class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
             )
     )
 
-    def __init__(self, interval: int, handlers: Iterable[BaseHandler],
+    def __init__(self, handlers: Iterable[BaseHandler], interval: int,
                  grp_name: str = '', parent_pid: int = None) -> None:
-        super().__init__(interval, handlers)
+        super().__init__(handlers, interval)
+
         self._group_name = grp_name
         self._group_path = ResctrlMonitor.mount_point / self._group_name
         self._monitoring_pid = parent_pid
@@ -95,6 +96,8 @@ class ResctrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
         proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._group_path))
         await proc.wait()
 
-        for mons in self._monitors:
-            for m in mons.values():
-                await m.close()
+        await asyncio.wait(tuple(
+                chain(*(
+                    (m.close() for m in mons.values())
+                    for mons in self._monitors))
+        ))

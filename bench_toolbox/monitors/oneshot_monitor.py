@@ -2,14 +2,20 @@
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Generic, Mapping
+from typing import Generic, Iterable, Mapping
 
 from . import MonitorData
 from .base_monitor import BaseMonitor
+from .handlers.base_handler import BaseHandler
 
 
 class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):
-    async def monitor(self) -> None:
+    def __init__(self, handlers: Iterable[BaseHandler[MonitorData]], interval: int) -> None:
+        super().__init__(handlers)
+
+        self._interval: int = interval
+
+    async def _monitor(self) -> None:
         while True:
             data = await self.monitor_once()
             transformed = self._transform_data(data)
@@ -23,5 +29,6 @@ class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):
     async def monitor_once(self) -> Mapping[str, MonitorData]:
         pass
 
+    # noinspection PyMethodMayBeStatic
     def _transform_data(self, data: Mapping[str, MonitorData]) -> Mapping[str, MonitorData]:
         return data
