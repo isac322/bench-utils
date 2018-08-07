@@ -1,45 +1,25 @@
 # coding: UTF-8
 
-from typing import List, Optional
+from dataclasses import dataclass
+from typing import Iterable, List, Optional
 
 from ..benchmark.drivers import gen_driver
 from ..benchmark.drivers.base_driver import BenchDriver
 
 
+@dataclass(frozen=True)
 class BenchConfig:
-    def __init__(self, workload_name: str, num_of_threads: int, binding_cores: str,
-                 numa_nodes: Optional[str], cpu_freq: float):
-        self._workload_name: str = workload_name
-        self._num_of_threads: int = num_of_threads
-        self._binding_cores: str = binding_cores
-        self._numa_nodes: Optional[str] = numa_nodes
-        self._cpu_freq: float = cpu_freq
-
-    @property
-    def name(self) -> str:
-        return self._workload_name
-
-    @property
-    def num_of_threads(self) -> int:
-        return self._num_of_threads
-
-    @property
-    def binding_cores(self) -> str:
-        return self._binding_cores
-
-    @property
-    def numa_nodes(self) -> Optional[str]:
-        return self._numa_nodes
-
-    @property
-    def cpu_freq(self) -> float:
-        return self._cpu_freq
+    name: str
+    num_of_threads: int
+    binding_cores: str
+    numa_nodes: Optional[str]
+    cpu_freq: float
 
     def generate_driver(self) -> BenchDriver:
-        return gen_driver(self._workload_name, self._num_of_threads, self._binding_cores, self._numa_nodes)
+        return gen_driver(self.name, self.num_of_threads, self.binding_cores, self.numa_nodes)
 
     @staticmethod
-    def gen_identifier(target: 'BenchConfig', configs: List['BenchConfig']) -> str:
+    def gen_identifier(target: 'BenchConfig', configs: Iterable['BenchConfig']) -> str:
         threads_same = True
         cores_same = True
         numa_same = True
@@ -51,13 +31,13 @@ class BenchConfig:
         for config in configs:
             _all_same = True
 
-            if target._num_of_threads != config._num_of_threads:
+            if target.num_of_threads != config.num_of_threads:
                 _all_same = threads_same = False
-            if target._binding_cores != config._binding_cores:
+            if target.binding_cores != config.binding_cores:
                 _all_same = cores_same = False
-            if target._numa_nodes != config._numa_nodes:
+            if target.numa_nodes != config.numa_nodes:
                 _all_same = numa_same = False
-            if target._cpu_freq != config._cpu_freq:
+            if target.cpu_freq != config.cpu_freq:
                 _all_same = freq_same = False
 
             if _all_same:

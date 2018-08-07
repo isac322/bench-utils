@@ -1,42 +1,30 @@
 # coding: UTF-8
 
-from typing import Any, Generator, Optional, Tuple
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Generator, Tuple
 
 
+@dataclass(frozen=True)
 class PerfEvent:
-    def __init__(self, event: str, alias: Optional[str] = None):
-        self._event: str = event
-        self._alias: str = alias if alias is not None else event
-
-    @property
-    def event(self) -> str:
-        return self._event
-
-    @property
-    def alias(self) -> str:
-        return self._alias
+    event: str
+    alias: str
 
 
+@dataclass(frozen=True)
 class PerfConfig:
-    def __init__(self, interval: int, events: Tuple[PerfEvent, ...]):
-        self._interval: int = interval
-        self._events: Tuple[PerfEvent, ...] = events
-
-    @property
-    def interval(self) -> int:
-        return self._interval
-
-    @property
-    def events(self) -> Tuple[PerfEvent, ...]:
-        return self._events
+    interval: int
+    events: Tuple[PerfEvent, ...]
 
     @property
     def event_names(self) -> Generator[str, Any, None]:
-        return (event.alias for event in self._events)
+        return (event.alias for event in self.events)
 
     @property
     def event_str(self) -> str:
-        return ','.join(event.event for event in self._events)
+        return ','.join(event.event for event in self.events)
 
-    def merge_events(self, new_events: Tuple[PerfEvent, ...]) -> 'PerfConfig':
-        return PerfConfig(self._interval, self._events + new_events)
+    # FIXME
+    def merge_events(self, new_events: Tuple[PerfEvent, ...]) -> PerfConfig:
+        return PerfConfig(self.interval, self.events + new_events)
