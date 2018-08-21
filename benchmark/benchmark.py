@@ -3,7 +3,6 @@
 import asyncio
 import json
 import logging
-import sys
 import time
 from concurrent.futures import CancelledError
 from itertools import chain
@@ -21,9 +20,7 @@ from coloredlogs import ColoredFormatter
 from pika.adapters.blocking_connection import BlockingChannel
 
 from benchmark.driver.base_driver import BenchDriver
-from containers.bench_config import BenchConfig
-from containers.perf_config import PerfConfig
-from containers.rabbit_mq_config import RabbitMQConfig
+from containers import BenchConfig, PerfConfig, RabbitMQConfig
 
 
 class Benchmark:
@@ -86,7 +83,7 @@ class Benchmark:
         self._log_path: Path = log_parent / f'{identifier}.log'
 
         # resource group for this benchmark
-        self._res_path = Path(f'/sys/fs/resctrl/{self.identifier}')
+        self._res_path = Path('/sys/fs/resctrl')
 
         # setup for loggers
 
@@ -119,15 +116,19 @@ class Benchmark:
         await self._bench_driver.run()
         logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
 
-        # create a resource group and register this benchmark to the group
-        await (await asyncio.create_subprocess_exec('sudo', 'mkdir', str(self._res_path))).wait()
-
-        proc = await asyncio.create_subprocess_exec('sudo', 'tee', str(self._res_path / 'tasks'),
-                                                    stdin=asyncio.subprocess.PIPE,
-                                                    stdout=asyncio.subprocess.DEVNULL)
-        await proc.communicate(str(self._bench_driver.pid).encode())
-
         self._pause_bench()
+
+        self._res_path = self._res_path / str(self._bench_driver.pid)
+
+        # create a resource group and register this benchmark to the group
+        proc = await asyncio.create_subprocess_exec('sudo', 'mkdir', str(self._res_path))
+        await proc.wait()
+
+        for tid in self._bench_driver.all_child_tid():
+            proc = await asyncio.create_subprocess_exec('sudo', 'tee', str(self._res_path / 'tasks'),
+                                                        stdin=asyncio.subprocess.PIPE,
+                                                        stdout=asyncio.subprocess.DEVNULL)
+            await proc.communicate(str(tid).encode())
 
     async def _read_llc_occupancy(self):
         tot_llc = 0
@@ -142,6 +143,34 @@ class Benchmark:
                     tot_llc += int(line)
 
         return tot_llc
+
+    async def _read_local_mem(self):
+        tot_mem = 0
+
+        # sum all local_mem
+        for mon in (self._res_path / 'mon_data').iterdir():
+            local_mem_path = mon / 'mbm_local_bytes'
+
+            if local_mem_path.is_file():
+                async with aiofiles.open(str(local_mem_path)) as afp:
+                    line: str = await afp.readline()
+                    tot_mem += int(line)
+
+        return tot_mem
+
+    async def _read_total_mem(self):
+        tot_mem = 0
+
+        # sum all total_mem
+        for mon in (self._res_path / 'mon_data').iterdir():
+            total_mem_path = mon / 'mbm_total_bytes'
+
+            if total_mem_path.is_file():
+                async with aiofiles.open(str(total_mem_path)) as afp:
+                    line: str = await afp.readline()
+                    tot_mem += int(line)
+
+        return tot_mem
 
     async def _remove_res_dir(self):
         proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._res_path))
@@ -170,9 +199,10 @@ class Benchmark:
             if print_metric_log:
                 metric_logger.addHandler(logging.StreamHandler())
 
-            with open(self._perf_csv, 'w') as fp:
+            with self._perf_csv.open('w') as fp:
                 # print csv header
-                fp.write(','.join(chain(self._perf_config.event_names, ('wall-cycles', 'llc_occupancy'))) + '\n')
+                fp.write(','.join(chain(self._perf_config.event_names,
+                                        ('wall-cycles', 'llc_occupancy', 'local_mem', 'remote_mem'))) + '\n')
             metric_logger.addHandler(logging.FileHandler(self._perf_csv))
 
             # perf polling loop
@@ -180,6 +210,8 @@ class Benchmark:
             num_of_events = len(self._perf_config.events)
 
             prev_tsc = rdtsc.get_cycles()
+            prev_local_mem = await self._read_local_mem()
+            prev_total_mem = await self._read_total_mem()
             while self._bench_driver.is_running and self._perf.returncode is None:
                 record = []
                 ignore_flag = False
@@ -198,16 +230,22 @@ class Benchmark:
                                      f' and the line is : {line}')
 
                 tmp = rdtsc.get_cycles()
-                if tmp < prev_tsc:
-                    tsc_val = sys.maxsize - prev_tsc + tmp
-                else:
-                    tsc_val = tmp - prev_tsc
-                record.append(str(tsc_val))
-
-                record.append(str(await self._read_llc_occupancy()))
+                record.append(str(tmp - prev_tsc))
                 prev_tsc = tmp
 
+                record.append(str(await self._read_llc_occupancy()))
+
+                tmp = await self._read_local_mem()
+                cur_local_mem = tmp - prev_local_mem
+                record.append(str(cur_local_mem))
+                prev_local_mem = tmp
+
+                tmp = await self._read_total_mem()
+                record.append(str(max(tmp - prev_total_mem - cur_local_mem, 0)))
+                prev_total_mem = tmp
+
                 if not ignore_flag:
+                    # print(f'{self._identifier} : {record}')
                     metric_logger.info(','.join(record))
 
             logger.info('end of monitoring loop')
@@ -344,7 +382,7 @@ class RabbitMQHandler(Handler):
 class RabbitMQFormatter(Formatter):
     def __init__(self, events: Generator[str, Any, None]):
         super().__init__()
-        self._event_names = tuple(events) + ('wall_cycles', 'llc_occupancy', 'req_num')
+        self._event_names = tuple(events) + ('wall-cycles', 'llc_occupancy', 'local_mem', 'remote_mem', 'req_num')
         self._req_num = 0
 
     @staticmethod

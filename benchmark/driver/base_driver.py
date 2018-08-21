@@ -1,13 +1,14 @@
 # coding: UTF-8
 
 import asyncio
-import functools
 import json
-from abc import ABCMeta, abstractmethod
+from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Optional, Set, Type
+from typing import Any, Callable, Iterable, Optional, Set, Type
 
+import functools
 import psutil
+from abc import ABCMeta, abstractmethod
 
 
 class BenchDriver(metaclass=ABCMeta):
@@ -60,11 +61,10 @@ class BenchDriver(metaclass=ABCMeta):
         self._async_proc_info: Optional[psutil.Process] = None
 
     def __del__(self):
-        if self._is_running:
-            try:
-                self.stop()
-            except (psutil.NoSuchProcess, ProcessLookupError):
-                pass
+        try:
+            self.stop()
+        except (psutil.NoSuchProcess, ProcessLookupError):
+            pass
 
     @staticmethod
     @abstractmethod
@@ -157,6 +157,13 @@ class BenchDriver(metaclass=ABCMeta):
     def resume(self) -> None:
         self._async_proc.send_signal(SIGCONT)
         self._bench_proc_info.resume()
+
+    @_Decorators.ensure_running
+    def all_child_tid(self) -> Iterable[int]:
+        return chain(
+                (t.id for t in self._bench_proc_info.threads()),
+                *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
+        )
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
