@@ -202,7 +202,7 @@ class Benchmark:
             with self._perf_csv.open('w') as fp:
                 # print csv header
                 fp.write(','.join(chain(self._perf_config.event_names,
-                                        ('wall-cycles', 'llc_occupancy', 'local_mem', 'remote_mem'))) + '\n')
+                                        ('wall_cycles', 'llc_size', 'local_mem', 'remote_mem'))) + '\n')
             metric_logger.addHandler(logging.FileHandler(self._perf_csv))
 
             # perf polling loop
@@ -382,7 +382,7 @@ class RabbitMQHandler(Handler):
 class RabbitMQFormatter(Formatter):
     def __init__(self, events: Generator[str, Any, None]):
         super().__init__()
-        self._event_names = tuple(events) + ('wall-cycles', 'llc_occupancy', 'local_mem', 'remote_mem', 'req_num')
+        self._event_names = tuple(events) + ('wall_cycles', 'llc_size', 'local_mem', 'remote_mem', 'req_num')
         self._req_num = 0
 
     @staticmethod
