@@ -117,7 +117,7 @@ class Benchmark:
         logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
 
         self._pause_bench()
-        bench_path = str(self._bench_driver.name)+'-'+str(self._bench_driver.pid)
+        bench_path = str(self._bench_driver.name)+'_'+str(self._bench_driver.pid)
         self._res_path = self._res_path / bench_path
 
         # create a resource group and register this benchmark to the group
