@@ -1,6 +1,7 @@
 # coding: UTF-8
 
 import asyncio
+import functools
 import json
 import logging
 import time
@@ -12,7 +13,6 @@ from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Generator, Optional
 
 import aiofiles
-import functools
 import pika
 import psutil
 import rdtsc
@@ -117,8 +117,8 @@ class Benchmark:
         logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
 
         self._pause_bench()
-        bench_path = str(self._bench_driver.name)+'_'+str(self._bench_driver.pid)
-        self._res_path = self._res_path / bench_path
+
+        self._res_path = self._res_path / f'{self._bench_driver.name}_{self._bench_driver.pid}'
 
         # create a resource group and register this benchmark to the group
         proc = await asyncio.create_subprocess_exec('sudo', 'mkdir', str(self._res_path))
