@@ -262,3 +262,4 @@ Temporary Items
 # Intellij project files
 
 .idea
+*.json
