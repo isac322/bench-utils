@@ -1,6 +1,7 @@
 # coding: UTF-8
 
 import asyncio
+import functools
 import json
 import logging
 import time
@@ -12,7 +13,6 @@ from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Generator, Optional
 
 import aiofiles
-import functools
 import pika
 import psutil
 import rdtsc

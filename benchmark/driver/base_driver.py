@@ -1,14 +1,14 @@
 # coding: UTF-8
 
 import asyncio
+import functools
 import json
+from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Iterable, Optional, Set, Type
 
-import functools
 import psutil
-from abc import ABCMeta, abstractmethod
 
 
 class BenchDriver(metaclass=ABCMeta):
