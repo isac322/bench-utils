@@ -11,6 +11,7 @@ import logging
 import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any, Coroutine, Dict, Generator, List, Optional, Set, Tuple, Union
 
@@ -372,7 +373,10 @@ def main():
         print_log = args.print_log
         print_metric_log = args.print_metric_log
 
-        for workspace in dirs:
+        for i, workspace in enumerate(dirs):
+            if i is not 0:
+                time.sleep(10)
+
             if not launch(loop, Path(workspace), print_log, print_metric_log, args.verbose):
                 break
 
