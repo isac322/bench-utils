@@ -240,7 +240,7 @@ def hyper_threading_guard(loop: asyncio.AbstractEventLoop, ht_flag):
     subprocess.run(('sudo', 'tee', *files_to_write), input="1", encoding='UTF-8', stdout=subprocess.DEVNULL)
 
 
-GLOBAL_CFG_PATH = Path(__file__).resolve().parent.parent / 'config.json'
+GLOBAL_CFG_PATH = Path(__file__).resolve().parent / 'config.json'
 
 
 def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, print_metric_log: bool, verbose: bool):
