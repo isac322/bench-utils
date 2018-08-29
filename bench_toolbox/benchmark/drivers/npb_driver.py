@@ -44,14 +44,14 @@ class NPBDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        if self._numa_cores is None:
+        if self._bound_sockets is None:
             mem_flag = '--localalloc'
         else:
-            mem_flag = f'--membind={self._numa_cores}'
+            mem_flag = f'--membind={self._bound_sockets}'
 
         exec_name = self._exec_name
 
-        cmd = '--physcpubind={} {} {}/bin/{}'.format(self._binging_cores, mem_flag, self._bench_home, exec_name)
+        cmd = '--physcpubind={} {} {}/bin/{}'.format(self._bound_cores, mem_flag, self._bench_home, exec_name)
 
         return await asyncio.create_subprocess_exec('numactl', *shlex.split(cmd),
                                                     stdout=asyncio.subprocess.DEVNULL,

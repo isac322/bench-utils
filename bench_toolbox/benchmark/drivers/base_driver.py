@@ -71,11 +71,11 @@ class BenchDriver(metaclass=ABCMeta):
     All subclasses of :class:`BenchDriver` should override this variable with their own benchmark set name.
     """
 
-    def __init__(self, name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]):
+    def __init__(self, name: str, num_threads: int, bound_cores: str, bound_sockets: Optional[str]):
         self._name: str = name
         self._num_threads: int = num_threads
-        self._binging_cores: str = binding_cores
-        self._numa_cores: Optional[str] = numa_cores
+        self._bound_cores: str = bound_cores
+        self._bound_sockets: Optional[str] = bound_sockets
 
         self._bench_proc_info: Optional[psutil.Process] = None
         self._async_proc: Optional[asyncio.subprocess.Process] = None
