@@ -1,19 +1,17 @@
 # coding: UTF-8
 
-from __future__ import annotations
-
 import asyncio
-import functools
 import logging
 import time
 from concurrent.futures import CancelledError
 from logging import Handler
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple
+from typing import Optional, Tuple
 
 import psutil
 from coloredlogs import ColoredFormatter
 
+from .decorators.benchmark import ensure_invoked, ensure_not_running, ensure_running
 from .drivers import BenchDriver
 from ..containers import BenchConfig
 from ..monitors.base_monitor import BaseMonitor
@@ -21,38 +19,6 @@ from ..monitors.idle_monitor import IdleMonitor
 
 
 class Benchmark:
-    class _Decorators:
-        @staticmethod
-        def ensure_running(func: Callable[[Benchmark, Any], Any]):
-            @functools.wraps(func)
-            def decorator(self: Benchmark, *args, **kwargs):
-                if not self.is_running:
-                    raise RuntimeError(f'The benchmark ({self._identifier}) has already ended or never been invoked.'
-                                       ' Run benchmark first via invoking `run()`!')
-                return func(self, *args, **kwargs)
-
-            return decorator
-
-        @staticmethod
-        def ensure_not_running(func: Callable[[Benchmark, Any], Any]):
-            @functools.wraps(func)
-            def decorator(self: Benchmark, *args, **kwargs):
-                if self.is_running:
-                    raise RuntimeError(f'benchmark {self._bench_driver.pid} is already in running.')
-                return func(self, *args, **kwargs)
-
-            return decorator
-
-        @staticmethod
-        def ensure_invoked(func: Callable[[Benchmark, Any], Any]):
-            @functools.wraps(func)
-            def decorator(self: Benchmark, *args, **kwargs):
-                if not self._bench_driver.has_invoked:
-                    raise RuntimeError(f'benchmark {self._identifier} is never invoked.')
-                return func(self, *args, **kwargs)
-
-            return decorator
-
     _file_formatter = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
     _stream_formatter = ColoredFormatter('%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
@@ -85,7 +51,7 @@ class Benchmark:
         logger = logging.getLogger(self._identifier)
         logger.setLevel(logger_level)
 
-    @_Decorators.ensure_not_running
+    @ensure_not_running
     async def start_and_pause(self, silent: bool = False) -> None:
         self._remove_logger_handlers()
 
@@ -110,7 +76,7 @@ class Benchmark:
 
         self.pause()
 
-    @_Decorators.ensure_running
+    @ensure_running
     async def monitor(self) -> None:
         logger = logging.getLogger(self._identifier)
 
@@ -128,13 +94,13 @@ class Benchmark:
 
             await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
 
-    @_Decorators.ensure_running
+    @ensure_running
     def pause(self) -> None:
         logging.getLogger(self._identifier).info('pausing...')
 
         self._bench_driver.pause()
 
-    @_Decorators.ensure_running
+    @ensure_running
     def resume(self) -> None:
         logging.getLogger(self._identifier).info('resuming...')
 
@@ -158,7 +124,7 @@ class Benchmark:
             handler.close()
 
     @property
-    @_Decorators.ensure_invoked
+    @ensure_invoked
     def launched_time(self) -> float:
         return self._bench_driver.created_time
 

@@ -1,55 +1,16 @@
 # coding: UTF-8
 
-from __future__ import annotations
-
 import asyncio
-import functools
 from abc import ABCMeta, abstractmethod
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Optional, Set
+from typing import Optional, Set
 
 import psutil
 
+from ..decorators.driver import ensure_invoked, ensure_not_running, ensure_running
+
 
 class BenchDriver(metaclass=ABCMeta):
-    class _Decorators:
-        """
-        Decorators for methods of :class:`BenchDriver`
-        """
-
-        @staticmethod
-        def ensure_running(func: Callable[[BenchDriver, Any], Any]):
-            @functools.wraps(func)
-            def decorator(self: BenchDriver, *args, **kwargs):
-                if not self.is_running:
-                    raise RuntimeError(f'The benchmark ({self._name}) has already ended or never been invoked.'
-                                       ' Run benchmark first via invoking `run()`!')
-                return func(self, *args, **kwargs)
-
-            return decorator
-
-        @staticmethod
-        def ensure_not_running(func: Callable[[BenchDriver, Any], Any]):
-            @functools.wraps(func)
-            def decorator(self: BenchDriver, *args, **kwargs):
-                if self.is_running:
-                    raise RuntimeError(f'The benchmark ({self._name}) has already ended or never been invoked.'
-                                       ' Run benchmark first via invoking `run()`!')
-                return func(self, *args, **kwargs)
-
-            return decorator
-
-        @staticmethod
-        def ensure_invoked(func: Callable[[BenchDriver, Any], Any]):
-            @functools.wraps(func)
-            def decorator(self: BenchDriver, *args, **kwargs):
-                if not self.has_invoked:
-                    raise RuntimeError(f'The benchmark ({self._name}) has never been invoked.'
-                                       ' Run benchmark first via invoking `run()`!')
-                return func(self, *args, **kwargs)
-
-            return decorator
-
     _benches: Set[str] = None
     """
     :class:`Set` of benchmark names.
@@ -104,7 +65,7 @@ class BenchDriver(metaclass=ABCMeta):
         return self._name
 
     @property
-    @_Decorators.ensure_invoked
+    @ensure_invoked
     def created_time(self) -> float:
         return self._bench_proc_info.create_time()
 
@@ -156,7 +117,7 @@ class BenchDriver(metaclass=ABCMeta):
         """
         pass
 
-    @_Decorators.ensure_not_running
+    @ensure_not_running
     async def run(self) -> None:
         self._bench_proc_info = None
         self._async_proc = await self._launch_bench()
@@ -168,7 +129,7 @@ class BenchDriver(metaclass=ABCMeta):
                 return
             await asyncio.sleep(0.1)
 
-    @_Decorators.ensure_running
+    @ensure_running
     async def join(self) -> None:
         await self._async_proc.wait()
 
@@ -177,12 +138,12 @@ class BenchDriver(metaclass=ABCMeta):
         self._bench_proc_info.kill()
         self._async_proc_info.kill()
 
-    @_Decorators.ensure_running
+    @ensure_running
     def pause(self) -> None:
         self._async_proc.send_signal(SIGSTOP)
         self._bench_proc_info.suspend()
 
-    @_Decorators.ensure_running
+    @ensure_running
     def resume(self) -> None:
         self._async_proc.send_signal(SIGCONT)
         self._bench_proc_info.resume()
