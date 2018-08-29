@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
 
 from . import GLOBAL_CFG_PATH
-from .benchmark.benchmark import Benchmark
+from .benchmark import Benchmark
 from .containers import BenchConfig, LauncherConfig, PerfConfig, PerfEvent, RabbitMQConfig
 
 MIN_PYTHON = (3, 6)
