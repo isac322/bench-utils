@@ -1,5 +1,7 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 import functools
 from abc import ABCMeta, abstractmethod
@@ -16,9 +18,9 @@ class BenchDriver(metaclass=ABCMeta):
         """
 
         @staticmethod
-        def ensure_running(func: Callable[['BenchDriver', Any], Any]):
+        def ensure_running(func: Callable[[BenchDriver, Any], Any]):
             @functools.wraps(func)
-            def decorator(self: 'BenchDriver', *args, **kwargs):
+            def decorator(self: BenchDriver, *args, **kwargs):
                 if not self.is_running:
                     raise RuntimeError(f'The benchmark ({self._name}) has already ended or never been invoked.'
                                        ' Run benchmark first via invoking `run()`!')
@@ -27,9 +29,9 @@ class BenchDriver(metaclass=ABCMeta):
             return decorator
 
         @staticmethod
-        def ensure_not_running(func: Callable[['BenchDriver', Any], Any]):
+        def ensure_not_running(func: Callable[[BenchDriver, Any], Any]):
             @functools.wraps(func)
-            def decorator(self: 'BenchDriver', *args, **kwargs):
+            def decorator(self: BenchDriver, *args, **kwargs):
                 if self.is_running:
                     raise RuntimeError(f'The benchmark ({self._name}) has already ended or never been invoked.'
                                        ' Run benchmark first via invoking `run()`!')
@@ -38,9 +40,9 @@ class BenchDriver(metaclass=ABCMeta):
             return decorator
 
         @staticmethod
-        def ensure_invoked(func: Callable[['BenchDriver', Any], Any]):
+        def ensure_invoked(func: Callable[[BenchDriver, Any], Any]):
             @functools.wraps(func)
-            def decorator(self: 'BenchDriver', *args, **kwargs):
+            def decorator(self: BenchDriver, *args, **kwargs):
                 if not self.has_invoked:
                     raise RuntimeError(f'The benchmark ({self._name}) has never been invoked.'
                                        ' Run benchmark first via invoking `run()`!')

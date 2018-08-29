@@ -1,5 +1,7 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Iterable, List, Optional
 
@@ -18,8 +20,8 @@ class BenchConfig:
     def generate_driver(self) -> BenchDriver:
         return gen_driver(self.name, self.num_of_threads, self.binding_cores, self.numa_nodes)
 
-    @staticmethod
-    def gen_identifier(target: 'BenchConfig', configs: Iterable['BenchConfig']) -> str:
+    @classmethod
+    def gen_identifier(cls, target: BenchConfig, configs: Iterable[BenchConfig]) -> str:
         threads_same = True
         cores_same = True
         numa_same = True

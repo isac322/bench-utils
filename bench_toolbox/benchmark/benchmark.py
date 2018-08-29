@@ -1,5 +1,7 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 import functools
 import json
@@ -26,9 +28,9 @@ from ..containers import BenchConfig, PerfConfig, RabbitMQConfig
 class Benchmark:
     class _Decorators:
         @staticmethod
-        def ensure_running(func: Callable[['Benchmark', Any], Any]):
+        def ensure_running(func: Callable[[Benchmark, Any], Any]):
             @functools.wraps(func)
-            def decorator(self: 'Benchmark', *args, **kwargs):
+            def decorator(self: Benchmark, *args, **kwargs):
                 if not self.is_running:
                     raise RuntimeError(f'The benchmark ({self._identifier}) has already ended or never been invoked.'
                                        ' Run benchmark first via invoking `run()`!')
@@ -37,9 +39,9 @@ class Benchmark:
             return decorator
 
         @staticmethod
-        def ensure_not_running(func: Callable[['Benchmark', Any], Any]):
+        def ensure_not_running(func: Callable[[Benchmark, Any], Any]):
             @functools.wraps(func)
-            def decorator(self: 'Benchmark', *args, **kwargs):
+            def decorator(self: Benchmark, *args, **kwargs):
                 if self.is_running:
                     raise RuntimeError(f'benchmark {self._bench_driver.pid} is already in running.')
                 return func(self, *args, **kwargs)
@@ -47,9 +49,9 @@ class Benchmark:
             return decorator
 
         @staticmethod
-        def ensure_invoked(func: Callable[['Benchmark', Any], Any]):
+        def ensure_invoked(func: Callable[[Benchmark, Any], Any]):
             @functools.wraps(func)
-            def decorator(self: 'Benchmark', *args, **kwargs):
+            def decorator(self: Benchmark, *args, **kwargs):
                 if not self._bench_driver.has_invoked:
                     raise RuntimeError(f'benchmark {self._identifier} is never invoked.')
                 return func(self, *args, **kwargs)
