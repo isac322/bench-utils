@@ -32,8 +32,10 @@ class Benchmark:
         self._identifier: str = identifier
         self._bench_driver: BenchDriver = bench_config.generate_driver()
 
-        self._monitors: Tuple[BaseMonitor, ...] = \
-            monitors if monitors is not tuple() else (IdleMonitor(self._bench_driver),)
+        if monitors is tuple():
+            self._monitors = (IdleMonitor(self._bench_driver),)
+        else:
+            self._monitors = monitors
 
         for monitor in monitors:
             monitor._current_bench = self
