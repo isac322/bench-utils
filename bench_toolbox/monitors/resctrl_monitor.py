@@ -49,6 +49,8 @@ class ResCtrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
         return frozenset(chain(*all_children, map(lambda t: t.id, target.threads())))
 
     async def on_init(self) -> None:
+        await super().on_init()
+
         async def write_to_tasks(pid: int) -> None:
             write_proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(
                     'sudo', 'tee', str(self._group_path / 'tasks'),

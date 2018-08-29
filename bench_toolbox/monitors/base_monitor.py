@@ -2,23 +2,26 @@
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Iterable
+from typing import Iterable, Tuple
 
 from . import MonitorData
 from .handlers.base_handler import BaseHandler
 
 
 class BaseMonitor(metaclass=ABCMeta):
-    def __init__(self, handlers: Iterable[BaseHandler[MonitorData]]) -> None:
-        self._handlers = tuple(handlers)
+    def __init__(self, handlers: Iterable[BaseHandler[MonitorData]] = tuple()) -> None:
+        self._handlers: Tuple[BaseHandler[MonitorData], ...] = tuple(handlers)
+        self._initialized = False
 
     async def monitor(self) -> None:
+        if not self._initialized:
+            raise AssertionError('"on_init()" must be invoked before "monitor()"')
+
         try:
             await self._monitor()
 
         except asyncio.CancelledError as e:
             await self.on_cancel(e)
-            raise
 
     @abstractmethod
     async def _monitor(self) -> None:
@@ -28,7 +31,10 @@ class BaseMonitor(metaclass=ABCMeta):
         pass
 
     async def on_init(self) -> None:
-        pass
+        if self._initialized:
+            raise AssertionError('This monitor has already been initialized.')
+        else:
+            self._initialized = True
 
     async def on_end(self) -> None:
         pass
