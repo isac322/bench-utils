@@ -16,7 +16,7 @@ class CgroupCpuset:
 
     @staticmethod
     async def async_create_group(name: str) -> None:
-        await asyncio.create_subprocess_exec('sudo', 'mkdir', '-p', f'{CgroupCpuset.MOUNT_POINT}/{name}'))
+        await asyncio.create_subprocess_exec('sudo', 'mkdir', '-p', f'{CgroupCpuset.MOUNT_POINT}/{name}')
 
     @staticmethod
     def add_task(name: str, pid: int) -> None:
