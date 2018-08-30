@@ -1,10 +1,12 @@
 # coding: UTF-8
 
 import asyncio
+import aiofiles
 import json
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Iterable, Optional, Set, Type
+from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict
+from pathlib import Path
 
 import functools
 import psutil
@@ -50,12 +52,13 @@ class BenchDriver(metaclass=ABCMeta):
     _bench_home: str = None
     bench_name: str = None
 
-    def __init__(self, name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]):
+    def __init__(self, name: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]):
         self._name: str = name
         self._num_threads: int = num_threads
-        self._binging_cores: str = binding_cores
-        self._numa_cores: Optional[str] = numa_cores
+        self._binding_cores: str = binding_cores
+        self._numa_mem_nodes: Optional[str] = numa_mem_nodes
 
+        self._host_numa_info: Optional[Tuple[Dict[int, List[int], List[int]]]] = None
         self._bench_proc_info: Optional[psutil.Process] = None
         self._async_proc: Optional[asyncio.subprocess.Process] = None
         self._async_proc_info: Optional[psutil.Process] = None
@@ -165,6 +168,20 @@ class BenchDriver(metaclass=ABCMeta):
                 *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
         )
 
+    @_Decorators.ensure_not_running
+    async def get_numa_info(self):
+        _base_path = '/sys/devices/system/node'
+
+
+    @_Decorators.ensure_not_running
+    async def get_numa_topo(self):
+
+    @_Decorators.ensure_not_running
+    async def get_cpu_topo(self):
+
+    @_Decorators.ensure_not_running
+    async def set_numa_memnodes(self):
+
 
 def find_driver(workload_name) -> Type[BenchDriver]:
     from benchmark.driver.spec_driver import SpecDriver
@@ -181,7 +198,7 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
 
 
-def bench_driver(workload_name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]) -> BenchDriver:
+def bench_driver(workload_name: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, num_threads, binding_cores, numa_cores)
+    return _bench_driver(workload_name, num_threads, binding_cores, numa_mem_nodes)

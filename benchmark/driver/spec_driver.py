@@ -33,14 +33,14 @@ class SpecDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        if self._numa_cores is None:
+        if self._numa_mem_nodes is None:
             mem_flag = '--localalloc'
         else:
-            mem_flag = f'--membind={self._numa_cores}'
+            mem_flag = f'--membind={self._numa_mem_nodes}'
 
         cmd = '--physcpubind={0} {1} ' \
               'runspec --config=vm.cfg --size=ref --noreportable --delay=0 --nobuild --iteration=1 {2}' \
-            .format(self._binging_cores, mem_flag, self._name)
+            .format(self._binding_cores, mem_flag, self._name)
 
         bench_bin = os.path.join(SpecDriver._bench_home, 'bin')
         bench_lib = os.path.join(bench_bin, 'lib')
