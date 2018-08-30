@@ -207,6 +207,9 @@ class BenchDriver(metaclass=ABCMeta):
             line:str = fp.readline()
             mem_list = line.split('-')
             mem_topo = [int(num) for num in mem_list]
+
+            #TODO: mem_topo can be enhanced by using real numa memory access latency
+
         return mem_topo
 
     @_Decorators.ensure_not_running
@@ -219,9 +222,20 @@ class BenchDriver(metaclass=ABCMeta):
         return cpu_topo, mem_topo
 
     @_Decorators.ensure_not_running
-    async def set_numa_mem_nodes(self) -> None:
+    async def create_cgroup_cpuset(self) -> None:
         group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
         CgroupCpuset.async_create_group(group_name)
+
+    @_Decorators.ensure_not_running
+    async def set_cgroup_cpuset(self) -> None:
+        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
+        cpu_topo, _ = self._host_numa_info
+        core_set = CgroupCpuset.convert_to_set(self._binding_cores)
+        CgroupCpuset.async_assign(group_name, core_set)
+
+    @_Decorators.ensure_not_running
+    async def set_numa_mem_nodes(self) -> None:
+        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
         workload_mem_nodes = set()
 
         if self._numa_mem_nodes is None:
@@ -230,13 +244,19 @@ class BenchDriver(metaclass=ABCMeta):
             for numa_node, cpuid_range in cpu_topo.items():
                 min, max = cpuid_range
                 if min <= self._binding_cores <= max:
-                    workload_mem_nodes.add(numa_node)
+                    if numa_node in mem_topo:
+                        workload_mem_nodes.add(numa_node)
         elif self._numa_mem_nodes is not None:
             ## Explicit Mem Node Alloc
             mem_nodes = self._numa_mem_nodes.split(',')
             workload_mem_nodes = set([int(mem_node) for mem_node in mem_nodes])
 
         CgroupCpuset.async_set_cpuset_mems(group_name, workload_mem_nodes)
+
+    @_Decorators.ensure_not_running
+    async def async_exec_cmd(self, exec_cmd: str) -> None:
+        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
+        CgroupCpuset.async_cgexec(group_name, exec_cmd)
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:

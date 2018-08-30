@@ -32,12 +32,11 @@ class ParsecDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        if self._numa_mem_nodes is None:
-            mem_flag = '--localalloc'
-        else:
-            mem_flag = f'--membind={self._numa_mem_nodes}'
+        self.create_cgroup_cpuset()
+        self.set_cgroup_cpuset()
+        self.set_numa_mem_nodes()
+        cmd = '{0}/parsecmgmt -a run -p {1} -i native -n {2}' \
+            .format(self._bench_home, self._name, self._num_threads)
 
-        cmd = '--physcpubind={0} {1} {2}/parsecmgmt -a run -p {3} -i native -n {4}' \
-            .format(self._binding_cores, mem_flag, self._bench_home, self._name, self._num_threads)
-
-        return await asyncio.create_subprocess_exec('numactl', *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL)
+        return self.async_exec_cmd(exec_cmd=cmd)
+        #return await asyncio.create_subprocess_exec(*shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL)

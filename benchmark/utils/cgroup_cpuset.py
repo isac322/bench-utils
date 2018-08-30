@@ -2,6 +2,7 @@
 
 import subprocess
 import asyncio
+import shlex
 from typing import Set
 
 import psutil
@@ -91,3 +92,16 @@ class CgroupCpuset:
                        stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
         input_mem_set = ','.join(map(str, mem_set))
         await proc.communicate(f'{input_mem_set}')
+
+    @staticmethod
+    def cgexec(group_name: str, cmd: str) -> None:
+        # This function executes the program in a cgroup by using cgexec
+        subprocess.run(args=('sudo', 'cgexec', '-g', f'cpuset:{group_name}', *shlex.split(cmd)),
+                       check=True, encoding='ASCII', stdout=subprocess.DEVNULL)
+
+    @staticmethod
+    async def async_cgexec(group_name: str, cmd: str) -> None:
+        #This function executes the program in a cgroup by using cgexec
+        await asyncio.create_subprocess_exec('sudo', 'cgexec', '-g', f'cpuset:{group_name}',
+                                             *shlex.split(cmd),
+                                             stdout=asyncio.subprocess.DEVNULL)
