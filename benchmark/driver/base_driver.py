@@ -7,6 +7,7 @@ from itertools import chain
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict
 from pathlib import Path
+from ..utils.cgroup_cpuset import CgroupCpuset
 
 import functools
 import psutil
@@ -133,6 +134,7 @@ class BenchDriver(metaclass=ABCMeta):
     @_Decorators.ensure_not_running
     async def run(self) -> None:
         self._bench_proc_info = None
+        self._host_numa_info = await self.get_numa_info()
         self._async_proc = await self._launch_bench()
         self._async_proc_info = psutil.Process(self._async_proc.pid)
 
@@ -179,11 +181,13 @@ class BenchDriver(metaclass=ABCMeta):
         return node_list
 
     @_Decorators.ensure_not_running
-    async def _get_cpu_topo(self, _base_path: str, node_list: List[int] ) -> Dict[int, List[List[int]]]:
+    async def _get_cpu_topo(self, _base_path: str, node_list: List[int]) -> Dict[int, List[List[int]]]:
         base_path = Path(_base_path)
         cpu_topo: Dict[int, List[List[int]]] = dict()
+
         for num in node_list:
             cpulist_path = base_path / f'node{num}/cpulist'
+
             async with aiofiles.open(cpulist_path) as fp:
                 line: str = fp.readline()
                 cpu_ranges: List[List[str]] = [cpus.split('-') for cpus in line.split(',')]
@@ -195,10 +199,10 @@ class BenchDriver(metaclass=ABCMeta):
         return cpu_topo
 
     @_Decorators.ensure_not_running
-    async def _get_mem_topo(self, _base_path: str, ) -> List[int]:
+    async def _get_mem_topo(self, _base_path: str) -> List[int]:
         base_path = Path(_base_path)
-        mem_topo: List[int] = list()
         has_memory_path = base_path / 'has_memory'
+
         async with aiofiles.open(has_memory_path) as fp:
             line:str = fp.readline()
             mem_list = line.split('-')
@@ -212,11 +216,27 @@ class BenchDriver(metaclass=ABCMeta):
         node_list = await self._get_node_topo(self, _base_path)
         cpu_topo = await self._get_cpu_topo(self, _base_path, node_list)
         mem_topo = await self._get_mem_topo(self, _base_path)
-        return (cpu_topo, mem_topo)
+        return cpu_topo, mem_topo
 
     @_Decorators.ensure_not_running
-    async def set_numa_memnodes(self):
-        return
+    async def set_numa_mem_nodes(self) -> None:
+        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
+        CgroupCpuset.async_create_group(group_name)
+        workload_mem_nodes = set()
+
+        if self._numa_mem_nodes is None:
+            ## Local Alloc Case
+            cpu_topo, mem_topo = self._host_numa_info
+            for numa_node, cpuid_range in cpu_topo.items():
+                min, max = cpuid_range
+                if min <= self._binding_cores <= max:
+                    workload_mem_nodes.add(numa_node)
+        elif self._numa_mem_nodes is not None:
+            ## Explicit Mem Node Alloc
+            mem_nodes = self._numa_mem_nodes.split(',')
+            workload_mem_nodes = set([int(mem_node) for mem_node in mem_nodes])
+
+        CgroupCpuset.async_set_cpuset_mems(group_name, workload_mem_nodes)
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
