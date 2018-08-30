@@ -16,7 +16,7 @@ class CgroupCpuset:
 
     @staticmethod
     async def async_create_group(name: str) -> None:
-        await asyncio.create_subprocess_exec(args=('sudo', 'mkdir', '-p', f'{CgroupCpuset.MOUNT_POINT}/{name}'))
+        await asyncio.create_subprocess_exec('sudo', 'mkdir', '-p', f'{CgroupCpuset.MOUNT_POINT}/{name}'))
 
     @staticmethod
     def add_task(name: str, pid: int) -> None:
@@ -36,13 +36,15 @@ class CgroupCpuset:
         p = psutil.Process(pid)
 
         for thread in p.threads():
-            await asyncio.create_subprocess_exec(args=('sudo', 'tee', '-a', f'{CgroupCpuset.MOUNT_POINT}/{name}/tasks'),
-                           input=f'{thread.id}\n', check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
+            proc = await asyncio.create_subprocess_exec('sudo', 'tee', '-a', f'{CgroupCpuset.MOUNT_POINT}/{name}/tasks',
+                           stdin=asyncio.subprocess.PIPE, check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
+            await proc.communicate(f'{thread.id}\n')
 
         for child in p.children(True):
             for thread in child.threads():
-                await asyncio.create_subprocess_exec(args=('sudo', 'tee', '-a', f'{CgroupCpuset.MOUNT_POINT}/{name}/tasks'),
-                               input=f'{thread.id}\n', check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
+                proc = await asyncio.create_subprocess_exec('sudo', 'tee', '-a', f'{CgroupCpuset.MOUNT_POINT}/{name}/tasks',
+                               stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
+                await proc.communicate(f'{thread.id}\n')
 
     @staticmethod
     def remove_group(name: str) -> None:
@@ -50,7 +52,7 @@ class CgroupCpuset:
 
     @staticmethod
     async def async_remove_group(name: str) -> None:
-        await asyncio.create_subprocess_exec(args=('sudo', 'rmdir', f'/sys/fs/cgroup/cpuset/{name}'))
+        await asyncio.create_subprocess_exec('sudo', 'rmdir', f'/sys/fs/cgroup/cpuset/{name}')
 
     @staticmethod
     def assign(group_name: str, core_set: Set[int]) -> None:
@@ -59,8 +61,10 @@ class CgroupCpuset:
 
     @staticmethod
     async def async_assign(group_name: str, core_set: Set[int]) -> None:
-        await asyncio.create_subprocess_exec(args=('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.cpus'),
-                       input=','.join(map(str, core_set)), check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
+        proc = await asyncio.create_subprocess_exec('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.cpus',
+                       stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
+        input_core_set = ','.join(map(str, core_set))
+        await proc.communicate(f'{input_core_set}')
 
     @staticmethod
     def convert_to_set(hyphen_str: str) -> Set[int]:
@@ -83,5 +87,7 @@ class CgroupCpuset:
 
     @staticmethod
     async def async_set_cpuset_mems(group_name: str, mem_set: Set[int]) -> None:
-        await asyncio.create_subprocess_exec(args=('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.mems'),
-                       input=','.join(map(str, mem_set)), check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
+        proc = await asyncio.create_subprocess_exec('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.mems',
+                       stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
+        input_mem_set = ','.join(map(str, mem_set))
+        await proc.communicate(f'{input_mem_set}')
