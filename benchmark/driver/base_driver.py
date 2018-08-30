@@ -168,19 +168,55 @@ class BenchDriver(metaclass=ABCMeta):
                 *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
         )
 
+
     @_Decorators.ensure_not_running
-    async def get_numa_info(self):
+    async def _get_node_topo(self, _base_path: str) -> List[int]:
+        base_path = Path(_base_path)
+        online_path = base_path / 'online'
+        async with aiofiles.open(online_path) as fp:
+            line: str = fp.readline()
+            node_list = [int(num) for num in line.split('-')]
+        return node_list
+
+    @_Decorators.ensure_not_running
+    async def _get_cpu_topo(self, _base_path: str, node_list: List[int] ) -> Dict[int, List[List[int]]]:
+        base_path = Path(_base_path)
+        cpu_topo: Dict[int, List[List[int]]] = dict()
+        for num in node_list:
+            cpulist_path = base_path / f'node{num}/cpulist'
+            async with aiofiles.open(cpulist_path) as fp:
+                line: str = fp.readline()
+                cpu_ranges: List[List[str]] = [cpus.split('-') for cpus in line.split(',')]
+                int_cpu_ranges: List[List[int]] = list()
+                for cpu_range in cpu_ranges:
+                    int_cpu_range = [int(cpuid) for cpuid in cpu_range]
+                    int_cpu_ranges.append(int_cpu_range)
+                cpu_topo[num] = int_cpu_ranges
+        return cpu_topo
+
+    @_Decorators.ensure_not_running
+    async def _get_mem_topo(self, _base_path: str, ) -> List[int]:
+        base_path = Path(_base_path)
+        mem_topo: List[int] = list()
+        has_memory_path = base_path / 'has_memory'
+        async with aiofiles.open(has_memory_path) as fp:
+            line:str = fp.readline()
+            mem_list = line.split('-')
+            mem_topo = [int(num) for num in mem_list]
+        return mem_topo
+
+    @_Decorators.ensure_not_running
+    async def get_numa_info(self) -> Tuple[Dict[int, List[List[int]]], List[int]]:
         _base_path = '/sys/devices/system/node'
 
-
-    @_Decorators.ensure_not_running
-    async def get_numa_topo(self):
-
-    @_Decorators.ensure_not_running
-    async def get_cpu_topo(self):
+        node_list = await self._get_node_topo(self, _base_path)
+        cpu_topo = await self._get_cpu_topo(self, _base_path, node_list)
+        mem_topo = await self._get_mem_topo(self, _base_path)
+        return (cpu_topo, mem_topo)
 
     @_Decorators.ensure_not_running
     async def set_numa_memnodes(self):
+        return
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
