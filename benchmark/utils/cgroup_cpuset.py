@@ -55,7 +55,7 @@ class CgroupCpuset:
     @staticmethod
     def assign(group_name: str, core_set: Set[int]) -> None:
         subprocess.run(args=('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.cpus'),
-                       input=','.join(map(str, core_set)), check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
+                       input=','.join(map(str, core_set)), check=True, encoding='ASCII', stdout=subprocess.DEVNULL)
 
     @staticmethod
     async def async_assign(group_name: str, core_set: Set[int]) -> None:
@@ -75,3 +75,13 @@ class CgroupCpuset:
                 ret.update(range(group[0], group[1] + 1))
 
         return ret
+
+    @staticmethod
+    def set_cpuset_mems(group_name: str, mem_set: Set[int]) -> None:
+        subprocess.run(args=('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.mems'),
+                       input=','.join(map(str, mem_set)), check=True, encoding='ASCII', stdout=subprocess.DEVNULL)
+
+    @staticmethod
+    async def async_set_cpuset_mems(group_name: str, mem_set: Set[int]) -> None:
+        await asyncio.create_subprocess_exec(args=('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.mems'),
+                       input=','.join(map(str, mem_set)), check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
