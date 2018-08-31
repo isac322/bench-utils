@@ -1,57 +1,43 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 import logging
-import time
 from concurrent.futures import CancelledError
-from logging import Handler
+from itertools import chain
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple, Type
 
 import psutil
-from coloredlogs import ColoredFormatter
 
+from .base_benchmark import BaseBenchmark
+from .base_builder import BaseBuilder
 from .decorators.benchmark import ensure_invoked, ensure_not_running, ensure_running
 from .drivers import BenchDriver
 from ..containers import BenchConfig
+from ..monitors import MonitorData
+from ..monitors.base_builder import BaseBuilder as MonitorBuilder
 from ..monitors.base_monitor import BaseMonitor
 from ..monitors.idle_monitor import IdleMonitor
+from ..monitors.messages.handlers.base_handler import BaseHandler
 
 
-class Benchmark:
-    _file_formatter = ColoredFormatter(
-            '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
-    _stream_formatter = ColoredFormatter('%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
+class Benchmark(BaseBenchmark):
+    def __new__(cls: Type[Benchmark],
+                identifier: str,
+                bench_config: BenchConfig,
+                workspace: Path,
+                logger_level: int = logging.INFO) -> Benchmark:
+        obj: Benchmark = super().__new__(cls, identifier, workspace, logger_level)
 
-    def __init__(self,
-                 identifier: str,
-                 bench_config: BenchConfig,
-                 workspace: Path,
-                 logger_level: int = logging.INFO,
-                 monitors: Tuple[BaseMonitor, ...] = tuple()) -> None:
-        self._identifier: str = identifier
-        self._bench_driver: BenchDriver = bench_config.generate_driver()
+        obj._bench_config = bench_config
+        obj._bench_driver: BenchDriver = bench_config.generate_driver()
 
-        if monitors is tuple():
-            self._monitors = (IdleMonitor(self._bench_driver),)
-        else:
-            self._monitors = monitors
+        return obj
 
-        for monitor in monitors:
-            monitor._current_bench = self
-
-        log_parent = workspace / 'logs'
-        if not log_parent.exists():
-            log_parent.mkdir()
-
-        self._log_path: Path = log_parent / f'{identifier}.log'
-
-        self._end_time: Optional[float] = None
-
-        # setup for loggers
-
-        logger = logging.getLogger(self._identifier)
-        logger.setLevel(logger_level)
+    def __init__(self, _, __, ___) -> None:
+        raise NotImplementedError('Use Benchmark.Builder to instantiate Benchmark')
 
     @ensure_not_running
     async def start_and_pause(self, silent: bool = False) -> None:
@@ -83,6 +69,7 @@ class Benchmark:
         logger = logging.getLogger(self._identifier)
 
         try:
+            await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
             await asyncio.wait(tuple(mon.monitor() for mon in self._monitors))
 
         except CancelledError as e:
@@ -92,7 +79,6 @@ class Benchmark:
         finally:
             logger.info('The benchmark is ended.')
             self._remove_logger_handlers()
-            self._end_time = time.time()
 
             await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
 
@@ -117,36 +103,56 @@ class Benchmark:
         except (psutil.NoSuchProcess, ProcessLookupError) as e:
             logger.debug(f'Process already killed : {e}')
 
-    def _remove_logger_handlers(self) -> None:
-        logger = logging.getLogger(self._identifier)
-
-        for handler in tuple(logger.handlers):  # type: Handler
-            logger.removeHandler(handler)
-            handler.flush()
-            handler.close()
-
     @property
     @ensure_invoked
     def launched_time(self) -> float:
         return self._bench_driver.created_time
 
     @property
-    def identifier(self) -> str:
-        return self._identifier
-
-    @property
-    def end_time(self) -> Optional[float]:
-        return self._end_time
-
-    @property
-    def runtime(self) -> Optional[float]:
-        if self._end_time is None:
-            return None
-        elif self._end_time < self.launched_time:
-            return None
-        else:
-            return self._end_time - self.launched_time
-
-    @property
     def is_running(self) -> bool:
         return self._bench_driver.is_running
+
+    @property
+    def benchmark_name(self):
+        return self._bench_config.name
+
+    @ensure_running
+    def all_child_tid(self) -> Tuple[int, ...]:
+        try:
+            proc = psutil.Process(self._bench_driver.pid)
+
+            return tuple(chain(
+                    (t.id for t in proc.threads()),
+                    *((t.id for t in proc.threads()) for proc in proc.children(recursive=True))
+            ))
+        except psutil.NoSuchProcess:
+            return tuple()
+
+    async def join(self) -> None:
+        await self._bench_driver.join()
+
+    class Builder(BaseBuilder['Benchmark']):
+        def __init__(self,
+                     identifier: str,
+                     bench_config: BenchConfig,
+                     workspace: Path,
+                     logger_level: int = logging.INFO) -> None:
+            super().__init__()
+
+            self._cur_obj: Benchmark = Benchmark.__new__(Benchmark, identifier, bench_config, workspace, logger_level)
+
+        def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
+            return monitor_builder \
+                .set_benchmark(self._cur_obj) \
+                .set_emitter(self._cur_obj._pipeline.on_message) \
+                .finalize()
+
+        def add_handler(self, handler: BaseHandler) -> Benchmark.Builder:
+            self._cur_obj._pipeline.add_handler(handler)
+            return self
+
+        def _finalize(self) -> None:
+            if len(self._monitors) is 0:
+                self._cur_obj._monitors = (IdleMonitor(self._cur_obj),)
+            else:
+                self._cur_obj._monitors = self._monitors

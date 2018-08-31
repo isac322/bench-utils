@@ -19,7 +19,7 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
 
 
-def gen_driver(workload_name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]) -> BenchDriver:
+def gen_driver(workload_name: str, num_threads: int, bound_cores: str, mem_bound_sockets: Optional[str]) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, num_threads, binding_cores, numa_cores)
+    return _bench_driver(workload_name, num_threads, bound_cores, mem_bound_sockets)

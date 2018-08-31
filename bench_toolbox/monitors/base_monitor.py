@@ -2,16 +2,17 @@
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Iterable, Tuple
+from typing import Callable, Generic, Mapping
 
 from . import MonitorData
-from .handlers.base_handler import BaseHandler
+from .messages import BaseMessage
 
 
-class BaseMonitor(metaclass=ABCMeta):
-    def __init__(self, handlers: Iterable[BaseHandler[MonitorData]] = tuple()) -> None:
-        self._handlers: Tuple[BaseHandler[MonitorData], ...] = tuple(handlers)
+# parametrize message type too
+class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
+    def __init__(self, emitter: Callable[[BaseMessage], None]) -> None:
         self._initialized = False
+        self._emitter = emitter
 
     async def monitor(self) -> None:
         if not self._initialized:
@@ -27,6 +28,10 @@ class BaseMonitor(metaclass=ABCMeta):
     async def _monitor(self) -> None:
         pass
 
+    @abstractmethod
+    async def create_message(self, data: Mapping[str, MonitorData]) -> BaseMessage:
+        pass
+
     async def on_cancel(self, cancel_error: asyncio.CancelledError) -> None:
         pass
 
@@ -40,5 +45,4 @@ class BaseMonitor(metaclass=ABCMeta):
         pass
 
     async def on_destroy(self) -> None:
-        if len(self._handlers) is not 0:
-            await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))
+        pass

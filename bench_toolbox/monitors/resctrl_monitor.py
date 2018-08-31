@@ -1,17 +1,22 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 import re
 from itertools import chain
 from pathlib import Path
-from typing import Dict, Iterable, Mapping, Optional, Tuple
+from typing import Callable, Dict, Mapping, Optional, Tuple
 
 import aiofiles
 from aiofiles.base import AiofilesContextManager
 
-from .handlers.base_handler import BaseHandler
+from . import MonitorData
+from .base_builder import BaseBuilder
+from .messages import BaseMessage
 from .oneshot_monitor import OneShotMonitor
 from ..benchmark import Benchmark
+from ..containers import HandlerConfig
 
 
 class ResCtrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
@@ -26,8 +31,8 @@ class ResCtrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
             )
     )
 
-    def __init__(self, handlers: Iterable[BaseHandler], interval: int, bench: Benchmark = None) -> None:
-        super().__init__(handlers, interval)
+    def __init__(self, emitter: Callable[[BaseMessage], None], interval: int, bench: Benchmark = None) -> None:
+        super().__init__(emitter, interval)
 
         self._benchmark: Benchmark = bench
         self._group_path: Path = ResCtrlMonitor.mount_point
@@ -48,7 +53,7 @@ class ResCtrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
         await super().on_init()
 
         if self._benchmark is not None:
-            self._group_path /= self._benchmark.benchmark_name
+            self._group_path = ResCtrlMonitor.mount_point / self._benchmark.benchmark_name
 
         # tuple of each feature monitors for each socket
         self._monitors = tuple(
@@ -90,6 +95,9 @@ class ResCtrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
 
         return dict(resctrl=data)
 
+    async def create_message(self, data: Mapping[str, MonitorData]) -> BaseMessage:
+        pass
+
     async def on_destroy(self) -> None:
         await super().on_destroy()
 
@@ -102,3 +110,10 @@ class ResCtrlMonitor(OneShotMonitor[Tuple[Mapping[str, int], ...]]):
                     for mons in self._monitors
                 ))
         ))
+
+    class Builder(BaseBuilder['ResCtrlMonitor']):
+        def _build_handler(self, handler_config: HandlerConfig) -> None:
+            pass
+
+        async def _finalize(self) -> ResCtrlMonitor:
+            pass

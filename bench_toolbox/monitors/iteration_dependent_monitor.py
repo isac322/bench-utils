@@ -2,16 +2,16 @@
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Iterable, Mapping
+from typing import Callable, Mapping
 
 from . import MonitorData
-from .handlers.base_handler import BaseHandler
+from .messages import BaseMessage
 from .oneshot_monitor import OneShotMonitor
 
 
 class IterationDependentMonitor(OneShotMonitor, metaclass=ABCMeta):
-    def __init__(self, handlers: Iterable[BaseHandler, ...], interval: int) -> None:
-        super().__init__(handlers, interval)
+    def __init__(self, emitter: Callable[[BaseMessage], None], interval: int) -> None:
+        super().__init__(emitter, interval)
 
         self._prev_data: Mapping[str, MonitorData] = None
 
@@ -23,7 +23,9 @@ class IterationDependentMonitor(OneShotMonitor, metaclass=ABCMeta):
 
             transformed = self._transform_data(diff)
 
-            await asyncio.wait((self._handle_data(transformed), asyncio.sleep(self._interval)))
+            message = await self.create_message(transformed)
+            self._emitter(message)
+            await asyncio.sleep(self._interval)
 
     @abstractmethod
     def calc_diff(self, before: Mapping[str, MonitorData], after: Mapping[str, MonitorData]) \

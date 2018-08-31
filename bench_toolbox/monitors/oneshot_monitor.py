@@ -2,16 +2,16 @@
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Generic, Iterable, Mapping
+from typing import Callable, Generic, Mapping
 
 from . import MonitorData
 from .base_monitor import BaseMonitor
-from .handlers.base_handler import BaseHandler
+from .messages import BaseMessage
 
 
 class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):
-    def __init__(self, handlers: Iterable[BaseHandler[MonitorData]], interval: int) -> None:
-        super().__init__(handlers)
+    def __init__(self, emitter: Callable[[BaseMessage], None], interval: int) -> None:
+        super().__init__(emitter)
 
         self._interval: int = interval
 
@@ -20,10 +20,13 @@ class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):
             data = await self.monitor_once()
             transformed = self._transform_data(data)
 
-            await asyncio.wait((*self._handle_data(transformed), asyncio.sleep(self._interval)))
+            message = await self.create_message(transformed)
+            self._emitter(message)
+            await asyncio.sleep(self._interval)
 
-    def _handle_data(self, data: Mapping[str, MonitorData]):
-        return (h.handle(data) for h in self._handlers)
+    @abstractmethod
+    async def create_message(self, data: Mapping[str, MonitorData]) -> BaseMessage:
+        pass
 
     @abstractmethod
     async def monitor_once(self) -> Mapping[str, MonitorData]:
