@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Generator, Tuple
 
+from .base_config import MonitorConfig
+
 
 @dataclass(frozen=True)
 class PerfEvent:
@@ -13,7 +15,7 @@ class PerfEvent:
 
 
 @dataclass(frozen=True)
-class PerfConfig:
+class PerfConfig(MonitorConfig):
     interval: int
     events: Tuple[PerfEvent, ...]
 

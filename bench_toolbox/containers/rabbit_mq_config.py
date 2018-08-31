@@ -2,8 +2,10 @@
 
 from dataclasses import dataclass
 
+from .base_config import HandlerConfig
+
 
 @dataclass(frozen=True)
-class RabbitMQConfig:
+class RabbitMQConfig(HandlerConfig):
     host_name: str
     creation_q_name: str

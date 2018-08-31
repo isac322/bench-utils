@@ -198,3 +198,9 @@ tags
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
+
+# Custom
+
+/bench_toolbox/configs/benchmark_home.json
+/bench_toolbox/configs/perf.json
+/bench_toolbox/configs/rabbit_mq.json
