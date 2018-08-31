@@ -8,7 +8,7 @@ from pathlib import Path
 from statistics import mean
 from typing import List
 
-from orderedset import OrderedSet
+from ordered_set import OrderedSet
 
 from .tools import WorkloadResult, read_result
 
