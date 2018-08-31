@@ -5,7 +5,7 @@ import aiofiles
 import json
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict
+from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict, Coroutine
 from pathlib import Path
 from ..utils.cgroup_cpuset import CgroupCpuset
 
@@ -53,8 +53,9 @@ class BenchDriver(metaclass=ABCMeta):
     _bench_home: str = None
     bench_name: str = None
 
-    def __init__(self, name: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]):
+    def __init__(self, name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]):
         self._name: str = name
+        self._identifier: str = identifier
         self._num_threads: int = num_threads
         self._binding_cores: str = binding_cores
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
@@ -63,6 +64,7 @@ class BenchDriver(metaclass=ABCMeta):
         self._bench_proc_info: Optional[psutil.Process] = None
         self._async_proc: Optional[asyncio.subprocess.Process] = None
         self._async_proc_info: Optional[psutil.Process] = None
+        self._group_name: str = None
 
     def __del__(self):
         try:
@@ -137,6 +139,7 @@ class BenchDriver(metaclass=ABCMeta):
         self._host_numa_info = await self.get_numa_info()
         self._async_proc = await self._launch_bench()
         self._async_proc_info = psutil.Process(self._async_proc.pid)
+        self.rename_group(self._async_proc)
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
@@ -169,7 +172,6 @@ class BenchDriver(metaclass=ABCMeta):
                 (t.id for t in self._bench_proc_info.threads()),
                 *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
         )
-
 
     @_Decorators.ensure_not_running
     async def _get_node_topo(self, _base_path: str) -> List[int]:
@@ -204,11 +206,11 @@ class BenchDriver(metaclass=ABCMeta):
         has_memory_path = base_path / 'has_memory'
 
         async with aiofiles.open(has_memory_path) as fp:
-            line:str = fp.readline()
+            line: str = fp.readline()
             mem_list = line.split('-')
             mem_topo = [int(num) for num in mem_list]
 
-            #TODO: mem_topo can be enhanced by using real numa memory access latency
+            # TODO: mem_topo can be enhanced by using real numa memory access latency
 
         return mem_topo
 
@@ -223,40 +225,51 @@ class BenchDriver(metaclass=ABCMeta):
 
     @_Decorators.ensure_not_running
     async def create_cgroup_cpuset(self) -> None:
-        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
-        CgroupCpuset.async_create_group(group_name)
+        self._group_name = f'{self._async_proc.name()}_{self._identifier}'
+        CgroupCpuset.async_create_group(self._group_name)
 
     @_Decorators.ensure_not_running
     async def set_cgroup_cpuset(self) -> None:
-        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
         cpu_topo, _ = self._host_numa_info
         core_set = CgroupCpuset.convert_to_set(self._binding_cores)
-        CgroupCpuset.async_assign(group_name, core_set)
+        CgroupCpuset.async_assign(self._group_name, core_set)
 
     @_Decorators.ensure_not_running
     async def set_numa_mem_nodes(self) -> None:
-        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
         workload_mem_nodes = set()
 
         if self._numa_mem_nodes is None:
-            ## Local Alloc Case
+            # Local Alloc Case
             cpu_topo, mem_topo = self._host_numa_info
             for numa_node, cpuid_range in cpu_topo.items():
-                min, max = cpuid_range
-                if min <= self._binding_cores <= max:
+                min_cpuid, max_cpuid = cpuid_range
+                if min_cpuid <= self._binding_cores <= max_cpuid:
                     if numa_node in mem_topo:
                         workload_mem_nodes.add(numa_node)
         elif self._numa_mem_nodes is not None:
-            ## Explicit Mem Node Alloc
+            # Explicit Mem Node Alloc
             mem_nodes = self._numa_mem_nodes.split(',')
             workload_mem_nodes = set([int(mem_node) for mem_node in mem_nodes])
 
-        CgroupCpuset.async_set_cpuset_mems(group_name, workload_mem_nodes)
+        CgroupCpuset.async_set_cpuset_mems(self._group_name, workload_mem_nodes)
 
     @_Decorators.ensure_not_running
-    async def async_exec_cmd(self, exec_cmd: str) -> None:
-        group_name = f'{self._async_proc.name()}_{self._async_proc.pid}'
-        CgroupCpuset.async_cgexec(group_name, exec_cmd)
+    def async_exec_cmd(self, exec_cmd: str) -> Coroutine:
+        return CgroupCpuset.async_cgexec(self._group_name, exec_cmd)
+
+    @_Decorators.ensure_running
+    async def rename_group(self) -> None:
+        base_path: str = CgroupCpuset.MOUNT_POINT
+        group_path = f'{base_path}/{self._group_name}'
+
+        # Create new group name
+        new_group_name = f'{self._async_proc_info.name()}_{self._async_proc.pid}'
+        new_group_path = f'{base_path}/{new_group_name}'
+
+        # Rename group name
+        CgroupCpuset.async_rename_group(group_path, new_group_path)
+        self._group_name = new_group_name
+
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
@@ -274,7 +287,7 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
 
 
-def bench_driver(workload_name: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]) -> BenchDriver:
+def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, num_threads, binding_cores, numa_mem_nodes)
+    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes)

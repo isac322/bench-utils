@@ -94,14 +94,22 @@ class CgroupCpuset:
         await proc.communicate(f'{input_mem_set}')
 
     @staticmethod
-    def cgexec(group_name: str, cmd: str) -> None:
-        # This function executes the program in a cgroup by using cgexec
-        subprocess.run(args=('sudo', 'cgexec', '-g', f'cpuset:{group_name}', *shlex.split(cmd)),
+    def cgexec(group_name: str, cmd: str) -> subprocess.CompletedProcess:
+        #This function executes the program in a cgroup by using cgexec
+        #TODO: Test
+        proc = subprocess.run(args=('sudo', 'cgexec', '-g', f'cpuset:{group_name}', *shlex.split(cmd)),
                        check=True, encoding='ASCII', stdout=subprocess.DEVNULL)
+        return proc
 
     @staticmethod
-    async def async_cgexec(group_name: str, cmd: str) -> None:
+    async def async_cgexec(group_name: str, cmd: str) -> asyncio.subprocess.Process:
         #This function executes the program in a cgroup by using cgexec
-        await asyncio.create_subprocess_exec('sudo', 'cgexec', '-g', f'cpuset:{group_name}',
+        #TODO: Test
+        return await asyncio.create_subprocess_exec('sudo', 'cgexec', '-g', f'cpuset:{group_name}',
                                              *shlex.split(cmd),
                                              stdout=asyncio.subprocess.DEVNULL)
+
+    @staticmethod
+    async def async_rename_group(group_path: str, new_group_path: str) -> None:
+        await asyncio.create_subprocess_exec('sudo', 'mv', f'{group_path}', f'{new_group_path}',
+                                                    stdout=asyncio.subprocess.DEVNULL)

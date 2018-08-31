@@ -7,11 +7,11 @@ from benchmark.driver.base_driver import BenchDriver, bench_driver
 
 class BenchConfig:
     def __init__(self, workload_name: str, num_of_threads: int, binding_cores: str,
-                 numa_nodes: Optional[str], cpu_freq: float):
+                 numa_mem_nodes: Optional[str], cpu_freq: float):
         self._workload_name: str = workload_name
         self._num_of_threads: int = num_of_threads
         self._binding_cores: str = binding_cores
-        self._numa_nodes: Optional[str] = numa_nodes
+        self._numa_mem_nodes: Optional[str] = numa_mem_nodes
         self._cpu_freq: float = cpu_freq
 
     @property
@@ -28,14 +28,15 @@ class BenchConfig:
 
     @property
     def numa_nodes(self) -> Optional[str]:
-        return self._numa_nodes
+        return self._numa_mem_nodes
 
     @property
     def cpu_freq(self) -> float:
         return self._cpu_freq
 
-    def generate_driver(self) -> BenchDriver:
-        return bench_driver(self._workload_name, self._num_of_threads, self._binding_cores, self._numa_nodes)
+    def generate_driver(self, identifier: str) -> BenchDriver:
+        return bench_driver(self._workload_name, identifier, self._num_of_threads, self._binding_cores,
+                            self._numa_mem_nodes)
 
     @staticmethod
     def gen_identifier(target: 'BenchConfig', configs: List['BenchConfig']) -> str:
@@ -54,7 +55,7 @@ class BenchConfig:
                 _all_same = threads_same = False
             if target._binding_cores != config._binding_cores:
                 _all_same = cores_same = False
-            if target._numa_nodes != config._numa_nodes:
+            if target._numa_mem_nodes != config._numa_mem_nodes:
                 _all_same = numa_same = False
             if target._cpu_freq != config._cpu_freq:
                 _all_same = freq_same = False

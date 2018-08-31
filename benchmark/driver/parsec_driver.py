@@ -1,7 +1,6 @@
 # coding: UTF-8
 
 import asyncio
-import shlex
 from typing import Optional, Set
 
 import psutil
@@ -38,5 +37,5 @@ class ParsecDriver(BenchDriver):
         cmd = '{0}/parsecmgmt -a run -p {1} -i native -n {2}' \
             .format(self._bench_home, self._name, self._num_threads)
 
-        return self.async_exec_cmd(exec_cmd=cmd)
+        return await self.async_exec_cmd(exec_cmd=cmd)
         #return await asyncio.create_subprocess_exec(*shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL)
