@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Di
 from pathlib import Path
 from ..utils.cgroup_cpuset import CgroupCpuset
 
+import logging
 import functools
 import psutil
 from abc import ABCMeta, abstractmethod
@@ -175,10 +176,12 @@ class BenchDriver(metaclass=ABCMeta):
 
     @_Decorators.ensure_not_running
     async def _get_node_topo(self, _base_path: str) -> List[int]:
+        logger = logging.basicConfig(level=logging.INFO)
         base_path = Path(_base_path)
         online_path = base_path / 'online'
         async with aiofiles.open(online_path) as fp:
             line: str = fp.readline()
+            logger.info(f'[_get_node_topo] line: {line}')
             node_list = [int(num) for num in line.split('-')]
         return node_list
 
@@ -218,9 +221,9 @@ class BenchDriver(metaclass=ABCMeta):
     async def get_numa_info(self) -> Tuple[Dict[int, List[List[int]]], List[int]]:
         _base_path = '/sys/devices/system/node'
 
-        node_list = await self._get_node_topo(self, _base_path)
-        cpu_topo = await self._get_cpu_topo(self, _base_path, node_list)
-        mem_topo = await self._get_mem_topo(self, _base_path)
+        node_list = await self._get_node_topo(_base_path)
+        cpu_topo = await self._get_cpu_topo(_base_path, node_list)
+        mem_topo = await self._get_mem_topo(_base_path)
         return cpu_topo, mem_topo
 
     @_Decorators.ensure_not_running

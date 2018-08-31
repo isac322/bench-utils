@@ -66,7 +66,7 @@ class Benchmark:
         self._perf_config: PerfConfig = perf_config
         self._rabbit_mq_config: RabbitMQConfig = rabbit_mq_config
 
-        self._bench_driver: BenchDriver = bench_config.generate_driver()
+        self._bench_driver: BenchDriver = bench_config.generate_driver(identifier)
         self._perf: Optional[asyncio.subprocess.Process] = None
         self._end_time: Optional[float] = None
 

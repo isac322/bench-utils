@@ -38,13 +38,16 @@ class CgroupCpuset:
 
         for thread in p.threads():
             proc = await asyncio.create_subprocess_exec('sudo', 'tee', '-a', f'{CgroupCpuset.MOUNT_POINT}/{name}/tasks',
-                           stdin=asyncio.subprocess.PIPE, check=True, encoding='ASCII', stdout=asyncio.subprocess.DEVNULL)
+                                                        stdin=asyncio.subprocess.PIPE, check=True, encoding='ASCII',
+                                                        stdout=asyncio.subprocess.DEVNULL)
             await proc.communicate(f'{thread.id}\n')
 
         for child in p.children(True):
             for thread in child.threads():
-                proc = await asyncio.create_subprocess_exec('sudo', 'tee', '-a', f'{CgroupCpuset.MOUNT_POINT}/{name}/tasks',
-                               stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
+                proc = await asyncio.create_subprocess_exec('sudo', 'tee', '-a',
+                                                            f'{CgroupCpuset.MOUNT_POINT}/{name}/tasks',
+                                                            stdin=asyncio.subprocess.PIPE,
+                                                            stdout=asyncio.subprocess.DEVNULL)
                 await proc.communicate(f'{thread.id}\n')
 
     @staticmethod
