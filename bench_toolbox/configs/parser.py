@@ -2,9 +2,10 @@
 
 import json
 from collections import Mapping
+from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from ..benchmark.drivers import bench_drivers
 from ..containers import BenchConfig, PerfConfig, PerfEvent, RabbitMQConfig
@@ -51,12 +52,71 @@ def rabbit_mq() -> RabbitMQConfig:
     return RabbitMQConfig(config['host'], config['queue_name']['workload_creation'])
 
 
+@dataclass(order=True)
+class _Pair:
+    cfg: Tuple[Any, ...]
+    idx: int
+
+
 def workloads(wl_configs: List[Mapping]) -> Tuple[BenchConfig, ...]:
+    sorted_pairs: List[_Pair] = sorted(
+            _Pair(
+                    (cfg['name'], cfg['num_of_threads'], cfg['bound_cores'], cfg['mem_bound_sockets'], cfg['cpu_freq']),
+                    idx
+            )
+            for idx, cfg in enumerate(wl_configs)
+    )
+
+    # name, num_of_threads, bound_cores, mem_bound_sockets, cpu_freq
+    max_level = 5
+
+    first_diff: List[Optional[int]] = [1]
+
+    for i in range(1, len(sorted_pairs)):
+        elem = sorted_pairs[i].cfg
+        prev = sorted_pairs[i - 1].cfg
+
+        curr_level = None
+        for level in range(max_level):
+            if elem[level] != prev[level]:
+                curr_level = level + 1
+                break
+
+        first_diff.append(curr_level)
+
+    first_diff.append(1)
+
+    idx = 1
+    prev_level = first_diff[0]
+    while idx <= len(sorted_pairs):
+        curr_level = first_diff[idx]
+
+        if curr_level is None:
+            curr_idx = idx
+
+            while first_diff[idx] is None:
+                idx += 1
+
+            curr_level = first_diff[idx]
+
+            for same_count, i in enumerate(range(curr_idx, idx + 1)):
+                elem = sorted_pairs[i - 1].cfg
+                sorted_pairs[i - 1].cfg = elem[:max(prev_level, curr_level)] + (same_count + 1,)
+        elif prev_level != max_level or curr_level != max_level:
+            elem = sorted_pairs[idx - 1].cfg
+            sorted_pairs[idx - 1].cfg = elem[:max(prev_level, curr_level)]
+
+        prev_level = curr_level
+        idx += 1
+
+    sorted_pairs.sort(key=lambda x: x.idx)
+
     return tuple(
             BenchConfig(config['name'],
                         config['num_of_threads'],
                         config['bound_cores'],
                         config['mem_bound_sockets'],
-                        config['cpu_freq'])
-            for config in wl_configs
+                        config['cpu_freq'],
+                        '_'.join(map(str, sorted_pairs[idx].cfg)))
+            for idx, config in enumerate(wl_configs)
     )

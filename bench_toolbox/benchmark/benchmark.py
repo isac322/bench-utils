@@ -25,11 +25,10 @@ from ..monitors.messages.handlers.base_handler import BaseHandler
 
 class Benchmark(BaseBenchmark):
     def __new__(cls: Type[Benchmark],
-                identifier: str,
                 bench_config: BenchConfig,
                 workspace: Path,
                 logger_level: int = logging.INFO) -> Benchmark:
-        obj: Benchmark = super().__new__(cls, identifier, workspace, logger_level)
+        obj: Benchmark = super().__new__(cls, bench_config.identifier, workspace, logger_level)
 
         obj._bench_config = bench_config
         obj._bench_driver: BenchDriver = bench_config.generate_driver()
@@ -133,13 +132,12 @@ class Benchmark(BaseBenchmark):
 
     class Builder(BaseBuilder['Benchmark']):
         def __init__(self,
-                     identifier: str,
                      bench_config: BenchConfig,
                      workspace: Path,
                      logger_level: int = logging.INFO) -> None:
             super().__init__()
 
-            self._cur_obj: Benchmark = Benchmark.__new__(Benchmark, identifier, bench_config, workspace, logger_level)
+            self._cur_obj: Benchmark = Benchmark.__new__(Benchmark, bench_config, workspace, logger_level)
 
         def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
             return monitor_builder \
