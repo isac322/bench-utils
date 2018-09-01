@@ -1,13 +1,10 @@
 # coding: UTF-8
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Optional
 
 from .base_config import BaseConfig
-from ..benchmark.drivers import gen_driver
-from ..benchmark.drivers.base_driver import BenchDriver
+from ..benchmark.drivers import BenchDriver, gen_driver
 
 
 @dataclass(frozen=True)
