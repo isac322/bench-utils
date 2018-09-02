@@ -6,6 +6,7 @@ from typing import Optional, Set
 import psutil
 
 from benchmark.driver.base_driver import BenchDriver
+import logging
 
 
 class ParsecDriver(BenchDriver):
@@ -31,9 +32,9 @@ class ParsecDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        self.create_cgroup_cpuset()
-        self.set_cgroup_cpuset()
-        self.set_numa_mem_nodes()
+        await self.create_cgroup_cpuset()
+        await self.set_cgroup_cpuset()
+        await self.set_numa_mem_nodes()
         cmd = '{0}/parsecmgmt -a run -p {1} -i native -n {2}' \
             .format(self._bench_home, self._name, self._num_threads)
 

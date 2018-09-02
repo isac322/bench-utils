@@ -140,11 +140,11 @@ class BenchDriver(metaclass=ABCMeta):
         self._host_numa_info = await self.get_numa_info()
         self._async_proc = await self._launch_bench()
         self._async_proc_info = psutil.Process(self._async_proc.pid)
-        self.rename_group(self._async_proc)
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
             if self._bench_proc_info is not None:
+                await self.rename_group()
                 return
             await asyncio.sleep(0.1)
 
@@ -176,12 +176,10 @@ class BenchDriver(metaclass=ABCMeta):
 
     @_Decorators.ensure_not_running
     async def _get_node_topo(self, _base_path: str) -> List[int]:
-        logger = logging.basicConfig(level=logging.INFO)
         base_path = Path(_base_path)
         online_path = base_path / 'online'
         async with aiofiles.open(online_path) as fp:
-            line: str = fp.readline()
-            logger.info(f'[_get_node_topo] line: {line}')
+            line: str = await fp.readline()
             node_list = [int(num) for num in line.split('-')]
         return node_list
 
@@ -194,7 +192,7 @@ class BenchDriver(metaclass=ABCMeta):
             cpulist_path = base_path / f'node{num}/cpulist'
 
             async with aiofiles.open(cpulist_path) as fp:
-                line: str = fp.readline()
+                line: str = await fp.readline()
                 cpu_ranges: List[List[str]] = [cpus.split('-') for cpus in line.split(',')]
                 int_cpu_ranges: List[List[int]] = list()
                 for cpu_range in cpu_ranges:
@@ -209,7 +207,7 @@ class BenchDriver(metaclass=ABCMeta):
         has_memory_path = base_path / 'has_memory'
 
         async with aiofiles.open(has_memory_path) as fp:
-            line: str = fp.readline()
+            line: str = await fp.readline()
             mem_list = line.split('-')
             mem_topo = [int(num) for num in mem_list]
 
@@ -228,14 +226,15 @@ class BenchDriver(metaclass=ABCMeta):
 
     @_Decorators.ensure_not_running
     async def create_cgroup_cpuset(self) -> None:
-        self._group_name = f'{self._async_proc.name()}_{self._identifier}'
-        CgroupCpuset.async_create_group(self._group_name)
+        self._group_name = f'{self._name}_{self._identifier}'
+        await CgroupCpuset.async_create_group(self._group_name)
+        await CgroupCpuset.async_chown_group(self._group_name)
 
     @_Decorators.ensure_not_running
     async def set_cgroup_cpuset(self) -> None:
         cpu_topo, _ = self._host_numa_info
         core_set = CgroupCpuset.convert_to_set(self._binding_cores)
-        CgroupCpuset.async_assign(self._group_name, core_set)
+        await CgroupCpuset.async_assign(self._group_name, core_set)
 
     @_Decorators.ensure_not_running
     async def set_numa_mem_nodes(self) -> None:
@@ -254,7 +253,7 @@ class BenchDriver(metaclass=ABCMeta):
             mem_nodes = self._numa_mem_nodes.split(',')
             workload_mem_nodes = set([int(mem_node) for mem_node in mem_nodes])
 
-        CgroupCpuset.async_set_cpuset_mems(self._group_name, workload_mem_nodes)
+        await CgroupCpuset.async_set_cpuset_mems(self._group_name, workload_mem_nodes)
 
     @_Decorators.ensure_not_running
     def async_exec_cmd(self, exec_cmd: str) -> Coroutine:
@@ -262,16 +261,19 @@ class BenchDriver(metaclass=ABCMeta):
 
     @_Decorators.ensure_running
     async def rename_group(self) -> None:
+        logger = logging.getLogger(self._identifier)
         base_path: str = CgroupCpuset.MOUNT_POINT
         group_path = f'{base_path}/{self._group_name}'
 
         # Create new group name
-        new_group_name = f'{self._async_proc_info.name()}_{self._async_proc.pid}'
+        new_group_name = f'{self._name}_{self._bench_proc_info.pid}'
         new_group_path = f'{base_path}/{new_group_name}'
+        logger.info(f'group_path : {group_path}')
+        logger.info(f'new_group_path : {new_group_path}')
 
         # Rename group name
-        CgroupCpuset.async_rename_group(group_path, new_group_path)
         self._group_name = new_group_name
+        await CgroupCpuset.async_rename_group(group_path, new_group_path)
 
 
 
