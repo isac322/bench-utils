@@ -33,20 +33,16 @@ class RodiniaDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        if self._numa_cores is None:
-            mem_flag = '--localalloc'
-        else:
-            mem_flag = f'--membind={self._numa_cores}'
+        await self.create_cgroup_cpuset()
+        await self.set_cgroup_cpuset()
+        await self.set_numa_mem_nodes()
 
-        cmd = '--physcpubind={0} {1} {2}/openmp/{3}/run' \
-            .format(self._binging_cores, mem_flag, self._bench_home, self._name)
+        cmd = '{0}/openmp/{1}/run' \
+            .format(self._bench_home, self._name)
 
-        return await asyncio.create_subprocess_exec(
-                'numactl',
-                *shlex.split(cmd),
-                stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL,
-                env={
-                    'OMP_NUM_THREADS': str(self._num_threads),
-                    'GOMP_CPU_AFFINITY': str(self._binging_cores)
-                })
+        env = {
+            'OMP_NUM_THREADS': str(self._num_threads),
+            'GOMP_CPU_AFFINITY': str(self._binding_cores)
+            }
+
+        return await self.async_exec_cmd(exec_cmd=cmd, exec_env=env)

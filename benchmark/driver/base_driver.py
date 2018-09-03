@@ -6,7 +6,8 @@ import json
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Iterable, Optional, Set, Type
+from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict, Coroutine
+from ..utils.cgroup_cpuset import CgroupCpuset
 
 import psutil
 
@@ -50,15 +51,18 @@ class BenchDriver(metaclass=ABCMeta):
     _bench_home: str = None
     bench_name: str = None
 
-    def __init__(self, name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]):
+    def __init__(self, name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]):
         self._name: str = name
+        self._identifier: str = identifier
         self._num_threads: int = num_threads
-        self._binging_cores: str = binding_cores
-        self._numa_cores: Optional[str] = numa_cores
+        self._binding_cores: str = binding_cores
+        self._numa_mem_nodes: Optional[str] = numa_mem_nodes
 
+        self._host_numa_info: [Tuple[Dict[int, List[int], List[int]]]] = None
         self._bench_proc_info: Optional[psutil.Process] = None
         self._async_proc: Optional[asyncio.subprocess.Process] = None
         self._async_proc_info: Optional[psutil.Process] = None
+        self._group_name: str = None
 
     def __del__(self):
         try:
@@ -136,6 +140,7 @@ class BenchDriver(metaclass=ABCMeta):
         while True:
             self._bench_proc_info = self._find_bench_proc()
             if self._bench_proc_info is not None:
+                await self.rename_group()
                 return
             await asyncio.sleep(0.1)
 
@@ -165,6 +170,53 @@ class BenchDriver(metaclass=ABCMeta):
                 *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
         )
 
+    @_Decorators.ensure_not_running
+    async def create_cgroup_cpuset(self) -> None:
+        self._group_name = f'{self._name}_{self._identifier}'
+        await CgroupCpuset.async_create_group(self._group_name)
+        await CgroupCpuset.async_chown_group(self._group_name)
+
+    @_Decorators.ensure_not_running
+    async def set_cgroup_cpuset(self) -> None:
+        cpu_topo, _ = self._host_numa_info
+        core_set = CgroupCpuset.convert_to_set(self._binding_cores)
+        await CgroupCpuset.async_assign(self._group_name, core_set)
+
+    @_Decorators.ensure_not_running
+    async def set_numa_mem_nodes(self) -> None:
+        workload_mem_nodes = set()
+
+        if self._numa_mem_nodes is None:
+            # Local Alloc Case
+            cpu_topo, mem_topo = self._host_numa_info
+            for numa_node, cpuid_range in cpu_topo.items():
+                min_cpuid, max_cpuid = cpuid_range
+                if min_cpuid <= self._binding_cores <= max_cpuid:
+                    if numa_node in mem_topo:
+                        workload_mem_nodes.add(numa_node)
+        elif self._numa_mem_nodes is not None:
+            # Explicit Mem Node Alloc
+            mem_nodes = self._numa_mem_nodes.split(',')
+            workload_mem_nodes = set([int(mem_node) for mem_node in mem_nodes])
+
+        await CgroupCpuset.async_set_cpuset_mems(self._group_name, workload_mem_nodes)
+
+    @_Decorators.ensure_running
+    async def rename_group(self) -> None:
+        base_path: str = CgroupCpuset.MOUNT_POINT
+        group_path = f'{base_path}/{self._group_name}'
+
+        # Create new group name
+        new_group_name = f'{self._name}_{self._bench_proc_info.pid}'
+        new_group_path = f'{base_path}/{new_group_name}'
+
+        # Rename group name
+        await CgroupCpuset.async_rename_group(group_path, new_group_path)
+
+    @_Decorators.ensure_not_running
+    def async_exec_cmd(self, exec_cmd: str, exec_env: Optional[Dict[str, str]]) -> Coroutine:
+        return CgroupCpuset.async_cgexec(self._group_name, exec_cmd, exec_env)
+
 
 def find_driver(workload_name) -> Type[BenchDriver]:
     from benchmark.driver.spec_driver import SpecDriver
@@ -181,7 +233,7 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
 
 
-def bench_driver(workload_name: str, num_threads: int, binding_cores: str, numa_cores: Optional[str]) -> BenchDriver:
+def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, num_threads, binding_cores, numa_cores)
+    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes)
