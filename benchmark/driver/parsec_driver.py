@@ -39,4 +39,3 @@ class ParsecDriver(BenchDriver):
             .format(self._bench_home, self._name, self._num_threads)
 
         return await self.async_exec_cmd(exec_cmd=cmd, exec_env=None)
-        #return await asyncio.create_subprocess_exec(*shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL)
