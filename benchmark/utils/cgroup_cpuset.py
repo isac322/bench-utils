@@ -113,11 +113,12 @@ class CgroupCpuset:
         return proc
 
     @staticmethod
-    async def async_cgexec(group_name: str, cmd: str) -> asyncio.subprocess.Process:
+    async def async_cgexec(group_name: str, exec_cmd: str, exec_env: Optional[Dict[str, str]]) -> asyncio.subprocess.Process:
         #This function executes the program in a cgroup by using cgexec
         return await asyncio.create_subprocess_exec('cgexec', '-g', f'cpuset:{group_name}',
-                                             *shlex.split(cmd),
-                                             stdout=asyncio.subprocess.DEVNULL)
+                                                    *shlex.split(exec_cmd),
+                                                    stdout=asyncio.subprocess.DEVNULL,
+                                                    env=exec_env)
 
     @staticmethod
     async def async_rename_group(group_path: str, new_group_path: str) -> None:
@@ -177,5 +178,5 @@ class CgroupCpuset:
         return new_group_name
 
     @staticmethod
-    def async_exec_cmd(group_name: str, exec_cmd: str) -> Coroutine:
-        return CgroupCpuset.async_cgexec(group_name, exec_cmd)
+    def async_exec_cmd(group_name: str, exec_cmd: str, exec_env: Optional[Dict[str, str]]) -> Coroutine:
+        return CgroupCpuset.async_cgexec(group_name, exec_cmd, exec_env)

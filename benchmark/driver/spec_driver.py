@@ -33,14 +33,12 @@ class SpecDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        if self._numa_mem_nodes is None:
-            mem_flag = '--localalloc'
-        else:
-            mem_flag = f'--membind={self._numa_mem_nodes}'
+        await self.create_cgroup_cpuset()
+        await self.set_cgroup_cpuset()
+        await self.set_numa_mem_nodes()
 
-        cmd = '--physcpubind={0} {1} ' \
-              'runspec --config=vm.cfg --size=ref --noreportable --delay=0 --nobuild --iteration=1 {2}' \
-            .format(self._binding_cores, mem_flag, self._name)
+        cmd = 'runspec --config=vm.cfg --size=ref --noreportable --delay=0 --nobuild --iteration=1 {0}' \
+            .format(self._name)
 
         bench_bin = os.path.join(SpecDriver._bench_home, 'bin')
         bench_lib = os.path.join(bench_bin, 'lib')
@@ -52,8 +50,7 @@ class SpecDriver(BenchDriver):
         env['LC_LANG'] = 'C'
         env['LC_ALL'] = 'C'
 
-        return await asyncio.create_subprocess_exec(
-                'numactl', *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
+        return await self.async_exec_cmd(exec_cmd=cmd, exec_env=env)
 
     def stop(self) -> None:
         try:

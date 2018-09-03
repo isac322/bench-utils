@@ -213,10 +213,9 @@ class BenchDriver(metaclass=ABCMeta):
         # Rename group name
         await CgroupCpuset.async_rename_group(group_path, new_group_path)
 
-
     @_Decorators.ensure_not_running
-    def async_exec_cmd(self, exec_cmd) -> Coroutine:
-        return CgroupCpuset.async_cgexec(self._group_name, exec_cmd)
+    def async_exec_cmd(self, exec_cmd: str, exec_env: Optional[Dict[str, str]]) -> Coroutine:
+        return CgroupCpuset.async_cgexec(self._group_name, exec_cmd, exec_env)
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
