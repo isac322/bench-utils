@@ -1,15 +1,12 @@
 # coding: UTF-8
 
 import asyncio
-import aiofiles
 import json
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict, Coroutine
-from pathlib import Path
 from ..utils.cgroup_cpuset import CgroupCpuset
 
-import logging
 import functools
 import psutil
 from abc import ABCMeta, abstractmethod
@@ -61,7 +58,7 @@ class BenchDriver(metaclass=ABCMeta):
         self._binding_cores: str = binding_cores
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
 
-        self._host_numa_info: Optional[Tuple[Dict[int, List[int], List[int]]]] = None
+        self._host_numa_info: [Tuple[Dict[int, List[int], List[int]]]] = None
         self._bench_proc_info: Optional[psutil.Process] = None
         self._async_proc: Optional[asyncio.subprocess.Process] = None
         self._async_proc_info: Optional[psutil.Process] = None
@@ -137,7 +134,6 @@ class BenchDriver(metaclass=ABCMeta):
     @_Decorators.ensure_not_running
     async def run(self) -> None:
         self._bench_proc_info = None
-        self._host_numa_info = await self.get_numa_info()
         self._async_proc = await self._launch_bench()
         self._async_proc_info = psutil.Process(self._async_proc.pid)
 
@@ -175,56 +171,6 @@ class BenchDriver(metaclass=ABCMeta):
         )
 
     @_Decorators.ensure_not_running
-    async def _get_node_topo(self, _base_path: str) -> List[int]:
-        base_path = Path(_base_path)
-        online_path = base_path / 'online'
-        async with aiofiles.open(online_path) as fp:
-            line: str = await fp.readline()
-            node_list = [int(num) for num in line.split('-')]
-        return node_list
-
-    @_Decorators.ensure_not_running
-    async def _get_cpu_topo(self, _base_path: str, node_list: List[int]) -> Dict[int, List[List[int]]]:
-        base_path = Path(_base_path)
-        cpu_topo: Dict[int, List[List[int]]] = dict()
-
-        for num in node_list:
-            cpulist_path = base_path / f'node{num}/cpulist'
-
-            async with aiofiles.open(cpulist_path) as fp:
-                line: str = await fp.readline()
-                cpu_ranges: List[List[str]] = [cpus.split('-') for cpus in line.split(',')]
-                int_cpu_ranges: List[List[int]] = list()
-                for cpu_range in cpu_ranges:
-                    int_cpu_range = [int(cpuid) for cpuid in cpu_range]
-                    int_cpu_ranges.append(int_cpu_range)
-                cpu_topo[num] = int_cpu_ranges
-        return cpu_topo
-
-    @_Decorators.ensure_not_running
-    async def _get_mem_topo(self, _base_path: str) -> List[int]:
-        base_path = Path(_base_path)
-        has_memory_path = base_path / 'has_memory'
-
-        async with aiofiles.open(has_memory_path) as fp:
-            line: str = await fp.readline()
-            mem_list = line.split('-')
-            mem_topo = [int(num) for num in mem_list]
-
-            # TODO: mem_topo can be enhanced by using real numa memory access latency
-
-        return mem_topo
-
-    @_Decorators.ensure_not_running
-    async def get_numa_info(self) -> Tuple[Dict[int, List[List[int]]], List[int]]:
-        _base_path = '/sys/devices/system/node'
-
-        node_list = await self._get_node_topo(_base_path)
-        cpu_topo = await self._get_cpu_topo(_base_path, node_list)
-        mem_topo = await self._get_mem_topo(_base_path)
-        return cpu_topo, mem_topo
-
-    @_Decorators.ensure_not_running
     async def create_cgroup_cpuset(self) -> None:
         self._group_name = f'{self._name}_{self._identifier}'
         await CgroupCpuset.async_create_group(self._group_name)
@@ -255,26 +201,22 @@ class BenchDriver(metaclass=ABCMeta):
 
         await CgroupCpuset.async_set_cpuset_mems(self._group_name, workload_mem_nodes)
 
-    @_Decorators.ensure_not_running
-    def async_exec_cmd(self, exec_cmd: str) -> Coroutine:
-        return CgroupCpuset.async_cgexec(self._group_name, exec_cmd)
-
     @_Decorators.ensure_running
     async def rename_group(self) -> None:
-        logger = logging.getLogger(self._identifier)
         base_path: str = CgroupCpuset.MOUNT_POINT
         group_path = f'{base_path}/{self._group_name}'
 
         # Create new group name
         new_group_name = f'{self._name}_{self._bench_proc_info.pid}'
         new_group_path = f'{base_path}/{new_group_name}'
-        logger.info(f'group_path : {group_path}')
-        logger.info(f'new_group_path : {new_group_path}')
 
         # Rename group name
-        self._group_name = new_group_name
         await CgroupCpuset.async_rename_group(group_path, new_group_path)
 
+
+    @_Decorators.ensure_not_running
+    def async_exec_cmd(self, exec_cmd) -> Coroutine:
+        return CgroupCpuset.async_cgexec(self._group_name, exec_cmd)
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:

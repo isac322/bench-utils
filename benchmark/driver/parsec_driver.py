@@ -6,7 +6,7 @@ from typing import Optional, Set
 import psutil
 
 from benchmark.driver.base_driver import BenchDriver
-import logging
+from benchmark.utils.cgroup_cpuset import CgroupCpuset
 
 
 class ParsecDriver(BenchDriver):

@@ -5,7 +5,7 @@ import asyncio
 import shlex
 import logging
 import getpass
-from typing import Set
+from typing import Set, Dict, List, Tuple, Coroutine, Optional
 
 import psutil
 
@@ -123,3 +123,59 @@ class CgroupCpuset:
     async def async_rename_group(group_path: str, new_group_path: str) -> None:
         await asyncio.create_subprocess_exec('sudo', 'mv', f'{group_path}', f'{new_group_path}',
                                                     stdout=asyncio.subprocess.DEVNULL)
+
+    # Below functions are exposed to be used with other framework
+
+    @staticmethod
+    async def create_cgroup_cpuset(wl_name: str, identifier: str) -> str:
+        group_name = f'{wl_name}_{identifier}'
+        await CgroupCpuset.async_create_group(group_name)
+        await CgroupCpuset.async_chown_group(group_name)
+        return group_name
+
+    @staticmethod
+    async def set_cgroup_cpuset(group_name: str,
+                                binding_cores: str,
+                                host_numa_info: Tuple[Dict[int, List[int]], List[int]]) -> None:
+        cpu_topo, _ = host_numa_info
+        core_set = CgroupCpuset.convert_to_set(binding_cores)
+        await CgroupCpuset.async_assign(group_name, core_set)
+
+    @staticmethod
+    async def set_numa_mem_nodes(group_name: str,
+                                 binding_cores: str,
+                                 numa_mem_nodes: str,
+                                 host_numa_info: [Tuple[Dict[int, List[int]], List[int]]]) -> None:
+        workload_mem_nodes = set()
+
+        if numa_mem_nodes is None:
+            # Local Alloc Case
+            cpu_topo, mem_topo = host_numa_info
+            for numa_node, cpuid_range in cpu_topo.items():
+                min_cpuid, max_cpuid = cpuid_range
+                if min_cpuid <= binding_cores <= max_cpuid:
+                    if numa_node in mem_topo:
+                        workload_mem_nodes.add(numa_node)
+        elif numa_mem_nodes is not None:
+            # Explicit Mem Node Alloc
+            mem_nodes = numa_mem_nodes.split(',')
+            workload_mem_nodes = set([int(mem_node) for mem_node in mem_nodes])
+
+        await CgroupCpuset.async_set_cpuset_mems(group_name, workload_mem_nodes)
+
+    @staticmethod
+    async def rename_group(group_name: str, wl_name: str, wl_pid: int) -> str:
+        base_path: str = CgroupCpuset.MOUNT_POINT
+        group_path = f'{base_path}/{group_name}'
+
+        # Create new group name
+        new_group_name = f'{wl_name}_{wl_pid}'
+        new_group_path = f'{base_path}/{new_group_name}'
+
+        # Rename group name
+        await CgroupCpuset.async_rename_group(group_path, new_group_path)
+        return new_group_name
+
+    @staticmethod
+    def async_exec_cmd(group_name: str, exec_cmd: str) -> Coroutine:
+        return CgroupCpuset.async_cgexec(group_name, exec_cmd)

@@ -21,7 +21,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 from benchmark.driver.base_driver import BenchDriver
 from containers import BenchConfig, PerfConfig, RabbitMQConfig
-
+from .utils.numa_topology import NumaTopology
 
 class Benchmark:
     class _Decorators:
@@ -110,8 +110,10 @@ class Benchmark:
             stream_handler.setFormatter(Benchmark._stream_formatter)
             logger.addHandler(stream_handler)
 
-        # launching benchmark
+        # retrieve host numa info
+        self._bench_driver._host_numa_info = await NumaTopology.get_numa_info()
 
+        # launching benchmark
         logger.info('Starting benchmark...')
         await self._bench_driver.run()
         logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
