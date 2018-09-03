@@ -24,6 +24,9 @@ from ..monitors.messages.handlers.base_handler import BaseHandler
 
 
 class Benchmark(BaseBenchmark):
+    _bench_config: BenchConfig
+    _bench_driver: BenchDriver
+
     def __new__(cls: Type[Benchmark],
                 bench_config: BenchConfig,
                 workspace: Path,
@@ -31,7 +34,7 @@ class Benchmark(BaseBenchmark):
         obj: Benchmark = super().__new__(cls, bench_config.identifier, workspace, logger_level)
 
         obj._bench_config = bench_config
-        obj._bench_driver: BenchDriver = bench_config.generate_driver()
+        obj._bench_driver = bench_config.generate_driver()
 
         return obj
 
@@ -127,6 +130,7 @@ class Benchmark(BaseBenchmark):
         except psutil.NoSuchProcess:
             return tuple()
 
+    @ensure_running
     async def join(self) -> None:
         await self._bench_driver.join()
 

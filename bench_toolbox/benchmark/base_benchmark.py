@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Tuple, Type
+from typing import ClassVar, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
@@ -15,9 +15,15 @@ from ..monitors.pipelines import BasePipeline, DefaultPipeline
 
 
 class BaseBenchmark(metaclass=ABCMeta):
-    _file_formatter = ColoredFormatter(
+    _file_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
-    _stream_formatter = ColoredFormatter('%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
+    _stream_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
+            '%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
+
+    _identifier: str
+    _monitors: Tuple[BaseMonitor[MonitorData], ...]
+    _pipeline: BasePipeline
+    _log_path: Path
 
     def __new__(cls: Type[BaseBenchmark],
                 identifier: str,
@@ -27,14 +33,14 @@ class BaseBenchmark(metaclass=ABCMeta):
 
         obj._identifier = identifier
 
-        obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
-        obj._pipeline: BasePipeline = DefaultPipeline()
+        obj._monitors = tuple()
+        obj._pipeline = DefaultPipeline()
 
         # setup for logger
         log_dir = workspace / 'logs'
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        obj._log_path: Path = log_dir / f'{identifier}.log'
+        obj._log_path = log_dir / f'{identifier}.log'
 
         logger = logging.getLogger(identifier)
         logger.setLevel(logger_level)
