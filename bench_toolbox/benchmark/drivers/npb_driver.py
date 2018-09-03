@@ -2,7 +2,7 @@
 
 import asyncio
 import shlex
-from typing import Optional, Set
+from typing import ClassVar, Dict, Optional, Set
 
 import psutil
 
@@ -10,11 +10,11 @@ from .base_driver import BenchDriver
 
 
 class NPBDriver(BenchDriver):
-    _benches: Set[str] = {'CG', 'IS', 'DC', 'EP', 'MG', 'FT', 'SP', 'BT', 'LU', 'UA'}
-    bench_name: str = 'npb'
+    _benches: ClassVar[Set[str]] = {'CG', 'IS', 'DC', 'EP', 'MG', 'FT', 'SP', 'BT', 'LU', 'UA'}
+    bench_name: ClassVar[str] = 'npb'
 
     # TODO: variable data size
-    DATA_SET_MAP = {
+    DATA_SET_MAP: ClassVar[Dict[str, str]] = {
         'CG': 'C',
         'IS': 'D',
         'DC': 'B',

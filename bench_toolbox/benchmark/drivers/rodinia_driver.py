@@ -2,7 +2,7 @@
 
 import asyncio
 import shlex
-from typing import Optional, Set
+from typing import ClassVar, Optional, Set
 
 import psutil
 
@@ -10,8 +10,8 @@ from .base_driver import BenchDriver
 
 
 class RodiniaDriver(BenchDriver):
-    _benches: Set[str] = {'nn', 'kmeans', 'cfd', 'particlefilter', 'bfs'}
-    bench_name: str = 'rodinia'
+    _benches: ClassVar[Set[str]] = {'nn', 'kmeans', 'cfd', 'particlefilter', 'bfs'}
+    bench_name: ClassVar[str] = 'rodinia'
 
     @staticmethod
     def has(bench_name: str) -> bool:

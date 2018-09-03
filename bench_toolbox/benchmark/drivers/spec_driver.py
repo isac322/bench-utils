@@ -4,7 +4,7 @@ import asyncio
 import os
 import shlex
 from signal import SIGCONT, SIGSTOP
-from typing import Optional, Set
+from typing import ClassVar, Optional, Set
 
 import psutil
 
@@ -13,8 +13,8 @@ from ..decorators.driver import ensure_running
 
 
 class SpecDriver(BenchDriver):
-    _benches: Set[str] = {'lbm', 'libquantum', 'GemsFDTD', 'sphinx', 'gcc', 'zeusmp', 'sjeng'}
-    bench_name: str = 'spec'
+    _benches: ClassVar[Set[str]] = {'lbm', 'libquantum', 'GemsFDTD', 'sphinx', 'gcc', 'zeusmp', 'sjeng'}
+    bench_name: ClassVar[str] = 'spec'
 
     @staticmethod
     def has(bench_name: str) -> bool:

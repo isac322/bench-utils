@@ -2,7 +2,7 @@
 
 import asyncio
 import shlex
-from typing import Optional, Set
+from typing import ClassVar, Optional, Set
 
 import psutil
 
@@ -10,9 +10,11 @@ from .base_driver import BenchDriver
 
 
 class ParsecDriver(BenchDriver):
-    _benches: Set[str] = {'streamcluster', 'canneal', 'swaptions', 'x264', 'ferret', 'bodytrack', 'blackscholes',
-                          'dedup', 'facesim', 'fluidanimate', 'freqmine', 'raytrace', 'vips'}
-    bench_name: str = 'parsec'
+    _benches: ClassVar[Set[str]] = {
+        'streamcluster', 'canneal', 'swaptions', 'x264', 'ferret', 'bodytrack', 'blackscholes',
+        'dedup', 'facesim', 'fluidanimate', 'freqmine', 'raytrace', 'vips'
+    }
+    bench_name: ClassVar[str] = 'parsec'
 
     @staticmethod
     def has(bench_name: str) -> bool:

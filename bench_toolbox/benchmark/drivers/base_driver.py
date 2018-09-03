@@ -3,7 +3,7 @@
 import asyncio
 from abc import ABCMeta, abstractmethod
 from signal import SIGCONT, SIGSTOP
-from typing import Optional, Set
+from typing import ClassVar, Optional, Set
 
 import psutil
 
@@ -11,26 +11,34 @@ from ..decorators.driver import ensure_invoked, ensure_not_running, ensure_runni
 
 
 class BenchDriver(metaclass=ABCMeta):
-    _benches: Set[str] = None
+    _benches: ClassVar[Set[str]] = None
     """
     :class:`Set` of benchmark names.
     
     All subclasses of :class:`BenchDriver` should override this variable with their own benchmark name.
     """
 
-    _bench_home: str = None
+    _bench_home: ClassVar[str] = None
     """
     Base directory of the benchmark.
     
     All subclasses of :class:`BenchDriver` should override this variable with their own home directory.
     """
 
-    bench_name: str = None
+    bench_name: ClassVar[str] = None
     """
     Benchmark set name.
     
     All subclasses of :class:`BenchDriver` should override this variable with their own benchmark set name.
     """
+
+    _name: str
+    _num_threads: int
+    _bound_cores: str
+    _bound_sockets: Optional[str]
+    _bench_proc_info: Optional[psutil.Process]
+    _async_proc: Optional[asyncio.subprocess.Process]
+    _async_proc_info: Optional[psutil.Process]
 
     def __init__(self, name: str, num_threads: int, bound_cores: str, bound_sockets: Optional[str]):
         self._name: str = name
