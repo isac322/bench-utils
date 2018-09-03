@@ -14,10 +14,14 @@ T = TypeVar('T', bound=BaseBenchmark)
 
 
 class BaseBuilder(Generic[T], metaclass=ABCMeta):
+    _is_finalized: bool
+    _cur_obj: Optional[T]
+    _monitors: List[BaseMonitor[MonitorData]]
+
     def __init__(self) -> None:
         self._is_finalized = False
-        self._cur_obj: Optional[T] = None
-        self._monitors: List[BaseMonitor[MonitorData]] = list()
+        self._cur_obj = None
+        self._monitors = list()
 
     @abstractmethod
     def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
