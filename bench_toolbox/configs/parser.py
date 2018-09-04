@@ -125,6 +125,7 @@ def workloads(wl_configs: List[Mapping]) -> Tuple[BenchConfig, ...]:
                         config['bound_cores'],
                         config['mem_bound_sockets'],
                         config['cpu_freq'],
+                        # TODO: add configuration name
                         '_'.join(map(str, sorted_pairs[idx].cfg)))
             for idx, config in enumerate(wl_configs)
     )
