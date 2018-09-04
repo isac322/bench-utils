@@ -1,19 +1,27 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Generic, Mapping
+from typing import Any, Callable, Coroutine, Type
 
 from . import MonitorData
 from .base_monitor import BaseMonitor
 from .messages import BaseMessage
 
 
-class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):
-    def __init__(self, emitter: Callable[[BaseMessage], None], interval: int) -> None:
-        super().__init__(emitter)
+class OneShotMonitor(BaseMonitor[MonitorData], metaclass=ABCMeta):
+    _interval: float
 
-        self._interval: int = interval
+    def __new__(cls: Type[OneShotMonitor],
+                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
+                interval: int) -> Any:
+        obj = super().__new__(cls, emitter)
+
+        obj._interval = interval / 1000
+
+        return obj
 
     async def _monitor(self) -> None:
         while True:
@@ -21,17 +29,14 @@ class OneShotMonitor(BaseMonitor, Generic[MonitorData], metaclass=ABCMeta):
             transformed = self._transform_data(data)
 
             message = await self.create_message(transformed)
-            self._emitter(message)
+            await self._emitter(message)
+
             await asyncio.sleep(self._interval)
 
     @abstractmethod
-    async def create_message(self, data: Mapping[str, MonitorData]) -> BaseMessage:
-        pass
-
-    @abstractmethod
-    async def monitor_once(self) -> Mapping[str, MonitorData]:
+    async def monitor_once(self) -> MonitorData:
         pass
 
     # noinspection PyMethodMayBeStatic
-    def _transform_data(self, data: Mapping[str, MonitorData]) -> Mapping[str, MonitorData]:
+    def _transform_data(self, data: MonitorData) -> MonitorData:
         return data

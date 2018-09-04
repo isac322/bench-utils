@@ -1,19 +1,28 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Mapping
+from typing import Any, Callable, Coroutine, Optional, Type
 
 from . import MonitorData
 from .messages import BaseMessage
 from .oneshot_monitor import OneShotMonitor
 
 
-class IterationDependentMonitor(OneShotMonitor, metaclass=ABCMeta):
-    def __init__(self, emitter: Callable[[BaseMessage], None], interval: int) -> None:
-        super().__init__(emitter, interval)
+# FIXME: rename
+class IterationDependentMonitor(OneShotMonitor[MonitorData], metaclass=ABCMeta):
+    _prev_data: Optional[MonitorData]
 
-        self._prev_data: Mapping[str, MonitorData] = None
+    def __new__(cls: Type[IterationDependentMonitor],
+                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
+                interval: int) -> Any:
+        obj = super().__new__(cls, emitter, interval)
+
+        obj._prev_data = None
+
+        return obj
 
     async def _monitor(self) -> None:
         while True:
@@ -24,10 +33,11 @@ class IterationDependentMonitor(OneShotMonitor, metaclass=ABCMeta):
             transformed = self._transform_data(diff)
 
             message = await self.create_message(transformed)
-            self._emitter(message)
+            await self._emitter(message)
+
             await asyncio.sleep(self._interval)
 
+    # FIXME: rename
     @abstractmethod
-    def calc_diff(self, before: Mapping[str, MonitorData], after: Mapping[str, MonitorData]) \
-            -> Mapping[str, MonitorData]:
+    def calc_diff(self, before: MonitorData, after: MonitorData) -> MonitorData:
         pass

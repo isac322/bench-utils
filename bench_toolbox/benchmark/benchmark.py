@@ -80,9 +80,9 @@ class Benchmark(BaseBenchmark):
 
         finally:
             logger.info('The benchmark is ended.')
-            self._remove_logger_handlers()
-
             await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
+
+            self._remove_logger_handlers()
 
     @ensure_running
     def pause(self) -> None:
@@ -155,6 +155,6 @@ class Benchmark(BaseBenchmark):
 
         def _finalize(self) -> None:
             if len(self._monitors) is 0:
-                self._cur_obj._monitors = (IdleMonitor(self._cur_obj),)
-            else:
-                self._cur_obj._monitors = self._monitors
+                self.build_monitor(IdleMonitor.Builder())
+
+            self._cur_obj._monitors = self._monitors

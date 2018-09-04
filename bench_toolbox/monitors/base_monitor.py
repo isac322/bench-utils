@@ -1,8 +1,10 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Generic, Mapping
+from typing import Any, Callable, Coroutine, Generic, Type
 
 from . import MonitorData
 from .messages import BaseMessage
@@ -10,9 +12,17 @@ from .messages import BaseMessage
 
 # parametrize message type too
 class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
-    def __init__(self, emitter: Callable[[BaseMessage], None]) -> None:
-        self._initialized = False
-        self._emitter = emitter
+    _initialized: bool
+    _emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]
+
+    def __new__(cls: Type[BaseMonitor],
+                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]) -> Any:
+        obj = super().__new__(cls)
+
+        obj._initialized = False
+        obj._emitter = emitter
+
+        return obj
 
     async def monitor(self) -> None:
         if not self._initialized:
@@ -29,7 +39,7 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def create_message(self, data: Mapping[str, MonitorData]) -> BaseMessage:
+    async def create_message(self, data: MonitorData) -> BaseMessage[MonitorData]:
         pass
 
     async def on_cancel(self, cancel_error: asyncio.CancelledError) -> None:

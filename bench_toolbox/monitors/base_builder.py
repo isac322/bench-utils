@@ -13,10 +13,14 @@ T = TypeVar('T', bound=BaseMonitor)
 
 
 class BaseBuilder(Generic[T], metaclass=ABCMeta):
+    _is_finalized: bool
+    _cur_bench: Optional[BaseBenchmark]
+    _cur_emitter: Optional[Callable[[BaseMessage], Coroutine[None, None, None]]]
+
     def __init__(self) -> None:
         self._is_finalized = False
-        self._cur_bench: Optional[BaseBenchmark] = None
-        self._cur_emitter: Optional[Callable[[BaseMessage], Coroutine[None, None, None]]] = None
+        self._cur_bench = None
+        self._cur_emitter = None
 
     def set_benchmark(self, bench: BaseBenchmark) -> BaseBuilder[T]:
         if self._is_finalized:
