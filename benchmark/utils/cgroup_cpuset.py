@@ -1,11 +1,10 @@
 # coding: UTF-8
 
-import subprocess
 import asyncio
-import shlex
-import logging
 import getpass
-from typing import Set, Dict, List, Tuple, Coroutine, Optional
+import shlex
+import subprocess
+from typing import Coroutine, Dict, List, Optional, Set, Tuple
 
 import psutil
 
@@ -23,7 +22,8 @@ class CgroupCpuset:
 
     @staticmethod
     async def async_chown_group(name: str) -> None:
-        return await asyncio.create_subprocess_exec('sudo', 'chown', '-R', f'{getpass.getuser()}',f'{CgroupCpuset.MOUNT_POINT}/{name}')
+        return await asyncio.create_subprocess_exec('sudo', 'chown', '-R', f'{getpass.getuser()}',
+                                                    f'{CgroupCpuset.MOUNT_POINT}/{name}')
 
     @staticmethod
     def add_task(name: str, pid: int) -> None:
@@ -74,7 +74,7 @@ class CgroupCpuset:
     @staticmethod
     async def async_assign(group_name: str, core_set: Set[int]) -> None:
         proc = await asyncio.create_subprocess_exec('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.cpus',
-                       stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
+                                                    stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
         input_core_set = ','.join(map(str, core_set)).encode()
         return await proc.communicate(input_core_set)
 
@@ -100,21 +100,22 @@ class CgroupCpuset:
     @staticmethod
     async def async_set_cpuset_mems(group_name: str, mem_set: Set[int]) -> None:
         proc = await asyncio.create_subprocess_exec('sudo', 'tee', f'/sys/fs/cgroup/cpuset/{group_name}/cpuset.mems',
-                       stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
+                                                    stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
         input_mem_set = ','.join(map(str, mem_set)).encode()
         return await proc.communicate(input_mem_set)
 
     @staticmethod
     def cgexec(group_name: str, cmd: str) -> subprocess.CompletedProcess:
-        #This function executes the program in a cgroup by using cgexec
-        #TODO: Test
+        # This function executes the program in a cgroup by using cgexec
+        # TODO: Test
         proc = subprocess.run(args=('cgexec', '-g', f'cpuset:{group_name}', *shlex.split(cmd)),
-                       check=True, encoding='ASCII', stdout=subprocess.DEVNULL)
+                              check=True, encoding='ASCII', stdout=subprocess.DEVNULL)
         return proc
 
     @staticmethod
-    async def async_cgexec(group_name: str, exec_cmd: str, exec_env: Optional[Dict[str, str]]) -> asyncio.subprocess.Process:
-        #This function executes the program in a cgroup by using cgexec
+    async def async_cgexec(group_name: str, exec_cmd: str,
+                           exec_env: Optional[Dict[str, str]]) -> asyncio.subprocess.Process:
+        # This function executes the program in a cgroup by using cgexec
         return await asyncio.create_subprocess_exec('cgexec', '-g', f'cpuset:{group_name}',
                                                     *shlex.split(exec_cmd),
                                                     stdout=asyncio.subprocess.DEVNULL,
@@ -123,7 +124,7 @@ class CgroupCpuset:
     @staticmethod
     async def async_rename_group(group_path: str, new_group_path: str) -> None:
         await asyncio.create_subprocess_exec('sudo', 'mv', f'{group_path}', f'{new_group_path}',
-                                                    stdout=asyncio.subprocess.DEVNULL)
+                                             stdout=asyncio.subprocess.DEVNULL)
 
     # Below functions are exposed to be used with other framework
 

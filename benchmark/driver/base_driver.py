@@ -1,15 +1,16 @@
 # coding: UTF-8
 
 import asyncio
+import functools
 import json
+from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict, Coroutine
-from ..utils.cgroup_cpuset import CgroupCpuset
+from typing import Any, Callable, Coroutine, Dict, Iterable, List, Optional, Set, Tuple, Type
 
-import functools
 import psutil
-from abc import ABCMeta, abstractmethod
+
+from ..utils.cgroup_cpuset import CgroupCpuset
 
 
 class BenchDriver(metaclass=ABCMeta):
@@ -233,7 +234,8 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
 
 
-def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str]) -> BenchDriver:
+def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str,
+                 numa_mem_nodes: Optional[str]) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
     return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes)

@@ -1,9 +1,8 @@
-import aiofiles
-import logging
-
-
-from typing import Tuple, List, Dict
 from pathlib import Path
+from typing import Dict, List, Tuple
+
+import aiofiles
+
 
 class NumaTopology:
     BASE_PATH = '/sys/devices/system/node'

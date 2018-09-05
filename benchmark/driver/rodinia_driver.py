@@ -1,7 +1,6 @@
 # coding: UTF-8
 
 import asyncio
-import shlex
 from typing import Optional, Set
 
 import psutil
@@ -43,6 +42,6 @@ class RodiniaDriver(BenchDriver):
         env = {
             'OMP_NUM_THREADS': str(self._num_threads),
             'GOMP_CPU_AFFINITY': str(self._binding_cores)
-            }
+        }
 
         return await self.async_exec_cmd(exec_cmd=cmd, exec_env=env)

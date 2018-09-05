@@ -2,7 +2,6 @@
 
 import asyncio
 import os
-import shlex
 from signal import SIGCONT, SIGSTOP
 from typing import Optional, Set
 
