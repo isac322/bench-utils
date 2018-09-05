@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from concurrent.futures import CancelledError
-from itertools import chain
 from pathlib import Path
 from typing import Tuple, Type
 
@@ -120,15 +119,7 @@ class Benchmark(BaseBenchmark):
 
     @ensure_running
     def all_child_tid(self) -> Tuple[int, ...]:
-        try:
-            proc = psutil.Process(self._bench_driver.pid)
-
-            return tuple(chain(
-                    (t.id for t in proc.threads()),
-                    *((t.id for t in proc.threads()) for proc in proc.children(recursive=True))
-            ))
-        except psutil.NoSuchProcess:
-            return tuple()
+        return self._bench_driver.all_child_tid()
 
     @ensure_running
     async def join(self) -> None:

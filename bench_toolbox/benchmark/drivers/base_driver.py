@@ -2,8 +2,9 @@
 
 import asyncio
 from abc import ABCMeta, abstractmethod
+from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import ClassVar, Optional, Set
+from typing import ClassVar, Optional, Set, Tuple
 
 import psutil
 
@@ -151,3 +152,16 @@ class BenchDriver(metaclass=ABCMeta):
     def resume(self) -> None:
         self._wrapper_proc.send_signal(SIGCONT)
         self._bench_proc_info.resume()
+
+    @ensure_running
+    def all_child_tid(self) -> Tuple[int, ...]:
+        if self._bench_proc_info is None:
+            return tuple()
+
+        try:
+            return tuple(chain(
+                    (t.id for t in self._bench_proc_info.threads()),
+                    *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
+            ))
+        except psutil.NoSuchProcess:
+            return tuple()
