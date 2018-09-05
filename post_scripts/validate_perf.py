@@ -16,12 +16,12 @@ def run(workspace: Path, global_cfg_path: Path):
         error_file.unlink()
 
     for result in results:
-        if 0 in result.metrics.get('llc_occupancy'):
-            print(f'{result.name} has 0 llc_occupancy value!', file=sys.stderr)
+        if 0 in result.metrics.get('llc_size'):
+            print(f'{result.name} has 0 llc_size value!', file=sys.stderr)
 
             if not error_file.exists():
-                with open(error_file, mode='w') as fp:
+                with error_file.open('w') as fp:
                     fp.write(result.name)
             else:
-                with open(error_file, mode='a') as fp:
+                with error_file.open('a') as fp:
                     fp.write(result.name)
