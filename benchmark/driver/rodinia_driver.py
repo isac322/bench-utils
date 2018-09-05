@@ -32,10 +32,6 @@ class RodiniaDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        await self.create_cgroup_cpuset()
-        await self.set_cgroup_cpuset()
-        await self.set_numa_mem_nodes()
-
         cmd = '{0}/openmp/{1}/run' \
             .format(self._bench_home, self._name)
 
@@ -44,4 +40,6 @@ class RodiniaDriver(BenchDriver):
             'GOMP_CPU_AFFINITY': str(self._binding_cores)
         }
 
-        return await self.async_exec_cmd(exec_cmd=cmd, exec_env=env)
+        return await self._cgroup.exec_command(cmd, env=env,
+                                               stdout=asyncio.subprocess.DEVNULL,
+                                               stderr=asyncio.subprocess.DEVNULL)

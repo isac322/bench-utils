@@ -266,6 +266,7 @@ class Benchmark:
             except (psutil.NoSuchProcess, ProcessLookupError):
                 pass
 
+            await self._bench_driver.cleanup()
             await self._remove_res_dir()
             logger.info('The benchmark is ended.')
             self._remove_logger_handlers()
