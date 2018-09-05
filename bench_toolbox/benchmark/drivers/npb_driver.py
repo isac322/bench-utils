@@ -38,8 +38,8 @@ class NPBDriver(BenchDriver):
     def _find_bench_proc(self) -> Optional[psutil.Process]:
         exec_name = self._exec_name
 
-        if self._async_proc_info.name() == exec_name and self._async_proc_info.is_running():
-            return self._async_proc_info
+        if self._wrapper_proc_info.name() == exec_name and self._wrapper_proc_info.is_running():
+            return self._wrapper_proc_info
 
         return None
 

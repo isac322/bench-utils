@@ -26,7 +26,7 @@ class ParsecDriver(BenchDriver):
         else:
             exec_name = self._name
 
-        for process in self._async_proc_info.children(recursive=True):  # type: psutil.Process
+        for process in self._wrapper_proc_info.children(recursive=True):  # type: psutil.Process
             if process.name() == exec_name and process.is_running():
                 return process
 

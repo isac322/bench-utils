@@ -36,19 +36,15 @@ class BenchDriver(metaclass=ABCMeta):
     _num_threads: int
     _bound_cores: str
     _bound_sockets: Optional[str]
-    _bench_proc_info: Optional[psutil.Process]
-    _async_proc: Optional[asyncio.subprocess.Process]
-    _async_proc_info: Optional[psutil.Process]
+    _bench_proc_info: Optional[psutil.Process] = None
+    _wrapper_proc: Optional[asyncio.subprocess.Process] = None
+    _wrapper_proc_info: Optional[psutil.Process] = None
 
     def __init__(self, name: str, num_threads: int, bound_cores: str, bound_sockets: Optional[str]):
-        self._name: str = name
-        self._num_threads: int = num_threads
-        self._bound_cores: str = bound_cores
-        self._bound_sockets: Optional[str] = bound_sockets
-
-        self._bench_proc_info: Optional[psutil.Process] = None
-        self._async_proc: Optional[asyncio.subprocess.Process] = None
-        self._async_proc_info: Optional[psutil.Process] = None
+        self._name = name
+        self._num_threads = num_threads
+        self._bound_cores = bound_cores
+        self._bound_sockets = bound_sockets
 
     def __del__(self):
         if self._is_running:
@@ -92,8 +88,8 @@ class BenchDriver(metaclass=ABCMeta):
     @property
     def has_invoked(self) -> bool:
         return self._bench_proc_info is not None and \
-               self._async_proc is not None and \
-               self._async_proc_info is not None
+               self._wrapper_proc is not None and \
+               self._wrapper_proc_info is not None
 
     @property
     def is_running(self) -> bool:
@@ -128,8 +124,8 @@ class BenchDriver(metaclass=ABCMeta):
     @ensure_not_running
     async def run(self) -> None:
         self._bench_proc_info = None
-        self._async_proc = await self._launch_bench()
-        self._async_proc_info = psutil.Process(self._async_proc.pid)
+        self._wrapper_proc = await self._launch_bench()
+        self._wrapper_proc_info = psutil.Process(self._wrapper_proc.pid)
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
@@ -139,19 +135,19 @@ class BenchDriver(metaclass=ABCMeta):
 
     @ensure_running
     async def join(self) -> None:
-        await self._async_proc.wait()
+        await self._wrapper_proc.wait()
 
     def stop(self) -> None:
-        self._async_proc.kill()
+        self._wrapper_proc.kill()
         self._bench_proc_info.kill()
-        self._async_proc_info.kill()
+        self._wrapper_proc_info.kill()
 
     @ensure_running
     def pause(self) -> None:
-        self._async_proc.send_signal(SIGSTOP)
+        self._wrapper_proc.send_signal(SIGSTOP)
         self._bench_proc_info.suspend()
 
     @ensure_running
     def resume(self) -> None:
-        self._async_proc.send_signal(SIGCONT)
+        self._wrapper_proc.send_signal(SIGCONT)
         self._bench_proc_info.resume()

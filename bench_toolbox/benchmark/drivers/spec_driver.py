@@ -26,7 +26,7 @@ class SpecDriver(BenchDriver):
         else:
             exec_name = f'{self._name}_base.proc'
 
-        for process in self._async_proc_info.children(recursive=True):  # type: psutil.Process
+        for process in self._wrapper_proc_info.children(recursive=True):  # type: psutil.Process
             if process.name() == exec_name and process.is_running():
                 return process
 
@@ -67,10 +67,10 @@ class SpecDriver(BenchDriver):
 
     @ensure_running
     def pause(self) -> None:
-        self._async_proc.send_signal(SIGSTOP)
+        self._wrapper_proc.send_signal(SIGSTOP)
         self._find_bench_proc().suspend()
 
     @ensure_running
     def resume(self) -> None:
-        self._async_proc.send_signal(SIGCONT)
+        self._wrapper_proc.send_signal(SIGCONT)
         self._find_bench_proc().resume()
