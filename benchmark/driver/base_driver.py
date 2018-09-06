@@ -6,13 +6,14 @@ import json
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Iterable, List, Optional, Set, Type
+from typing import Any, Callable, Coroutine, Iterable, List, Optional, Set, Tuple, Type
 
 import psutil
 
 from ..utils.cgroup_cpuset import CgroupCpuset
 from ..utils.hyphen import convert_to_hyphen, convert_to_set
 from ..utils.numa_topology import NumaTopology
+from ..utils.resctrl import ResCtrl
 
 
 class BenchDriver(metaclass=ABCMeta):
@@ -67,6 +68,7 @@ class BenchDriver(metaclass=ABCMeta):
 
         self._group_name = identifier
         self._cgroup: CgroupCpuset = CgroupCpuset(identifier)
+        self._resctrl_group: ResCtrl = ResCtrl()
 
     def __del__(self):
         try:
@@ -150,6 +152,8 @@ class BenchDriver(metaclass=ABCMeta):
             self._bench_proc_info = self._find_bench_proc()
             if self._bench_proc_info is not None:
                 await self._rename_group(f'{self._name}_{self._bench_proc_info.pid}')
+                await self._resctrl_group.create_group()
+                await self._resctrl_group.add_tasks(self.all_child_tid())
                 return
             await asyncio.sleep(0.1)
 
@@ -201,9 +205,14 @@ class BenchDriver(metaclass=ABCMeta):
         self._group_name = new_name
 
         await self._cgroup.rename(new_name)
+        self._resctrl_group.group_name = self._group_name
 
     async def cleanup(self) -> None:
         await self._cgroup.delete()
+        await self._resctrl_group.delete()
+
+    def read_resctrl(self) -> Coroutine[None, None, Tuple[int, int, int]]:
+        return self._resctrl_group.read()
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:
