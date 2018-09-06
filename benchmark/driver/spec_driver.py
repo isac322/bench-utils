@@ -2,7 +2,6 @@
 
 import asyncio
 import os
-import shlex
 from signal import SIGCONT, SIGSTOP
 from typing import Optional, Set
 
@@ -33,10 +32,6 @@ class SpecDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        await self.create_cgroup_cpuset()
-        await self.set_cgroup_cpuset()
-        await self.set_numa_mem_nodes()
-
         cmd = 'runspec --config=vm.cfg --size=ref --noreportable --delay=0 --nobuild --iteration=1 {0}' \
             .format(self._name)
 
@@ -50,7 +45,7 @@ class SpecDriver(BenchDriver):
         env['LC_LANG'] = 'C'
         env['LC_ALL'] = 'C'
 
-        return await self.async_exec_cmd(exec_cmd=cmd, exec_env=env)
+        return await self._cgroup.exec_command(cmd, stdout=asyncio.subprocess.DEVNULL, env=env)
 
     def stop(self) -> None:
         try:

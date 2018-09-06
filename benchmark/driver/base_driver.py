@@ -6,10 +6,14 @@ import json
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Iterable, Optional, Set, Type, Tuple, List, Dict, Coroutine
-from ..utils.cgroup_cpuset import CgroupCpuset
+from typing import Any, Callable, Coroutine, Iterable, List, Optional, Set, Tuple, Type
 
 import psutil
+
+from ..utils.cgroup_cpuset import CgroupCpuset
+from ..utils.hyphen import convert_to_hyphen, convert_to_set
+from ..utils.numa_topology import NumaTopology
+from ..utils.resctrl import ResCtrl
 
 
 class BenchDriver(metaclass=ABCMeta):
@@ -61,11 +65,13 @@ class BenchDriver(metaclass=ABCMeta):
         self._cbm_mask: str = cbm_mask
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
 
-        self._host_numa_info: [Tuple[Dict[int, List[int], List[int]]]] = None
         self._bench_proc_info: Optional[psutil.Process] = None
         self._async_proc: Optional[asyncio.subprocess.Process] = None
         self._async_proc_info: Optional[psutil.Process] = None
-        self._group_name: str = None
+
+        self._group_name = identifier
+        self._cgroup: CgroupCpuset = CgroupCpuset(identifier)
+        self._resctrl_group: ResCtrl = ResCtrl()
 
     def __del__(self):
         try:
@@ -137,13 +143,28 @@ class BenchDriver(metaclass=ABCMeta):
     @_Decorators.ensure_not_running
     async def run(self) -> None:
         self._bench_proc_info = None
+
+        await self._cgroup.create_group()
+        await self._cgroup.assign_cpus(self._binding_cores)
+        mem_sockets = await self.__get_effective_mem_modes()
+        await self._cgroup.assign_mems(mem_sockets)
+
         self._async_proc = await self._launch_bench()
         self._async_proc_info = psutil.Process(self._async_proc.pid)
+
+        nodes = await NumaTopology.get_node_topo()
+        # FIXME: hard coded
+        masks = ['1'] * (max(nodes) + 1)
+        for socket_id in convert_to_set(mem_sockets):
+            masks[socket_id] = ResCtrl.MAX_MASK
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
             if self._bench_proc_info is not None:
-                await self.rename_group()
+                await self._rename_group(f'{self._name}_{self._bench_proc_info.pid}')
+                await self._resctrl_group.create_group()
+                await self._resctrl_group.assign_llc(*masks)
+                await self._resctrl_group.add_tasks(self.all_child_tid())
                 return
             await asyncio.sleep(0.1)
 
@@ -173,52 +194,36 @@ class BenchDriver(metaclass=ABCMeta):
                 *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
         )
 
-    @_Decorators.ensure_not_running
-    async def create_cgroup_cpuset(self) -> None:
-        self._group_name = f'{self._name}_{self._identifier}'
-        await CgroupCpuset.async_create_group(self._group_name)
-        await CgroupCpuset.async_chown_group(self._group_name)
+    async def __get_effective_mem_modes(self) -> str:
+        # Explicit Mem Node Alloc
+        if self._numa_mem_nodes is not None:
+            return self._numa_mem_nodes
 
-    @_Decorators.ensure_not_running
-    async def set_cgroup_cpuset(self) -> None:
-        cpu_topo, _ = self._host_numa_info
-        core_set = CgroupCpuset.convert_to_set(self._binding_cores)
-        await CgroupCpuset.async_assign(self._group_name, core_set)
+        # Local Alloc Case
+        cpu_topo, mem_topo = await NumaTopology.get_numa_info()
+        bound_cores = convert_to_set(self._binding_cores)
 
-    @_Decorators.ensure_not_running
-    async def set_numa_mem_nodes(self) -> None:
-        workload_mem_nodes = set()
+        belonged_sockets: List[int] = list()
 
-        if self._numa_mem_nodes is None:
-            # Local Alloc Case
-            cpu_topo, mem_topo = self._host_numa_info
-            for numa_node, cpuid_range in cpu_topo.items():
-                min_cpuid, max_cpuid = cpuid_range
-                if min_cpuid <= self._binding_cores <= max_cpuid:
-                    if numa_node in mem_topo:
-                        workload_mem_nodes.add(numa_node)
-        elif self._numa_mem_nodes is not None:
-            # Explicit Mem Node Alloc
-            mem_nodes = self._numa_mem_nodes.split(',')
-            workload_mem_nodes = set([int(mem_node) for mem_node in mem_nodes])
+        for socket_id, core_ids in cpu_topo.items():
+            if len(core_ids & bound_cores) is not 0:
+                belonged_sockets.append(socket_id)
 
-        await CgroupCpuset.async_set_cpuset_mems(self._group_name, workload_mem_nodes)
+        return convert_to_hyphen(belonged_sockets)
 
     @_Decorators.ensure_running
-    async def rename_group(self) -> None:
-        base_path: str = CgroupCpuset.MOUNT_POINT
-        group_path = f'{base_path}/{self._group_name}'
+    async def _rename_group(self, new_name: str) -> None:
+        self._group_name = new_name
 
-        # Create new group name
-        new_group_name = f'{self._name}_{self._bench_proc_info.pid}'
-        new_group_path = f'{base_path}/{new_group_name}'
+        await self._cgroup.rename(new_name)
+        self._resctrl_group.group_name = self._group_name
 
-        # Rename group name
-        await CgroupCpuset.async_rename_group(group_path, new_group_path)
+    async def cleanup(self) -> None:
+        await self._cgroup.delete()
+        await self._resctrl_group.delete()
 
-    @_Decorators.ensure_not_running
-    def async_exec_cmd(self, exec_cmd: str, exec_env: Optional[Dict[str, str]]) -> Coroutine:
-        return CgroupCpuset.async_cgexec(self._group_name, exec_cmd, exec_env)
+    def read_resctrl(self) -> Coroutine[None, None, Tuple[int, int, int]]:
+        return self._resctrl_group.read()
 
 
 def find_driver(workload_name) -> Type[BenchDriver]:

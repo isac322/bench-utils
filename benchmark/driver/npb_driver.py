@@ -1,7 +1,6 @@
 # coding: UTF-8
 
 import asyncio
-import shlex
 from typing import Optional, Set
 
 import psutil
@@ -45,13 +44,9 @@ class NPBDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        await self.create_cgroup_cpuset()
-        await self.set_cgroup_cpuset()
-        await self.set_numa_mem_nodes()
-
         exec_name = self._exec_name
 
         cmd = '{0}/bin/{1}'.format(self._bench_home, exec_name)
         env = {'OMP_NUM_THREADS': str(self._num_threads)}
 
-        return await self.async_exec_cmd(exec_cmd=cmd, exec_env=env)
+        return await self._cgroup.exec_command(cmd, stdout=asyncio.subprocess.DEVNULL, env=env)

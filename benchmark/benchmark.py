@@ -12,7 +12,6 @@ from pathlib import Path
 from signal import SIGCONT, SIGSTOP
 from typing import Any, Callable, Generator, Optional
 
-import aiofiles
 import pika
 import psutil
 import rdtsc
@@ -23,6 +22,7 @@ from benchmark.driver.base_driver import BenchDriver
 from containers import BenchConfig, PerfConfig, RabbitMQConfig
 from .utils.numa_topology import NumaTopology
 from .utils.dvfs import DVFS
+
 
 class Benchmark:
     class _Decorators:
@@ -83,9 +83,6 @@ class Benchmark:
 
         self._log_path: Path = log_parent / f'{identifier}.log'
 
-        # resource group for this benchmark
-        self._res_path = Path('/sys/fs/resctrl')
-
         # setup for loggers
 
         logger = logging.getLogger(self._identifier)
@@ -126,64 +123,6 @@ class Benchmark:
 
         self._pause_bench()
 
-        self._res_path = self._res_path / f'{self._bench_driver.name}_{self._bench_driver.pid}'
-
-        # create a resource group and register this benchmark to the group
-        proc = await asyncio.create_subprocess_exec('sudo', 'mkdir', str(self._res_path))
-        await proc.wait()
-
-        for tid in self._bench_driver.all_child_tid():
-            proc = await asyncio.create_subprocess_exec('sudo', 'tee', str(self._res_path / 'tasks'),
-                                                        stdin=asyncio.subprocess.PIPE,
-                                                        stdout=asyncio.subprocess.DEVNULL)
-            await proc.communicate(str(tid).encode())
-
-    async def _read_llc_occupancy(self):
-        tot_llc = 0
-
-        # sum all llc_occupancy monitors
-        for mon in (self._res_path / 'mon_data').iterdir():
-            llc_monitor_path = mon / 'llc_occupancy'
-
-            if llc_monitor_path.is_file():
-                async with aiofiles.open(llc_monitor_path) as fp:
-                    line: str = await fp.readline()
-                    tot_llc += int(line)
-
-        return tot_llc
-
-    async def _read_local_mem(self):
-        tot_mem = 0
-
-        # sum all local_mem
-        for mon in (self._res_path / 'mon_data').iterdir():
-            local_mem_path = mon / 'mbm_local_bytes'
-
-            if local_mem_path.is_file():
-                async with aiofiles.open(str(local_mem_path)) as afp:
-                    line: str = await afp.readline()
-                    tot_mem += int(line)
-
-        return tot_mem
-
-    async def _read_total_mem(self):
-        tot_mem = 0
-
-        # sum all total_mem
-        for mon in (self._res_path / 'mon_data').iterdir():
-            total_mem_path = mon / 'mbm_total_bytes'
-
-            if total_mem_path.is_file():
-                async with aiofiles.open(str(total_mem_path)) as afp:
-                    line: str = await afp.readline()
-                    tot_mem += int(line)
-
-        return tot_mem
-
-    async def _remove_res_dir(self):
-        proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._res_path))
-        await proc.wait()
-
     @_Decorators.ensure_running
     async def monitor(self, print_metric_log: bool = False):
         logger = logging.getLogger(self._identifier)
@@ -218,8 +157,7 @@ class Benchmark:
             num_of_events = len(self._perf_config.events)
 
             prev_tsc = rdtsc.get_cycles()
-            prev_local_mem = await self._read_local_mem()
-            prev_total_mem = await self._read_total_mem()
+            _, prev_local_mem, prev_total_mem = await self._bench_driver.read_resctrl()
             while self._bench_driver.is_running and self._perf.returncode is None:
                 record = []
                 ignore_flag = False
@@ -241,19 +179,17 @@ class Benchmark:
                 record.append(str(tmp - prev_tsc))
                 prev_tsc = tmp
 
-                record.append(str(await self._read_llc_occupancy()))
+                llc_occupancy, local_mem, total_mem = await self._bench_driver.read_resctrl()
+                record.append(str(llc_occupancy))
 
-                tmp = await self._read_local_mem()
-                cur_local_mem = tmp - prev_local_mem
+                cur_local_mem = local_mem - prev_local_mem
                 record.append(str(cur_local_mem))
-                prev_local_mem = tmp
+                prev_local_mem = local_mem
 
-                tmp = await self._read_total_mem()
-                record.append(str(max(tmp - prev_total_mem - cur_local_mem, 0)))
-                prev_total_mem = tmp
+                record.append(str(max(total_mem - prev_total_mem - cur_local_mem, 0)))
+                prev_total_mem = total_mem
 
                 if not ignore_flag:
-                    # print(f'{self._identifier} : {record}')
                     metric_logger.info(','.join(record))
 
             logger.info('end of monitoring loop')
@@ -271,7 +207,7 @@ class Benchmark:
             except (psutil.NoSuchProcess, ProcessLookupError):
                 pass
 
-            await self._remove_res_dir()
+            await self._bench_driver.cleanup()
             logger.info('The benchmark is ended.')
             self._remove_logger_handlers()
             self._end_time = time.time()
