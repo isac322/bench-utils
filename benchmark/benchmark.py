@@ -20,8 +20,8 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 from benchmark.driver.base_driver import BenchDriver
 from containers import BenchConfig, PerfConfig, RabbitMQConfig
-from .utils.numa_topology import NumaTopology
 from .utils.dvfs import DVFS
+from .utils.numa_topology import NumaTopology
 
 
 class Benchmark:
@@ -113,7 +113,7 @@ class Benchmark:
 
         # setting freq to local config
         core_set = DVFS.convert_to_set(self._bench_driver._binding_cores)
-        cpufreq_khz = int(self._bench_driver._cpu_freq*1000000)
+        cpufreq_khz = int(self._bench_driver._cpu_freq * 1000000)
         DVFS.set_freq(cpufreq_khz, core_set)
 
         # launching benchmark
