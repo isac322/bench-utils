@@ -52,12 +52,13 @@ class BenchDriver(metaclass=ABCMeta):
     bench_name: str = None
 
     def __init__(self, name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str],
-                 cpu_freq: float):
+                 cpu_freq: float, cbm_mask: str):
         self._name: str = name
         self._identifier: str = identifier
         self._num_threads: int = num_threads
         self._binding_cores: str = binding_cores
         self._cpu_freq: float = cpu_freq
+        self._cbm_mask: str = cbm_mask
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
 
         self._host_numa_info: [Tuple[Dict[int, List[int], List[int]]]] = None
@@ -236,7 +237,7 @@ def find_driver(workload_name) -> Type[BenchDriver]:
 
 
 def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str,
-                 numa_mem_nodes: Optional[str], cpu_freq: float) -> BenchDriver:
+                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_mask: str) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes, cpu_freq)
+    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes, cpu_freq, cbm_mask)

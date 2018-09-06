@@ -116,7 +116,7 @@ class Benchmark:
 
         # setting freq to local config
         core_set = DVFS.convert_to_set(self._bench_driver._binding_cores)
-        cpufreq_khz = self._bench_driver._cpu_freq*1000000
+        cpufreq_khz = int(self._bench_driver._cpu_freq*1000000)
         DVFS.set_freq(cpufreq_khz, core_set)
 
         # launching benchmark
