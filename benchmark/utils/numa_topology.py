@@ -12,7 +12,7 @@ class NumaTopology:
     BASE_PATH: Path = Path('/sys/devices/system/node')
 
     @staticmethod
-    async def _get_node_topo() -> Set[int]:
+    async def get_node_topo() -> Set[int]:
         online_path: Path = NumaTopology.BASE_PATH / 'online'
 
         async with aiofiles.open(online_path) as fp:
@@ -35,20 +35,20 @@ class NumaTopology:
         return cpu_topo
 
     @staticmethod
-    async def _get_mem_topo() -> Set[int]:
+    async def get_mem_topo() -> Set[int]:
         has_memory_path = NumaTopology.BASE_PATH / 'has_memory'
 
         async with aiofiles.open(has_memory_path) as fp:
             line: str = await fp.readline()
             mem_topo = convert_to_set(line)
 
-            # TODO: mem_topo can be enhanced by using real numa memory access latency
+            # TODO: get_mem_topo can be enhanced by using real numa memory access latency
 
         return mem_topo
 
     @staticmethod
     async def get_numa_info() -> Tuple[Dict[int, Set[int]], Set[int]]:
-        node_list = await NumaTopology._get_node_topo()
+        node_list = await NumaTopology.get_node_topo()
         cpu_topo = await NumaTopology._get_cpu_topo(node_list)
-        mem_topo = await NumaTopology._get_mem_topo()
+        mem_topo = await NumaTopology.get_mem_topo()
         return cpu_topo, mem_topo
