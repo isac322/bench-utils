@@ -10,6 +10,7 @@ from aiofiles.base import AiofilesContextManager
 
 class ResCtrl:
     MOUNT_POINT = Path('/sys/fs/resctrl')
+    MAX_MASK: str = Path('/sys/fs/resctrl/info/L3/cbm_mask').read_text(encoding='ASCII').strip()
 
     def __init__(self) -> None:
         self._group_name: str = str()
@@ -46,6 +47,15 @@ class ResCtrl:
                                                         stdin=asyncio.subprocess.PIPE,
                                                         stdout=asyncio.subprocess.DEVNULL)
             await proc.communicate(str(pid).encode())
+
+    async def assign_llc(self, *masks: str) -> None:
+        masks = (f'{i}={m}' for i, m in enumerate(masks))
+        schemata = 'L3:{}\n'.format(';'.join(masks))
+
+        proc = await asyncio.create_subprocess_exec('sudo', 'tee', str(self._group_path / 'schemata'),
+                                                    stdin=asyncio.subprocess.PIPE,
+                                                    stdout=asyncio.subprocess.DEVNULL)
+        await proc.communicate(schemata.encode())
 
     async def read(self) -> Tuple[int, int, int]:
         ret = list()
