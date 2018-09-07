@@ -24,7 +24,7 @@ class IdleMonitor(BaseMonitor[MonitorData]):
         return obj
 
     def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError('Use IdleMonitor.Builder to instantiate IdleMonitor')
+        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
     async def create_message(self, data: MonitorData) -> BaseMessage[MonitorData]:
         pass

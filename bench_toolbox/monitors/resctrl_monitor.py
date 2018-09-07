@@ -52,7 +52,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T], SystemMonitor):
         return obj
 
     def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError('Use ResCtrlMonitor.Builder to instantiate ResCtrlMonitor')
+        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
     async def _write_to_tasks(self, pid: int) -> None:
         write_proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(

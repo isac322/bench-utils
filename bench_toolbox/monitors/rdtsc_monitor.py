@@ -26,7 +26,7 @@ class RDTSCMonitor(IterationDependentMonitor[int], SystemMonitor):
         return obj
 
     def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError('Use RDTSCMonitor.Builder to instantiate RDTSCMonitor')
+        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
     async def on_init(self) -> None:
         await super().on_init()
