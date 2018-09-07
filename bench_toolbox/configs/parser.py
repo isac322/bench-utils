@@ -4,8 +4,9 @@ import json
 from collections import Mapping
 from dataclasses import dataclass
 from importlib import resources
+from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union, Dict
 
 from ..benchmark.drivers import bench_drivers
 from ..containers import BenchConfig, PerfConfig, PerfEvent, RabbitMQConfig
@@ -32,15 +33,15 @@ def _parse_bench_home() -> None:
 _parse_bench_home()
 
 
-def perf() -> PerfConfig:
+def perf(local_config: Iterable[Dict[str, Union[str, Dict[str, str]]]]) -> PerfConfig:
     config: Mapping[str, Union[int, List[Mapping[str, Union[str, Mapping[str, str]]]]]] = \
         _validate_and_load('perf.json')
 
     events = tuple(
             PerfEvent(elem, elem)
-            if type(elem) is str else
+            if isinstance(elem, str) else
             PerfEvent(elem['event'], elem['alias'])
-            for elem in config['events']
+            for elem in chain(config['events'], local_config)
     )
 
     return PerfConfig(config['interval'], events)
