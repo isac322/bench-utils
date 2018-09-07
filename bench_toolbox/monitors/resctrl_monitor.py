@@ -66,7 +66,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
         await super().on_init()
 
         if self._benchmark is not None:
-            self._group_path = ResCtrlMonitor.mount_point / self._benchmark.benchmark_name
+            self._group_path = ResCtrlMonitor.mount_point / self._benchmark.identifier
 
         # tuple of each feature monitors for each socket
         self._monitors = tuple(
@@ -91,6 +91,8 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
 
         await asyncio.wait(tuple(open_file_async(mon) for mon in self._monitors))
 
+        self._prev_data = await self.monitor_once()
+
     @staticmethod
     async def _read_file(arg: Tuple[Path, AiofilesContextManager]) -> Tuple[str, int]:
         path, monitor = arg
@@ -112,7 +114,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
         for idx, d in enumerate(after):
             merged: Dict[str, int] = dict()
 
-            for k, v in d:
+            for k, v in d.items():
                 if k != 'llc_occupancy':
                     v -= before[idx][k]
 
@@ -147,5 +149,5 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
             super().__init__()
             self._interval = interval
 
-        async def _finalize(self) -> ResCtrlMonitor:
+        def _finalize(self) -> ResCtrlMonitor:
             return ResCtrlMonitor.__new__(ResCtrlMonitor, self._cur_emitter, self._interval, self._cur_bench)
