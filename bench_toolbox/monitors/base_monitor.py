@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from abc import ABC, ABCMeta, abstractmethod
-from typing import Any, Callable, Coroutine, Generic, Type
+from abc import ABCMeta, abstractmethod
+from typing import Callable, Coroutine, Generic, Type
 
 from . import MonitorData
 from .messages import BaseMessage
@@ -16,7 +16,7 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
     _emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]
 
     def __new__(cls: Type[BaseMonitor],
-                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]) -> Any:
+                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]) -> BaseMonitor:
         obj = super().__new__(cls)
 
         obj._initialized = False
@@ -39,6 +39,10 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    async def stop(self) -> None:
+        pass
+
+    @abstractmethod
     async def create_message(self, data: MonitorData) -> BaseMessage[MonitorData]:
         pass
 
@@ -55,12 +59,4 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
         pass
 
     async def on_destroy(self) -> None:
-        pass
-
-
-class SystemMonitor(BaseMonitor, ABC):
-    _is_stopped: bool = False
-
-    @abstractmethod
-    def stop(self) -> None:
         pass

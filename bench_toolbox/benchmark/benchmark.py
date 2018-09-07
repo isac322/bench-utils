@@ -69,13 +69,28 @@ class Benchmark(BaseBenchmark):
     async def monitor(self) -> None:
         logger = logging.getLogger(self._identifier)
 
+        # noinspection PyBroadException
         try:
             await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
-            await asyncio.wait(tuple(mon.monitor() for mon in self._monitors))
+            monitoring_tasks = asyncio.wait(tuple(mon.monitor() for mon in self._monitors))
+
+            await asyncio.wait((self._bench_driver.join(), monitoring_tasks),
+                               return_when=asyncio.FIRST_COMPLETED)
+
+            if self.is_running:
+                await self._bench_driver.join()
+            else:
+                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
 
         except CancelledError as e:
             logger.debug(f'The task cancelled : {e}')
             self._stop()
+            await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+
+        except Exception as e:
+            logger.critical(f'The following errors occurred during monitoring : {e}')
+            self._stop()
+            await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
 
         finally:
             logger.info('The benchmark is ended.')

@@ -33,14 +33,14 @@ class BaseBenchmark(metaclass=ABCMeta):
 
         obj._identifier = identifier
 
-        obj._monitors = tuple()
-        obj._pipeline = DefaultPipeline()
+        obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
+        obj._pipeline: BasePipeline = DefaultPipeline()
 
         # setup for logger
         log_dir = workspace / 'logs'
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        obj._log_path = log_dir / f'{identifier}.log'
+        obj._log_path: Path = log_dir / f'{identifier}.log'
 
         logger = logging.getLogger(identifier)
         logger.setLevel(logger_level)

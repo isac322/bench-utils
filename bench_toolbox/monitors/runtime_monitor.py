@@ -35,10 +35,12 @@ class RuntimeMonitor(BaseMonitor[float]):
     async def _monitor(self) -> None:
         await self._benchmark.join()
 
-    async def on_end(self) -> None:
         end = time.time()
         msg = await self.create_message(end - self._start_time)
         await self._emitter(msg)
+
+    async def stop(self) -> None:
+        pass
 
     async def create_message(self, data: float) -> PerBenchMessage[float]:
         return PerBenchMessage(data, self, self._benchmark)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Coroutine, Optional, Type
+from typing import Callable, Coroutine, Optional, Type
 
 from . import MonitorData
 from .messages import BaseMessage
@@ -17,8 +17,8 @@ class IterationDependentMonitor(OneShotMonitor[MonitorData], metaclass=ABCMeta):
 
     def __new__(cls: Type[IterationDependentMonitor],
                 emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
-                interval: int) -> Any:
-        obj = super().__new__(cls, emitter, interval)
+                interval: int) -> IterationDependentMonitor:
+        obj: IterationDependentMonitor = super().__new__(cls, emitter, interval)
 
         obj._prev_data = None
 

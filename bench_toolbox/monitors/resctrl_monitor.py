@@ -12,17 +12,16 @@ import aiofiles
 from aiofiles.base import AiofilesContextManager
 
 from .base_builder import BaseBuilder
-from .base_monitor import SystemMonitor
 from .iteration_dependent_monitor import IterationDependentMonitor
 from .messages import BaseMessage
 from .messages.per_bench_message import PerBenchMessage
 from .messages.system_message import SystemMessage
-from ..benchmark import Benchmark
+from ..benchmark import BaseBenchmark
 
 T = Tuple[Mapping[str, int], ...]
 
 
-class ResCtrlMonitor(IterationDependentMonitor[T], SystemMonitor):
+class ResCtrlMonitor(IterationDependentMonitor[T]):
     mount_point: ClassVar[Path] = Path('/sys/fs/resctrl')
     mon_features: ClassVar[List[str]] = (mount_point / 'info' / 'L3_MON' / 'mon_features').read_text('ASCII').split()
 
@@ -34,15 +33,16 @@ class ResCtrlMonitor(IterationDependentMonitor[T], SystemMonitor):
             )
     )
 
-    _benchmark: Optional[Benchmark]
+    _benchmark: Optional[BaseBenchmark]
     _group_path: Path
     # tuple of each feature monitors for each socket
     _monitors: Tuple[Dict[Path, Optional[AiofilesContextManager]], ...]
+    _is_stopped: bool = False
 
     def __new__(cls: Type[ResCtrlMonitor],
                 emitter: Callable[[BaseMessage], Coroutine[None, None, None]],
                 interval: int,
-                bench: Benchmark = None) -> ResCtrlMonitor:
+                bench: BaseBenchmark = None) -> ResCtrlMonitor:
         obj: ResCtrlMonitor = super().__new__(cls, emitter, interval)
 
         obj._benchmark = bench
@@ -111,16 +111,10 @@ class ResCtrlMonitor(IterationDependentMonitor[T], SystemMonitor):
 
     @property
     def stopped(self) -> bool:
-        if self._benchmark is None:
-            return self._is_stopped
-        else:
-            return not self._benchmark.is_running
+        return self._is_stopped
 
-    def stop(self) -> None:
-        if self._benchmark is None:
-            self._is_stopped = True
-        else:
-            raise PermissionError('Only system monitor can be stopped.')
+    async def stop(self) -> None:
+        self._is_stopped = True
 
     def calc_diff(self, before: T, after: T) -> T:
         result: List[Dict[str, int]] = list()

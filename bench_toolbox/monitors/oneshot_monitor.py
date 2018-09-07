@@ -4,19 +4,20 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Coroutine, Type
+from typing import Callable, Coroutine, Type
 
 from . import MonitorData
 from .base_monitor import BaseMonitor
 from .messages import BaseMessage
 
 
+# FIXME: rename
 class OneShotMonitor(BaseMonitor[MonitorData], metaclass=ABCMeta):
     _interval: float
 
     def __new__(cls: Type[OneShotMonitor],
                 emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
-                interval: int) -> Any:
+                interval: int) -> OneShotMonitor:
         obj: OneShotMonitor = super().__new__(cls, emitter)
 
         obj._interval = interval / 1000

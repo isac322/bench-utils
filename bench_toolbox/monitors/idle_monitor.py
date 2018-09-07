@@ -17,7 +17,7 @@ class IdleMonitor(BaseMonitor[MonitorData]):
     def __new__(cls: Type[IdleMonitor],
                 emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
                 benchmark: BaseBenchmark) -> IdleMonitor:
-        obj = super().__new__(cls, emitter)
+        obj: IdleMonitor = super().__new__(cls, emitter)
 
         obj._benchmark = benchmark
 
@@ -31,6 +31,9 @@ class IdleMonitor(BaseMonitor[MonitorData]):
 
     async def _monitor(self) -> None:
         await self._benchmark.join()
+
+    async def stop(self) -> None:
+        pass
 
     class Builder(BaseBuilder['IdleMonitor']):
         def _finalize(self) -> IdleMonitor:
