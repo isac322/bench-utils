@@ -6,7 +6,7 @@ import asyncio
 import logging
 from concurrent.futures import CancelledError
 from pathlib import Path
-from typing import Tuple, Type
+from typing import Optional, Tuple, Type
 
 import psutil
 
@@ -69,10 +69,12 @@ class Benchmark(BaseBenchmark):
     async def monitor(self) -> None:
         logger = logging.getLogger(self._identifier)
 
+        monitoring_tasks: Optional[asyncio.Task] = None
+
         # noinspection PyBroadException
         try:
             await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
-            monitoring_tasks = asyncio.wait(tuple(mon.monitor() for mon in self._monitors))
+            monitoring_tasks = asyncio.create_task(asyncio.wait(tuple(mon.monitor() for mon in self._monitors)))
 
             await asyncio.wait((self._bench_driver.join(), monitoring_tasks),
                                return_when=asyncio.FIRST_COMPLETED)
@@ -81,16 +83,23 @@ class Benchmark(BaseBenchmark):
                 await self._bench_driver.join()
             else:
                 await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await monitoring_tasks
 
         except CancelledError as e:
             logger.debug(f'The task cancelled : {e}')
-            self._stop()
-            await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+            if self.is_running:
+                self._stop()
+            if monitoring_tasks is not None and not monitoring_tasks.done():
+                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await monitoring_tasks
 
         except Exception as e:
             logger.critical(f'The following errors occurred during monitoring : {e}')
-            self._stop()
-            await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+            if self.is_running:
+                self._stop()
+            if monitoring_tasks is not None and not monitoring_tasks.done():
+                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await monitoring_tasks
 
         finally:
             logger.info('The benchmark is ended.')
