@@ -6,10 +6,12 @@ from dataclasses import dataclass
 from importlib import resources
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Tuple, Union, Dict
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from ..benchmark.drivers import bench_drivers
 from ..containers import BenchConfig, PerfConfig, PerfEvent, RabbitMQConfig
+
+PerfConfigJson = Dict[str, Union[int, List[Dict[str, Union[str, Dict[str, str]]]]]]
 
 
 def _validate_and_load(config_file_name: str):
@@ -33,18 +35,17 @@ def _parse_bench_home() -> None:
 _parse_bench_home()
 
 
-def perf(local_config: Iterable[Dict[str, Union[str, Dict[str, str]]]]) -> PerfConfig:
-    config: Mapping[str, Union[int, List[Mapping[str, Union[str, Mapping[str, str]]]]]] = \
-        _validate_and_load('perf.json')
+def perf(local_config: PerfConfigJson) -> PerfConfig:
+    config: PerfConfigJson = _validate_and_load('perf.json')
 
     events = tuple(
             PerfEvent(elem, elem)
             if isinstance(elem, str) else
             PerfEvent(elem['event'], elem['alias'])
-            for elem in chain(config['events'], local_config)
+            for elem in chain(config['events'], local_config.get('events', tuple()))
     )
 
-    return PerfConfig(config['interval'], events)
+    return PerfConfig(local_config.get('interval', config['interval']), events)
 
 
 def rabbit_mq() -> RabbitMQConfig:
