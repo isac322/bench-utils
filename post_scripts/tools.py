@@ -76,6 +76,6 @@ def read_config(workspace: Path, global_cfg_path: Path) -> \
 
     return \
         parse_workload_cfg(local_cfg['workloads']), \
-        parse_perf_cfg(global_cfg['perf'], local_cfg['perf']), \
+        parse_perf_cfg(global_cfg['perf'], local_cfg.get('perf', {'extra_events': []})), \
         parse_rabbit_mq_cfg(global_cfg['rabbitMQ']), \
         parse_launcher_cfg(local_cfg['launcher'])
