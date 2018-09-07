@@ -37,7 +37,7 @@ class Benchmark(BaseBenchmark):
 
         return obj
 
-    def __init__(self, _, __, ___) -> None:
+    def __init__(self, **kwargs) -> None:
         raise NotImplementedError('Use Benchmark.Builder to instantiate Benchmark')
 
     @ensure_not_running
