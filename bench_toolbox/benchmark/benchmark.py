@@ -110,6 +110,11 @@ class Benchmark(BaseBenchmark):
         return self._bench_driver.created_time
 
     @property
+    @ensure_running
+    def pid(self) -> int:
+        return self._bench_driver.pid
+
+    @property
     def is_running(self) -> bool:
         return self._bench_driver.is_running
 

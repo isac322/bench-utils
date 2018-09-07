@@ -79,6 +79,11 @@ class BaseBenchmark(metaclass=ABCMeta):
     def identifier(self) -> str:
         return self._identifier
 
+    @property
+    @abstractmethod
+    def pid(self) -> int:
+        pass
+
     @abstractmethod
     def all_child_tid(self) -> Tuple[int, ...]:
         pass
