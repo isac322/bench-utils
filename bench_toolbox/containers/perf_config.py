@@ -1,7 +1,5 @@
 # coding: UTF-8
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any, Generator, Tuple
 
@@ -26,7 +24,3 @@ class PerfConfig(MonitorConfig):
     @property
     def event_str(self) -> str:
         return ','.join(event.event for event in self.events)
-
-    # FIXME
-    def merge_events(self, new_events: Tuple[PerfEvent, ...]) -> PerfConfig:
-        return PerfConfig(self.interval, self.events + new_events)
