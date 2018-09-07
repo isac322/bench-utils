@@ -25,7 +25,7 @@ class IterationDependentMonitor(OneShotMonitor[MonitorData], metaclass=ABCMeta):
         return obj
 
     async def _monitor(self) -> None:
-        while True:
+        while not self.stopped:
             data = await self.monitor_once()
             diff = self.calc_diff(self._prev_data, data)
             self._prev_data = data

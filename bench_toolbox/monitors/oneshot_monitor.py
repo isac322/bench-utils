@@ -17,14 +17,14 @@ class OneShotMonitor(BaseMonitor[MonitorData], metaclass=ABCMeta):
     def __new__(cls: Type[OneShotMonitor],
                 emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
                 interval: int) -> Any:
-        obj = super().__new__(cls, emitter)
+        obj: OneShotMonitor = super().__new__(cls, emitter)
 
         obj._interval = interval / 1000
 
         return obj
 
     async def _monitor(self) -> None:
-        while True:
+        while not self.stopped:
             data = await self.monitor_once()
             transformed = self._transform_data(data)
 
@@ -35,6 +35,11 @@ class OneShotMonitor(BaseMonitor[MonitorData], metaclass=ABCMeta):
 
     @abstractmethod
     async def monitor_once(self) -> MonitorData:
+        pass
+
+    @property
+    @abstractmethod
+    def stopped(self) -> bool:
         pass
 
     # noinspection PyMethodMayBeStatic

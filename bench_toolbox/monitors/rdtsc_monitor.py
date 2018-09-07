@@ -7,12 +7,13 @@ from typing import Callable, Coroutine, Type
 import rdtsc
 
 from .base_builder import BaseBuilder
+from .base_monitor import SystemMonitor
 from .iteration_dependent_monitor import IterationDependentMonitor
 from .messages import BaseMessage
 from .messages.system_message import SystemMessage
 
 
-class RDTSCMonitor(IterationDependentMonitor[int]):
+class RDTSCMonitor(IterationDependentMonitor[int], SystemMonitor):
     _prev_data: int
 
     def __new__(cls: Type[IterationDependentMonitor],
@@ -40,6 +41,13 @@ class RDTSCMonitor(IterationDependentMonitor[int]):
 
     async def monitor_once(self) -> int:
         return rdtsc.get_cycles()
+
+    @property
+    def stopped(self) -> bool:
+        return self._is_stopped
+
+    def stop(self) -> None:
+        self._is_stopped = True
 
     class Builder(BaseBuilder['RDTSCMonitor']):
         _interval: int

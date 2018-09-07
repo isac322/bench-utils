@@ -12,6 +12,7 @@ import aiofiles
 from aiofiles.base import AiofilesContextManager
 
 from .base_builder import BaseBuilder
+from .base_monitor import SystemMonitor
 from .iteration_dependent_monitor import IterationDependentMonitor
 from .messages import BaseMessage
 from .messages.per_bench_message import PerBenchMessage
@@ -21,7 +22,7 @@ from ..benchmark import Benchmark
 T = Tuple[Mapping[str, int], ...]
 
 
-class ResCtrlMonitor(IterationDependentMonitor[T]):
+class ResCtrlMonitor(IterationDependentMonitor[T], SystemMonitor):
     mount_point: ClassVar[Path] = Path('/sys/fs/resctrl')
     mon_features: ClassVar[List[str]] = (mount_point / 'info' / 'L3_MON' / 'mon_features').read_text('ASCII').split()
 
@@ -107,6 +108,19 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
                         for mons in self._monitors))
                     )
         )
+
+    @property
+    def stopped(self) -> bool:
+        if self._benchmark is None:
+            return self._is_stopped
+        else:
+            return not self._benchmark.is_running
+
+    def stop(self) -> None:
+        if self._benchmark is None:
+            self._is_stopped = True
+        else:
+            raise PermissionError('Only system monitor can be stopped.')
 
     def calc_diff(self, before: T, after: T) -> T:
         result: List[Dict[str, int]] = list()

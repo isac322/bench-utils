@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from abc import ABCMeta, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from typing import Any, Callable, Coroutine, Generic, Type
 
 from . import MonitorData
@@ -55,4 +55,12 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
         pass
 
     async def on_destroy(self) -> None:
+        pass
+
+
+class SystemMonitor(BaseMonitor, ABC):
+    _is_stopped: bool = False
+
+    @abstractmethod
+    def stop(self) -> None:
         pass
