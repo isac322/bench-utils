@@ -86,7 +86,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
         if self._benchmark is not None:
             await asyncio.wait(tuple(map(self._write_to_tasks, self._benchmark.all_child_tid())))
 
-        async def open_file_async(monitor_dict: Dict[Path, AiofilesContextManager]):
+        async def open_file_async(monitor_dict: Dict[Path, AiofilesContextManager]) -> None:
             for file_path in monitor_dict:
                 monitor_dict[file_path] = await aiofiles.open(file_path)
 
