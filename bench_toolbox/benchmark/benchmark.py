@@ -104,6 +104,7 @@ class Benchmark(BaseBenchmark):
         finally:
             logger.info('The benchmark is ended.')
             await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
+            await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
 
             self._remove_logger_handlers()
 
