@@ -120,6 +120,7 @@ class Benchmark(BaseBenchmark):
 
         self._bench_driver.resume()
 
+    @ensure_running
     def _stop(self) -> None:
         logger = logging.getLogger(self._identifier)
         logger.info('stopping...')
