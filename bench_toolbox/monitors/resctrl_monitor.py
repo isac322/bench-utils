@@ -67,7 +67,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
         await super().on_init()
 
         if self._benchmark is not None:
-            self._group_path = ResCtrlMonitor.mount_point / self._benchmark.identifier
+            self._group_path = ResCtrlMonitor.mount_point / self._benchmark.group_name
 
         # tuple of each feature monitors for each socket
         self._monitors = tuple(

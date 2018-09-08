@@ -81,6 +81,11 @@ class BaseBenchmark(metaclass=ABCMeta):
 
     @property
     @abstractmethod
+    def group_name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
     def pid(self) -> int:
         pass
 

@@ -143,8 +143,11 @@ class Benchmark(BaseBenchmark):
         return self._bench_driver.is_running
 
     @property
-    def benchmark_name(self):
-        return self._bench_config.name
+    def group_name(self) -> str:
+        if self.is_running:
+            return '{}_{}'.format(self._bench_driver.name, self._bench_driver.pid)
+        else:
+            return self._identifier
 
     @ensure_running
     def all_child_tid(self) -> Tuple[int, ...]:
