@@ -56,13 +56,13 @@ class BenchDriver(metaclass=ABCMeta):
     bench_name: str = None
 
     def __init__(self, name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str],
-                 cpu_freq: float, cbm_mask: str):
+                 cpu_freq: float, cbm_bits: int):
         self._name: str = name
         self._identifier: str = identifier
         self._num_threads: int = num_threads
         self._binding_cores: str = binding_cores
         self._cpu_freq: float = cpu_freq
-        self._cbm_mask: str = cbm_mask
+        self._cbm_bits: int = cbm_bits
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
 
         self._bench_proc_info: Optional[psutil.Process] = None
@@ -146,7 +146,7 @@ class BenchDriver(metaclass=ABCMeta):
 
         await self._cgroup.create_group()
         await self._cgroup.assign_cpus(self._binding_cores)
-        mem_sockets = await self.__get_effective_mem_modes()
+        mem_sockets = await self.__get_effective_mem_nodes()
         await self._cgroup.assign_mems(mem_sockets)
 
         self._async_proc = await self._launch_bench()
@@ -155,8 +155,17 @@ class BenchDriver(metaclass=ABCMeta):
         nodes = await NumaTopology.get_node_topo()
         # FIXME: hard coded
         masks = ['1'] * (max(nodes) + 1)
-        for socket_id in convert_to_set(mem_sockets):
-            masks[socket_id] = ResCtrl.MAX_MASK
+        if len(mem_sockets) is 1:
+            # if one mem nodes is called
+            socket_id = int(mem_sockets)
+            cbm_mask = ResCtrl.gen_mask(self._cbm_bits)
+            masks[socket_id] = cbm_mask
+        if len(mem_sockets) > 1:
+            # if more than one mem nodes is called, then distribute cbm bits evenly
+            even_part_of_cbm_bits = int(self._cbm_bits/len(mem_sockets))
+            for socket_id in convert_to_set(mem_sockets):
+                cbm_mask = ResCtrl.gen_mask(even_part_of_cbm_bits)
+                masks[socket_id] = cbm_mask
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
@@ -194,7 +203,7 @@ class BenchDriver(metaclass=ABCMeta):
                 *((t.id for t in proc.threads()) for proc in self._bench_proc_info.children(recursive=True))
         )
 
-    async def __get_effective_mem_modes(self) -> str:
+    async def __get_effective_mem_nodes(self) -> str:
         # Explicit Mem Node Alloc
         if self._numa_mem_nodes is not None:
             return self._numa_mem_nodes
@@ -242,7 +251,7 @@ def find_driver(workload_name) -> Type[BenchDriver]:
 
 
 def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str,
-                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_mask: str) -> BenchDriver:
+                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_bits: int) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes, cpu_freq, cbm_mask)
+    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes, cpu_freq, cbm_bits)

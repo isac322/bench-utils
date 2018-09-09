@@ -30,7 +30,8 @@ def parse_workload_cfg(wl_configs: List[Dict[str, Any]]) -> Tuple[BenchConfig, .
                         config['num_of_threads'],
                         config['binding_cores'],
                         config['numa_nodes'],
-                        config['cpu_freq'])
+                        config['cpu_freq'],
+                        config['cbm_bits'])
             for config in wl_configs
     )
 
@@ -259,7 +260,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
         local_cfg_source: Dict[str, Any] = json.load(local_config_fp)
         global_cfg_source: Dict[str, Any] = json.load(global_config_fp)
 
-        bench_cfges = parse_workload_cfg(local_cfg_source['workloads'])
+        bench_cfgs = parse_workload_cfg(local_cfg_source['workloads'])
         perf_cfg = parse_perf_cfg(global_cfg_source['perf'], local_cfg_source.get('perf', {'extra_events': []}))
         rabbit_cfg = parse_rabbit_mq_cfg(global_cfg_source['rabbitMQ'])
         launcher_cfg = parse_launcher_cfg(local_cfg_source.get('launcher'))
@@ -308,7 +309,7 @@ def launch(loop: asyncio.AbstractEventLoop, workspace: Path, print_log: bool, pr
 
         a_task.remove_done_callback(store_runtime)
 
-    benches = tuple(create_benchmarks(bench_cfges, perf_cfg, rabbit_cfg, workspace, verbose))
+    benches = tuple(create_benchmarks(bench_cfgs, perf_cfg, rabbit_cfg, workspace, verbose))
 
     loop.add_signal_handler(signal.SIGHUP, stop_all)
     loop.add_signal_handler(signal.SIGTERM, stop_all)

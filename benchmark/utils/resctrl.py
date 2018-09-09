@@ -2,15 +2,25 @@
 
 import asyncio
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Optional
 
 import aiofiles
 from aiofiles.base import AiofilesContextManager
 
 
+def len_of_mask(mask: str) -> int:
+    cnt = 0
+    num = int(mask, 16)
+    while num is not 0:
+        cnt += 1
+        num >>= 1
+    return cnt
+
 class ResCtrl:
     MOUNT_POINT = Path('/sys/fs/resctrl')
     MAX_MASK: str = Path('/sys/fs/resctrl/info/L3/cbm_mask').read_text(encoding='ASCII').strip()
+    MIN = int((MOUNT_POINT / 'info' / 'L3' / 'min_cbm_bits').read_text())
+    MAX = len_of_mask((MOUNT_POINT / 'info' / 'L3' / 'cbm_mask').read_text())
 
     def __init__(self) -> None:
         self._group_name: str = str()
@@ -56,6 +66,17 @@ class ResCtrl:
                                                     stdin=asyncio.subprocess.PIPE,
                                                     stdout=asyncio.subprocess.DEVNULL)
         await proc.communicate(schemata.encode())
+
+    def gen_mask(start: int, end: Optional[int] = None) -> str:
+        if end is None or end > ResCtrl.MAX:
+            end = ResCtrl.MAX
+
+        if start < 0:
+            raise ValueError('start must be greater than 0')
+
+
+        ret_mask = format(((1 << (end - start)) - 1) << (ResCtrl.MAX - end), 'x')
+        return ret_mask
 
     async def read(self) -> Tuple[int, int, int]:
         ret = list()

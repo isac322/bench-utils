@@ -22,7 +22,7 @@ class NumaTopology:
         return node_list
 
     @staticmethod
-    async def _get_cpu_topo(node_list: Set[int]) -> Dict[int, Set[int]]:
+    async def get_cpu_topo(node_list: Set[int]) -> Dict[int, Set[int]]:
         cpu_topo: Dict[int, Set[int]] = dict()
 
         for num in node_list:
@@ -49,6 +49,6 @@ class NumaTopology:
     @staticmethod
     async def get_numa_info() -> Tuple[Dict[int, Set[int]], Set[int]]:
         node_list = await NumaTopology.get_node_topo()
-        cpu_topo = await NumaTopology._get_cpu_topo(node_list)
+        cpu_topo = await NumaTopology.get_cpu_topo(node_list)
         mem_topo = await NumaTopology.get_mem_topo()
         return cpu_topo, mem_topo
