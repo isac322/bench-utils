@@ -113,7 +113,7 @@ class Benchmark:
         # launching benchmark
         logger.info('Starting benchmark...')
         await self._bench_driver.run()
-        logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
+        logger.info(f'The {self._bench_driver.wl_type} benchmark has started. pid : {self._bench_driver.pid}')
 
         self._pause_bench()
 
@@ -130,8 +130,8 @@ class Benchmark:
 
             # setup for metric logger
 
-            rabbit_mq_handler = RabbitMQHandler(self._rabbit_mq_config, self._identifier, self._bench_driver.pid,
-                                                self._perf.pid, self._perf_config.interval)
+            rabbit_mq_handler = RabbitMQHandler(self._rabbit_mq_config, self._identifier, self._bench_driver.wl_type,
+                                                self._bench_driver.pid, self._perf.pid, self._perf_config.interval)
             rabbit_mq_handler.setFormatter(RabbitMQFormatter(self._perf_config.event_names))
 
             metric_logger = logging.getLogger(f'{self._identifier}-rabbitmq')
@@ -285,7 +285,7 @@ class Benchmark:
 
 class RabbitMQHandler(Handler):
     def __init__(self, rabbit_mq_config: RabbitMQConfig,
-                 bench_name: str, bench_pid: int, perf_pid: int, perf_interval: int):
+                 bench_name: str, bench_type: str, bench_pid: int, perf_pid: int, perf_interval: int):
         super().__init__()
         # TODO: upgrade to async version
         self._connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_mq_config.host_name))
@@ -297,7 +297,7 @@ class RabbitMQHandler(Handler):
         # Notify creation of this benchmark to scheduler
         self._channel.queue_declare(queue=rabbit_mq_config.creation_q_name)
         self._channel.basic_publish(exchange='', routing_key=rabbit_mq_config.creation_q_name,
-                                    body=f'{bench_name},{bench_pid},{perf_pid},{perf_interval}')
+                                    body=f'{bench_name},{bench_type},{bench_pid},{perf_pid},{perf_interval}')
 
     def emit(self, record: LogRecord):
         formatted: str = self.format(record)

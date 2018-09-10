@@ -6,9 +6,10 @@ from benchmark.driver.base_driver import BenchDriver, bench_driver
 
 
 class BenchConfig:
-    def __init__(self, workload_name: str, num_of_threads: int, binding_cores: str,
+    def __init__(self, workload_name: str, workload_type: str,num_of_threads: int, binding_cores: str,
                  numa_mem_nodes: Optional[str], cpu_freq: float, cbm_ranges: str):
         self._workload_name: str = workload_name
+        self._workload_type: str = workload_type
         self._num_of_threads: int = num_of_threads
         self._binding_cores: str = binding_cores
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
@@ -18,6 +19,10 @@ class BenchConfig:
     @property
     def name(self) -> str:
         return self._workload_name
+
+    @property
+    def workload_type(self) -> str:
+        return self._workload_type
 
     @property
     def num_of_threads(self) -> int:
@@ -40,11 +45,12 @@ class BenchConfig:
         return self._cbm_ranges
 
     def generate_driver(self, identifier: str) -> BenchDriver:
-        return bench_driver(self._workload_name, identifier, self._num_of_threads, self._binding_cores,
+        return bench_driver(self._workload_name, self._workload_type, identifier, self._num_of_threads, self._binding_cores,
                             self._numa_mem_nodes, self._cpu_freq, self._cbm_ranges)
 
     @staticmethod
     def gen_identifier(target: 'BenchConfig', configs: List['BenchConfig']) -> str:
+        type_same = True
         threads_same = True
         cores_same = True
         numa_same = True
@@ -57,6 +63,8 @@ class BenchConfig:
         for config in configs:
             _all_same = True
 
+            if target._workload_type != config._workload_type:
+                _all_same = type_same = False
             if target._num_of_threads != config._num_of_threads:
                 _all_same = threads_same = False
             if target._binding_cores != config._binding_cores:
@@ -76,6 +84,8 @@ class BenchConfig:
 
         names: List[str] = [target.name]
 
+        if not type_same:
+            names.append(f'{target.workload_type}')
         if not threads_same:
             names.append(f'{target.num_of_threads}threads')
         if not cores_same:
