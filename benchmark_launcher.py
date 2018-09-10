@@ -31,7 +31,7 @@ def parse_workload_cfg(wl_configs: List[Dict[str, Any]]) -> Tuple[BenchConfig, .
                         config['binding_cores'],
                         config['numa_nodes'],
                         config['cpu_freq'],
-                        config['cbm_bits'])
+                        config['cbm_ranges'])
             for config in wl_configs
     )
 

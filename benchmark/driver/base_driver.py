@@ -56,13 +56,13 @@ class BenchDriver(metaclass=ABCMeta):
     bench_name: str = None
 
     def __init__(self, name: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str],
-                 cpu_freq: float, cbm_bits: int):
+                 cpu_freq: float, cbm_ranges: str):
         self._name: str = name
         self._identifier: str = identifier
         self._num_threads: int = num_threads
         self._binding_cores: str = binding_cores
         self._cpu_freq: float = cpu_freq
-        self._cbm_bits: int = cbm_bits
+        self._cbm_ranges: str = cbm_ranges
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
 
         self._bench_proc_info: Optional[psutil.Process] = None
@@ -146,26 +146,24 @@ class BenchDriver(metaclass=ABCMeta):
 
         await self._cgroup.create_group()
         await self._cgroup.assign_cpus(self._binding_cores)
-        mem_sockets = await self.__get_effective_mem_nodes()
+        mem_sockets: str = await self.__get_effective_mem_nodes()
         await self._cgroup.assign_mems(mem_sockets)
 
         self._async_proc = await self._launch_bench()
         self._async_proc_info = psutil.Process(self._async_proc.pid)
 
         nodes = await NumaTopology.get_node_topo()
-        # FIXME: hard coded
+
+        # Masks for cbm_mask
         masks = ['1'] * (max(nodes) + 1)
-        if len(mem_sockets) is 1:
-            # if one mem nodes is called
-            socket_id = int(mem_sockets)
-            cbm_mask = ResCtrl.gen_mask(self._cbm_bits)
+
+        # change the cbm_ranges to cbm_ranges_list
+        cbm_ranges_list: List[List[str]] = ResCtrl.cbm_ranges_to_list(self._cbm_ranges)
+        effective_mem_nodes: Set[int] = convert_to_set(mem_sockets)
+        for socket_id, cbm_range in enumerate(cbm_ranges_list):
+            start, end = cbm_range
+            cbm_mask = ResCtrl.gen_mask(int(start), int(end))
             masks[socket_id] = cbm_mask
-        if len(mem_sockets) > 1:
-            # if more than one mem nodes is called, then distribute cbm bits evenly
-            even_part_of_cbm_bits = int(self._cbm_bits/len(mem_sockets))
-            for socket_id in convert_to_set(mem_sockets):
-                cbm_mask = ResCtrl.gen_mask(even_part_of_cbm_bits)
-                masks[socket_id] = cbm_mask
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
@@ -251,7 +249,7 @@ def find_driver(workload_name) -> Type[BenchDriver]:
 
 
 def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str,
-                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_bits: int) -> BenchDriver:
+                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_ranges: str) -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes, cpu_freq, cbm_bits)
+    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes, cpu_freq, cbm_ranges)

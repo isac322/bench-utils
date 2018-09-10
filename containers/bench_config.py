@@ -7,13 +7,13 @@ from benchmark.driver.base_driver import BenchDriver, bench_driver
 
 class BenchConfig:
     def __init__(self, workload_name: str, num_of_threads: int, binding_cores: str,
-                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_bits: int):
+                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_ranges: str):
         self._workload_name: str = workload_name
         self._num_of_threads: int = num_of_threads
         self._binding_cores: str = binding_cores
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
         self._cpu_freq: float = cpu_freq
-        self._cbm_bits: int = cbm_bits
+        self._cbm_ranges: str = cbm_ranges
 
     @property
     def name(self) -> str:
@@ -36,12 +36,12 @@ class BenchConfig:
         return self._cpu_freq
 
     @property
-    def cbm_bits(self) -> int:
-        return self._cbm_bits
+    def cbm_ranges(self) -> str:
+        return self._cbm_ranges
 
     def generate_driver(self, identifier: str) -> BenchDriver:
         return bench_driver(self._workload_name, identifier, self._num_of_threads, self._binding_cores,
-                            self._numa_mem_nodes, self._cpu_freq, self._cbm_bits)
+                            self._numa_mem_nodes, self._cpu_freq, self._cbm_ranges)
 
     @staticmethod
     def gen_identifier(target: 'BenchConfig', configs: List['BenchConfig']) -> str:
@@ -65,7 +65,7 @@ class BenchConfig:
                 _all_same = numa_same = False
             if target._cpu_freq != config._cpu_freq:
                 _all_same = freq_same = False
-            if target.cbm_bits != config._cbm_bits:
+            if target.cbm_ranges != config._cbm_ranges:
                 _all_same = cbm_same = False
 
             if _all_same:
@@ -85,7 +85,7 @@ class BenchConfig:
         if not freq_same:
             names.append(f'{target.cpu_freq}GHz')
         if not cbm_same:
-            names.append(f'cbm{target.cbm_bits}')
+            names.append(f'cbm{target.cbm_ranges}')
         if num_of_same_cfg is not 0:
             names.append(str(index_in_same_cfg))
 
