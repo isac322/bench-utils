@@ -2,15 +2,25 @@
 
 import asyncio
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Optional
 
 import aiofiles
 from aiofiles.base import AiofilesContextManager
 
 
+def len_of_mask(mask: str) -> int:
+    cnt = 0
+    num = int(mask, 16)
+    while num is not 0:
+        cnt += 1
+        num >>= 1
+    return cnt
+
 class ResCtrl:
     MOUNT_POINT = Path('/sys/fs/resctrl')
     MAX_MASK: str = Path('/sys/fs/resctrl/info/L3/cbm_mask').read_text(encoding='ASCII').strip()
+    MIN_BITS = int((MOUNT_POINT / 'info' / 'L3' / 'min_cbm_bits').read_text())
+    MAX_BITS = len_of_mask((MOUNT_POINT / 'info' / 'L3' / 'cbm_mask').read_text())
 
     def __init__(self) -> None:
         self._group_name: str = str()
@@ -56,6 +66,23 @@ class ResCtrl:
                                                     stdin=asyncio.subprocess.PIPE,
                                                     stdout=asyncio.subprocess.DEVNULL)
         await proc.communicate(schemata.encode())
+
+    @staticmethod
+    def gen_mask(start: int, end: Optional[int] = None) -> str:
+        if end is None or end > ResCtrl.MAX_BITS:
+            end = ResCtrl.MAX_BITS
+
+        if start < 0:
+            raise ValueError('start must be greater than 0')
+
+        ret_mask = format(((1 << (end - start)) - 1) << (ResCtrl.MAX_BITS - end), 'x')
+        return ret_mask
+
+    @staticmethod
+    def cbm_ranges_to_list(cbm_ranges: str) -> List[List[str]]:
+        splited_cbm_ranges = cbm_ranges.split(',')
+        cbm_ranges_list = [cbm_range.split('-') for cbm_range in splited_cbm_ranges]
+        return cbm_ranges_list
 
     async def read(self) -> Tuple[int, int, int]:
         ret = list()
