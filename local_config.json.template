@@ -7,7 +7,7 @@
 			"binding_cores": "0-7",
 			"numa_nodes": "0",
 			"cpu_freq": 2.1,
-            "cbm_ranges": "0-10"
+			"cbm_ranges": "0-10"
 		},
 		{
 			"name": "streamcluster",
@@ -16,7 +16,7 @@
 			"binding_cores": "8-15",
 			"numa_nodes": "0",
 			"cpu_freq": 2.1,
-            "cbm_ranges": "10-20"
+			"cbm_ranges": "10-20"
 		}
 	],
 	"launcher": {
