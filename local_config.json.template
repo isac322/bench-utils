@@ -2,7 +2,7 @@
 	"workloads": [
 		{
 			"name": "streamcluster",
-            "type": "fg",
+			"type": "fg",
 			"num_of_threads": 8,
 			"binding_cores": "0-7",
 			"numa_nodes": "0",
@@ -11,7 +11,7 @@
 		},
 		{
 			"name": "streamcluster",
-            "type": "bg",
+			"type": "bg",
 			"num_of_threads": 8,
 			"binding_cores": "8-15",
 			"numa_nodes": "0",
