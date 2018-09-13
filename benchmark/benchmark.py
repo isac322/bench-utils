@@ -149,6 +149,9 @@ class Benchmark:
             # perf polling loop
 
             num_of_events = len(self._perf_config.events)
+            if self._perf_config.interval < 100:
+                # remove warning message of perf from buffer
+                await self._perf.stderr.readline()
 
             prev_tsc = rdtsc.get_cycles()
             _, prev_local_mem, prev_total_mem = await self._bench_driver.read_resctrl()
