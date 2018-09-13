@@ -1,19 +1,19 @@
 # coding: UTF-8
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from benchmark.driver.base_driver import BenchDriver, bench_driver
 
 
 class BenchConfig:
     def __init__(self, workload_name: str, num_of_threads: int, binding_cores: str,
-                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_ranges: str):
+                 numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None):
         self._workload_name: str = workload_name
         self._num_of_threads: int = num_of_threads
         self._binding_cores: str = binding_cores
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
-        self._cpu_freq: float = cpu_freq
-        self._cbm_ranges: str = cbm_ranges
+        self._cpu_freq: Optional[float] = cpu_freq
+        self._cbm_ranges: Optional[Union[str, List[str]]] = cbm_ranges
 
     @property
     def name(self) -> str:
@@ -45,6 +45,7 @@ class BenchConfig:
 
     @staticmethod
     def gen_identifier(target: 'BenchConfig', configs: List['BenchConfig']) -> str:
+        type_same = True
         threads_same = True
         cores_same = True
         numa_same = True
@@ -57,6 +58,8 @@ class BenchConfig:
         for config in configs:
             _all_same = True
 
+            if target._workload_type != config._workload_type:
+                _all_same = type_same = False
             if target._num_of_threads != config._num_of_threads:
                 _all_same = threads_same = False
             if target._binding_cores != config._binding_cores:
@@ -76,6 +79,8 @@ class BenchConfig:
 
         names: List[str] = [target.name]
 
+        if not type_same:
+            names.append(f'{target.workload_type}')
         if not threads_same:
             names.append(f'{target.num_of_threads}threads')
         if not cores_same:
