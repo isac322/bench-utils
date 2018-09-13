@@ -1,20 +1,20 @@
 # coding: UTF-8
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from benchmark.driver.base_driver import BenchDriver, bench_driver
 
 
 class BenchConfig:
-    def __init__(self, workload_name: str, workload_type: str,num_of_threads: int, binding_cores: str,
-                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_ranges: str):
+    def __init__(self, workload_name: str, workload_type: str, binding_cores: str, num_of_threads: int = None,
+                 numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None):
         self._workload_name: str = workload_name
         self._workload_type: str = workload_type
-        self._num_of_threads: int = num_of_threads
         self._binding_cores: str = binding_cores
+        self._num_of_threads: Optional[int] = num_of_threads
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
-        self._cpu_freq: float = cpu_freq
-        self._cbm_ranges: str = cbm_ranges
+        self._cpu_freq: Optional[float] = cpu_freq
+        self._cbm_ranges: Optional[Union[str, List[str]]] = cbm_ranges
 
     @property
     def name(self) -> str:
@@ -25,28 +25,28 @@ class BenchConfig:
         return self._workload_type
 
     @property
-    def num_of_threads(self) -> int:
-        return self._num_of_threads
-
-    @property
     def binding_cores(self) -> str:
         return self._binding_cores
+
+    @property
+    def num_of_threads(self) -> Optional[int]:
+        return self._num_of_threads
 
     @property
     def numa_nodes(self) -> Optional[str]:
         return self._numa_mem_nodes
 
     @property
-    def cpu_freq(self) -> float:
+    def cpu_freq(self) -> Optional[float]:
         return self._cpu_freq
 
     @property
-    def cbm_ranges(self) -> str:
+    def cbm_ranges(self) -> Optional[Union[str, List[str]]]:
         return self._cbm_ranges
 
     def generate_driver(self, identifier: str) -> BenchDriver:
-        return bench_driver(self._workload_name, self._workload_type, identifier, self._num_of_threads, self._binding_cores,
-                            self._numa_mem_nodes, self._cpu_freq, self._cbm_ranges)
+        return bench_driver(self._workload_name, self._workload_type, identifier, self._binding_cores,
+                            self._num_of_threads, self._numa_mem_nodes, self._cpu_freq, self._cbm_ranges)
 
     @staticmethod
     def gen_identifier(target: 'BenchConfig', configs: List['BenchConfig']) -> str:

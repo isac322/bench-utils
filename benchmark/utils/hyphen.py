@@ -18,4 +18,5 @@ def convert_to_set(hyphen_str: str) -> Set[int]:
 
 
 def convert_to_hyphen(core_ids: Iterable[int]) -> str:
+    # TODO
     return ','.join(map(str, set(core_ids)))

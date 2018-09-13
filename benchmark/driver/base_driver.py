@@ -6,7 +6,7 @@ import json
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import Any, Callable, Coroutine, Iterable, List, Optional, Set, Tuple, Type
+from typing import Any, Callable, Coroutine, Iterable, List, Optional, Set, Tuple, Type, Union
 
 import psutil
 
@@ -56,16 +56,19 @@ class BenchDriver(metaclass=ABCMeta):
     _bench_home: str = None
     bench_name: str = None
 
-    def __init__(self, name: str, workload_type: str, identifier: str, num_threads: int, binding_cores: str, numa_mem_nodes: Optional[str],
-                 cpu_freq: float, cbm_ranges: str):
+    def __init__(self, name: str, workload_type: str, identifier: str, binding_cores: str, num_threads: int = None,
+                 numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None):
         self._name: str = name
         self._type: str = workload_type
         self._identifier: str = identifier
-        self._num_threads: int = num_threads
         self._binding_cores: str = binding_cores
-        self._cpu_freq: float = cpu_freq
-        self._cbm_ranges: str = cbm_ranges
+        if num_threads is not None:
+            self._num_threads: int = num_threads
+        else:
+            self._num_threads: int = len(convert_to_set(binding_cores))
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
+        self._cpu_freq: Optional[float] = cpu_freq
+        self._cbm_ranges: Optional[Union[str, List[str]]] = cbm_ranges
 
         self._bench_proc_info: Optional[psutil.Process] = None
         self._async_proc: Optional[asyncio.subprocess.Process] = None
@@ -161,19 +164,29 @@ class BenchDriver(metaclass=ABCMeta):
         nodes = await NumaTopology.get_node_topo()
 
         # Masks for cbm_mask
-        masks = ['1'] * (max(nodes) + 1)
+        masks = [ResCtrl.MIN_MASK] * (max(nodes) + 1)
 
         # change the cbm_ranges to cbm_ranges_list
-        cbm_ranges_list: List[List[str]] = ResCtrl.cbm_ranges_to_list(self._cbm_ranges)
-        for socket_id, cbm_range in enumerate(cbm_ranges_list):
-            start, end = cbm_range
-            cbm_mask = ResCtrl.gen_mask(int(start), int(end))
-            masks[socket_id] = cbm_mask
+        if self._cbm_ranges is not None:
+            if isinstance(self._cbm_ranges, str):
+                start, end = map(int, self._cbm_ranges.split('-'))
+                mask = ResCtrl.gen_mask(start, end)
+
+                for socket_id in convert_to_set(mem_sockets):
+                    masks[socket_id] = mask
+            else:
+                for socket_id, mask_str in enumerate(self._cbm_ranges):
+                    start, end = map(int, mask_str.split('-'))
+                    masks[socket_id] = ResCtrl.gen_mask(start, end)
+        else:
+            for socket_id in convert_to_set(mem_sockets):
+                masks[socket_id] = ResCtrl.MAX_MASK
 
         # setting freq to local config
-        core_set = convert_to_set(self._binding_cores)
-        cpufreq_khz = int(self._cpu_freq * 1000000)
-        DVFS.set_freq(cpufreq_khz, core_set)
+        if self._cpu_freq is not None:
+            core_set = convert_to_set(self._binding_cores)
+            cpufreq_khz = int(self._cpu_freq * 1000000)
+            DVFS.set_freq(cpufreq_khz, core_set)
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
@@ -251,16 +264,17 @@ def find_driver(workload_name) -> Type[BenchDriver]:
 
     bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver, NPBDriver)
 
-    for _bench_driver in bench_drivers:
-        if _bench_driver.has(workload_name):
-            return _bench_driver
+    for driver in bench_drivers:
+        if driver.has(workload_name):
+            return driver
 
-    raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
+    raise ValueError(f'Can not find appropriate driver for the workload "{workload_name}"')
 
 
-def bench_driver(workload_name: str, workload_type: str, identifier: str, num_threads: int, binding_cores: str,
-                 numa_mem_nodes: Optional[str], cpu_freq: float, cbm_ranges: str) -> BenchDriver:
+def bench_driver(workload_name: str, workload_type: str, identifier: str, binding_cores: str, num_threads: int = None,
+                 numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None) \
+        -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, workload_type, identifier, num_threads, binding_cores, numa_mem_nodes,
+    return _bench_driver(workload_name, workload_type, identifier, binding_cores, num_threads, numa_mem_nodes,
                          cpu_freq, cbm_ranges)
