@@ -56,13 +56,16 @@ class BenchDriver(metaclass=ABCMeta):
     _bench_home: str = None
     bench_name: str = None
 
-    def __init__(self, name: str, workload_type: str, identifier: str, num_threads: int, binding_cores: str,
+    def __init__(self, name: str, workload_type: str, identifier: str, binding_cores: str, num_threads: int = None,
                  numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None):
         self._name: str = name
         self._type: str = workload_type
         self._identifier: str = identifier
-        self._num_threads: int = num_threads
         self._binding_cores: str = binding_cores
+        if num_threads is not None:
+            self._num_threads: int = num_threads
+        else:
+            self._num_threads: int = len(convert_to_set(binding_cores))
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
         self._cpu_freq: Optional[float] = cpu_freq
         self._cbm_ranges: Optional[Union[str, List[str]]] = cbm_ranges
@@ -268,10 +271,10 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     raise ValueError(f'Can not find appropriate driver for the workload "{workload_name}"')
 
 
-def bench_driver(workload_name: str, workload_type: str, identifier: str, num_threads: int, binding_cores: str,
+def bench_driver(workload_name: str, workload_type: str, identifier: str, binding_cores: str, num_threads: int = None,
                  numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None) \
         -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, workload_type, identifier, num_threads, binding_cores, numa_mem_nodes,
+    return _bench_driver(workload_name, workload_type, identifier, binding_cores, num_threads, numa_mem_nodes,
                          cpu_freq, cbm_ranges)

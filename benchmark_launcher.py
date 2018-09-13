@@ -28,8 +28,8 @@ def parse_workload_cfg(wl_configs: List[Dict[str, Any]]) -> Tuple[BenchConfig, .
     return tuple(
             BenchConfig(config['name'],
                         config['type'],
-                        config['num_of_threads'],
                         config['binding_cores'],
+                        config.get('num_of_threads', None),
                         config.get('numa_nodes', None),
                         config.get('cpu_freq', None),
                         config.get('cbm_ranges', None))
