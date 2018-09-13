@@ -6,9 +6,10 @@ from benchmark.driver.base_driver import BenchDriver, bench_driver
 
 
 class BenchConfig:
-    def __init__(self, workload_name: str, num_of_threads: int, binding_cores: str,
+    def __init__(self, workload_name: str, workload_type: str, num_of_threads: int, binding_cores: str,
                  numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None):
         self._workload_name: str = workload_name
+        self._workload_type: str = workload_type
         self._num_of_threads: int = num_of_threads
         self._binding_cores: str = binding_cores
         self._numa_mem_nodes: Optional[str] = numa_mem_nodes
@@ -18,6 +19,10 @@ class BenchConfig:
     @property
     def name(self) -> str:
         return self._workload_name
+
+    @property
+    def workload_type(self) -> str:
+        return self._workload_type
 
     @property
     def num_of_threads(self) -> int:
@@ -40,7 +45,8 @@ class BenchConfig:
         return self._cbm_ranges
 
     def generate_driver(self, identifier: str) -> BenchDriver:
-        return bench_driver(self._workload_name, identifier, self._num_of_threads, self._binding_cores,
+        return bench_driver(self._workload_name, self._workload_type, identifier, self._num_of_threads,
+                            self._binding_cores,
                             self._numa_mem_nodes, self._cpu_freq, self._cbm_ranges)
 
     @staticmethod

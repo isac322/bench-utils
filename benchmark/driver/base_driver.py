@@ -56,9 +56,10 @@ class BenchDriver(metaclass=ABCMeta):
     _bench_home: str = None
     bench_name: str = None
 
-    def __init__(self, name: str, identifier: str, num_threads: int, binding_cores: str,
+    def __init__(self, name: str, workload_type: str, identifier: str, num_threads: int, binding_cores: str,
                  numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None):
         self._name: str = name
+        self._type: str = workload_type
         self._identifier: str = identifier
         self._num_threads: int = num_threads
         self._binding_cores: str = binding_cores
@@ -94,6 +95,10 @@ class BenchDriver(metaclass=ABCMeta):
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def wl_type(self) -> str:
+        return self._type
 
     @property
     @_Decorators.ensure_invoked
@@ -263,9 +268,10 @@ def find_driver(workload_name) -> Type[BenchDriver]:
     raise ValueError(f'Can not find appropriate driver for the workload "{workload_name}"')
 
 
-def bench_driver(workload_name: str, identifier: str, num_threads: int, binding_cores: str,
+def bench_driver(workload_name: str, workload_type: str, identifier: str, num_threads: int, binding_cores: str,
                  numa_mem_nodes: str = None, cpu_freq: float = None, cbm_ranges: Union[str, List[str]] = None) \
         -> BenchDriver:
     _bench_driver = find_driver(workload_name)
 
-    return _bench_driver(workload_name, identifier, num_threads, binding_cores, numa_mem_nodes, cpu_freq, cbm_ranges)
+    return _bench_driver(workload_name, workload_type, identifier, num_threads, binding_cores, numa_mem_nodes,
+                         cpu_freq, cbm_ranges)

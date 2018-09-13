@@ -10,7 +10,7 @@ from typing import List
 
 from orderedset import OrderedSet
 
-from post_scripts.tools import WorkloadResult, read_result
+from post_scripts.tools import WorkloadResult, read_config, read_result
 
 
 def run(workspace: Path, global_cfg_path: Path):
@@ -19,6 +19,10 @@ def run(workspace: Path, global_cfg_path: Path):
 
     if not output_path.exists():
         output_path.mkdir(parents=True)
+
+    _, perf_config, _, _ = read_config(workspace, global_cfg_path)
+
+    coefficient: float = 1000 / perf_config.interval
 
     categories: OrderedSet = reduce(lambda a, b: a | b, map(lambda x: OrderedSet(x.metrics.keys()), results))
     fields = tuple(map(lambda x: x.name, results))
@@ -35,6 +39,6 @@ def run(workspace: Path, global_cfg_path: Path):
             row_dict = OrderedDict({'category': category})
 
             for workload in results:
-                row_dict[workload.name] = mean(workload.metrics[category])
+                row_dict[workload.name] = mean(workload.metrics[category]) * coefficient
 
             csv_writer.writerow(row_dict)
