@@ -59,6 +59,9 @@ class Benchmark(BaseBenchmark):
 
         # launching benchmark
 
+        if len(self._constraints) is not 0:
+            await asyncio.wait(tuple(con.on_init() for con in self._constraints))
+
         logger.info('Starting benchmark...')
         await self._bench_driver.run()
         logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
@@ -73,6 +76,9 @@ class Benchmark(BaseBenchmark):
 
         # noinspection PyBroadException
         try:
+            if len(self._constraints) is not 0:
+                await asyncio.wait(tuple(con.on_start() for con in self._constraints))
+
             await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
             monitoring_tasks = asyncio.create_task(asyncio.wait(tuple(mon.monitor() for mon in self._monitors)))
 
@@ -105,6 +111,8 @@ class Benchmark(BaseBenchmark):
             logger.info('The benchmark is ended.')
             await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
             await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
+            if len(self._constraints) is not 0:
+                await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
 
             self._remove_logger_handlers()
 
@@ -164,8 +172,6 @@ class Benchmark(BaseBenchmark):
                      bench_config: BenchConfig,
                      workspace: Path,
                      logger_level: int = logging.INFO) -> None:
-            super().__init__()
-
             self._cur_obj: Benchmark = Benchmark.__new__(Benchmark, bench_config, workspace, logger_level)
 
         def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:

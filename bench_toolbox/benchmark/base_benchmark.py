@@ -9,6 +9,7 @@ from typing import ClassVar, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
+from .constraints import BaseConstraint
 from ..monitors import MonitorData
 from ..monitors.base_monitor import BaseMonitor
 from ..monitors.pipelines import BasePipeline, DefaultPipeline
@@ -22,6 +23,7 @@ class BaseBenchmark(metaclass=ABCMeta):
 
     _identifier: str
     _monitors: Tuple[BaseMonitor[MonitorData], ...]
+    _constraints: Tuple[BaseConstraint, ...]
     _pipeline: BasePipeline
     _log_path: Path
 
