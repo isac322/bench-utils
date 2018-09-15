@@ -74,9 +74,9 @@ class ResCtrl:
         self._group_path = ResCtrl.MOUNT_POINT / new_name
         self._monitors: Tuple[Dict[Path, Optional[AiofilesContextManager]], ...] = tuple(
                 dict.fromkeys(
-                        self._group_path / 'mon_data' / mon.name / feature for feature in ResCtrl.FEATURES
+                        self._group_path / 'mon_data' / mon_name / feature for feature in ResCtrl.FEATURES
                 )
-                for mon in self._MON_NAMES
+                for mon_name in ResCtrl._MON_NAMES
         )
 
     async def create_group(self) -> None:
