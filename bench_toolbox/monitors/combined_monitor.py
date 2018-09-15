@@ -51,6 +51,9 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
 
             await asyncio.sleep(self._interval)
 
+    async def stop(self) -> None:
+        await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+
     async def create_message(self, data: MonitorData) -> PerBenchMessage[MonitorData]:
         # FIXME
         return PerBenchMessage(data, self, None)
