@@ -9,7 +9,7 @@ from typing import ClassVar, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
-from .constraints import BaseConstraint
+from .constraints.base import BaseConstraint
 from ..monitors import MonitorData
 from ..monitors.base_monitor import BaseMonitor
 from ..monitors.pipelines import BasePipeline, DefaultPipeline

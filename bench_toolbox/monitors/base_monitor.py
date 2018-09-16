@@ -8,7 +8,8 @@ from typing import Callable, Coroutine, Generic, Optional, Type, TypeVar
 
 from . import MonitorData
 from .messages import BaseMessage
-from ..benchmark.constraints import BaseConstraint
+from ..benchmark.constraints.base import BaseConstraint
+from ..benchmark.constraints.base_builder import BaseBuilder
 
 _CT = TypeVar('_CT', bound=BaseConstraint)
 
@@ -28,7 +29,7 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
         return obj
 
     @classmethod
-    def required_constraint(cls) -> Optional[Type[_CT]]:
+    def required_constraint(cls) -> Optional[BaseBuilder[_CT]]:
         pass
 
     async def monitor(self) -> None:

@@ -1,20 +1,25 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
+from typing import Type
 
 
 # FIXME: circular import
-# from bench_toolbox.benchmark import BaseBenchmark
+# from ..base_benchmark import BaseBenchmark
 
 
 class BaseConstraint(metaclass=ABCMeta):
     # _benchmark: BaseBenchmark
 
     # noinspection PyUnresolvedReferences
-    def __init__(self, bench: 'BaseBenchmark') -> None:
-        super().__init__()
+    def __new__(cls: Type[BaseConstraint], bench: 'BaseBenchmark') -> BaseConstraint:
+        obj: BaseConstraint = super().__new__(cls)
 
-        self._benchmark = bench
+        obj._benchmark = bench
+
+        return obj
 
     async def on_init(self) -> None:
         pass
