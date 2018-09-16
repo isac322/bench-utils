@@ -36,9 +36,7 @@ class NPBDriver(BenchDriver):
         return bench_name in NPBDriver._benches
 
     def _find_bench_proc(self) -> Optional[psutil.Process]:
-        exec_name = self._exec_name
-
-        if self._wrapper_proc_info.name() == exec_name and self._wrapper_proc_info.is_running():
+        if self._wrapper_proc_info.name() == self._exec_name and self._wrapper_proc_info.is_running():
             return self._wrapper_proc_info
 
         return None
@@ -49,9 +47,7 @@ class NPBDriver(BenchDriver):
         else:
             mem_flag = f'--membind={self._bound_sockets}'
 
-        exec_name = self._exec_name
-
-        cmd = '--physcpubind={} {} {}/bin/{}'.format(self._bound_cores, mem_flag, self._bench_home, exec_name)
+        cmd = '--physcpubind={} {} {}/bin/{}'.format(self._bound_cores, mem_flag, self._bench_home, self._exec_name)
 
         return await asyncio.create_subprocess_exec('numactl', *shlex.split(cmd),
                                                     stdout=asyncio.subprocess.DEVNULL,
