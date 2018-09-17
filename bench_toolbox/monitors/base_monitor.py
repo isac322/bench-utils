@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Coroutine, Generic, Optional, Type, TypeVar
+from typing import Callable, Coroutine, Generic, Type, TypeVar
 
 from . import MonitorData
 from .messages import BaseMessage
 from ..benchmark.constraints.base import BaseConstraint
-from ..benchmark.constraints.base_builder import BaseBuilder
 
 _CT = TypeVar('_CT', bound=BaseConstraint)
 
@@ -27,10 +26,6 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
         obj._emitter = emitter
 
         return obj
-
-    @classmethod
-    def required_constraint(cls) -> Optional[BaseBuilder[_CT]]:
-        pass
 
     async def monitor(self) -> None:
         if not self._initialized:

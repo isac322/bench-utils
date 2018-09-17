@@ -187,5 +187,3 @@ class Benchmark(BaseBenchmark):
         def _finalize(self) -> None:
             if len(self._monitors) is 0:
                 self.build_monitor(IdleMonitor.Builder())
-
-            self._cur_obj._monitors = self._monitors

@@ -10,7 +10,6 @@ from .messages import BaseMessage
 from .messages.per_bench_message import PerBenchMessage
 from .messages.system_message import SystemMessage
 from ..benchmark import BaseBenchmark
-from ..benchmark.constraints.resctrl import ResCtrlConstraint
 from ..utils import ResCtrl
 
 T = Tuple[Mapping[str, int], ...]
@@ -33,10 +32,6 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
 
     def __init__(self, *args, **kwargs) -> None:
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
-
-    @classmethod
-    def required_constraint(cls) -> Optional[ResCtrlConstraint.Builder]:
-        return ResCtrlConstraint.Builder()
 
     async def on_init(self) -> None:
         await super().on_init()

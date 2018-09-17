@@ -21,7 +21,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
     _cur_obj: Optional[T] = None
     _monitors: List[BaseMonitor[MonitorData]] = list()
     # TODO: change key type to _CT not ConstraintBuilder[_CT]
-    _constraint_builders: Dict[Type[ConstraintBuilder[_CT]], ConstraintBuilder[_CT]] = dict()
+    _constraint_builders: Dict[Type[ConstraintBuilder[_CT]], _CT] = dict()
 
     @abstractmethod
     def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
@@ -34,11 +34,10 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         monitor = self._build_monitor(monitor_builder)
         self._monitors.append(monitor)
 
-        required_constraint_builder = monitor.required_constraint()
-        if required_constraint_builder is not None \
-                and type(required_constraint_builder) not in self._constraint_builders:
-            self._constraint_builders[type(required_constraint_builder)] = required_constraint_builder
+        return self
 
+    def build_constraint(self, constraint_builder: ConstraintBuilder) -> BaseBuilder[T]:
+        self._constraint_builders[type(constraint_builder)] = constraint_builder.finalize(self._cur_obj)
         return self
 
     @abstractmethod
@@ -50,7 +49,9 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
             raise AssertionError('Can\'t not reuse the finalized builder.')
 
         self._finalize()
-        self._cur_obj._constraints = tuple(map(lambda x: x.finalize(self._cur_obj), self._constraint_builders.values()))
+
+        self._cur_obj._monitors = self._monitors
+        self._cur_obj._constraints = tuple(self._constraint_builders.values())
 
         ret, self._cur_obj = self._cur_obj, None
         self._is_finalized = True
