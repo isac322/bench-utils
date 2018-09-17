@@ -24,6 +24,14 @@ class CpuConstraint(BaseCgroupConstraint):
 
         return obj
 
+    @property
+    def period(self) -> Optional[int]:
+        return self._period
+
+    @property
+    def quota(self) -> Optional[int]:
+        return self._quota
+
     async def on_init(self) -> None:
         await super().on_init()
 

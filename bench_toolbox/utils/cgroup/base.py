@@ -57,7 +57,7 @@ class BaseCGroup(metaclass=ABCMeta):
     def name(self) -> str:
         return self._name
 
-    async def set_name(self, new_name: str) -> None:
+    async def rename(self, new_name: str) -> None:
         proc = await asyncio.create_subprocess_exec(
                 'sudo', 'mv', str(self.absolute_path() / self._name), str(self.absolute_path() / new_name)
         )

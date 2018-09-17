@@ -24,6 +24,14 @@ class CpusetConstraint(BaseCgroupConstraint):
 
         return obj
 
+    @property
+    def cpus(self) -> Optional[str]:
+        return self._cpus
+
+    @property
+    def mems(self) -> Optional[str]:
+        return self._mems
+
     async def on_init(self) -> None:
         await super().on_init()
 

@@ -13,7 +13,7 @@ class BaseCgroupConstraint(BaseConstraint, metaclass=ABCMeta):
         await self._group.create_group()
 
     async def on_start(self) -> None:
-        await self._group.set_name(self._benchmark.group_name)
+        await self._group.rename(self._benchmark.group_name)
 
     async def on_destroy(self) -> None:
         await self._group.delete()
