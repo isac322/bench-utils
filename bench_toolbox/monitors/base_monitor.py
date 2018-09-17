@@ -19,7 +19,7 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
     _emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]
 
     def __new__(cls: Type[BaseMonitor],
-                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]) -> BaseMonitor:
+                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]]) -> BaseMonitor[MonitorData]:
         obj = super().__new__(cls)
 
         obj._initialized = False

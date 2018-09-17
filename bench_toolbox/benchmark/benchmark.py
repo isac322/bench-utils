@@ -44,7 +44,6 @@ class Benchmark(BaseBenchmark):
         self._remove_logger_handlers()
 
         # setup for loggers
-
         logger = logging.getLogger(self._identifier)
 
         fh = logging.FileHandler(self._log_path, mode='w')
@@ -167,10 +166,9 @@ class Benchmark(BaseBenchmark):
         await self._bench_driver.join()
 
     class Builder(BaseBuilder['Benchmark']):
-        def __init__(self,
-                     bench_config: BenchConfig,
-                     workspace: Path,
-                     logger_level: int = logging.INFO) -> None:
+        def __init__(self, bench_config: BenchConfig, workspace: Path, logger_level: int = logging.INFO) -> None:
+            super().__init__()
+
             self._cur_obj: Benchmark = Benchmark.__new__(Benchmark, bench_config, workspace, logger_level)
 
             for builder in bench_config.constraint_builders:

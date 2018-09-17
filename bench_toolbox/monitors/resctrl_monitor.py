@@ -18,7 +18,7 @@ T = Tuple[Mapping[str, int], ...]
 class ResCtrlMonitor(IterationDependentMonitor[T]):
     _benchmark: Optional[BaseBenchmark]
     _is_stopped: bool = False
-    _group: ResCtrl = ResCtrl()
+    _group: ResCtrl
 
     def __new__(cls: Type[ResCtrlMonitor],
                 emitter: Callable[[BaseMessage[T]], Coroutine[None, None, None]],
@@ -27,6 +27,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
         obj: ResCtrlMonitor = super().__new__(cls, emitter, interval)
 
         obj._benchmark = bench
+        obj._group = ResCtrl()
 
         return obj
 

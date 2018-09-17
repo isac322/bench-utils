@@ -43,6 +43,9 @@ class PerfMonitor(BaseMonitor[T]):
                 stderr=asyncio.subprocess.PIPE)
 
         num_of_events = len(self._perf_config.events)
+        if self._perf_config.interval < 100:
+            # remove warning message of perf from buffer
+            await perf_proc.stderr.readline()
 
         while not self._is_stopped:
             record = dict()

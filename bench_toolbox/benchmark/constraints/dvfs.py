@@ -13,7 +13,7 @@ from ...utils.dvfs import read_max_freqs, set_max_freq, set_max_freqs
 class DVFSConstraint(BaseConstraint):
     _target_freq: int
     _core_ids: Tuple[int, ...]
-    _orig_freq: Dict[int, int] = dict()
+    _orig_freq: Dict[int, int]
 
     def __new__(cls: Type[DVFSConstraint], bench: 'BaseBenchmark',
                 core_ids: Tuple[int, ...], freq: int) -> DVFSConstraint:
@@ -21,6 +21,7 @@ class DVFSConstraint(BaseConstraint):
 
         obj._core_ids = core_ids
         obj._target_freq = freq
+        obj._orig_freq = dict()
 
         return obj
 

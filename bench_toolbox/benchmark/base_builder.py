@@ -19,9 +19,13 @@ _CT = TypeVar('_CT', bound=BaseConstraint)
 class BaseBuilder(Generic[T], metaclass=ABCMeta):
     _is_finalized: bool = False
     _cur_obj: Optional[T] = None
-    _monitors: List[BaseMonitor[MonitorData]] = list()
+    _monitors: List[BaseMonitor[MonitorData]]
     # TODO: change key type to _CT not ConstraintBuilder[_CT]
-    _constraint_builders: Dict[Type[ConstraintBuilder[_CT]], _CT] = dict()
+    _constraint_builders: Dict[Type[ConstraintBuilder[_CT]], _CT]
+
+    def __init__(self) -> None:
+        self._monitors = list()
+        self._constraint_builders = dict()
 
     @abstractmethod
     def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:

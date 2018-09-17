@@ -15,13 +15,14 @@ from ...utils import ResCtrl
 
 class ResCtrlConstraint(BaseConstraint):
     _masks: Tuple[str, ...]
-    _group: ResCtrl = ResCtrl()
+    _group: ResCtrl
 
     # noinspection PyUnresolvedReferences
     def __new__(cls: Type[ResCtrlConstraint], bench: 'BaseBenchmark', masks: Tuple[str, ...]) -> ResCtrlConstraint:
         obj: ResCtrlConstraint = super().__new__(cls, bench)
 
         obj._masks = masks
+        obj._group = ResCtrl()
 
         return obj
 
