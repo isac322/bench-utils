@@ -8,6 +8,7 @@ from typing import ClassVar, Optional, Set, Tuple
 
 import psutil
 
+from .engines.base import BaseEngine
 from ..decorators.driver import ensure_invoked, ensure_not_running, ensure_running
 
 
@@ -35,17 +36,15 @@ class BenchDriver(metaclass=ABCMeta):
 
     _name: str
     _num_threads: int
-    _bound_cores: str
-    _bound_sockets: Optional[str]
+    _engine: BaseEngine
     _bench_proc_info: Optional[psutil.Process] = None
     _wrapper_proc: Optional[asyncio.subprocess.Process] = None
     _wrapper_proc_info: Optional[psutil.Process] = None
 
-    def __init__(self, name: str, num_threads: int, bound_cores: str, bound_sockets: Optional[str]):
+    def __init__(self, name: str, num_threads: int, engine: BaseEngine):
         self._name = name
         self._num_threads = num_threads
-        self._bound_cores = bound_cores
-        self._bound_sockets = bound_sockets
+        self._engine = engine
 
     def __del__(self):
         if self._is_running:

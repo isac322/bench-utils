@@ -13,7 +13,8 @@ import psutil
 from .base_benchmark import BaseBenchmark
 from .base_builder import BaseBuilder
 from .decorators.benchmark import ensure_invoked, ensure_not_running, ensure_running
-from .drivers import BenchDriver
+from .drivers import BenchDriver, gen_driver
+from .drivers.engines.cgroup import CGroupEngine
 from ..containers import BenchConfig
 from ..monitors import MonitorData
 from ..monitors.base_builder import BaseBuilder as MonitorBuilder
@@ -23,7 +24,6 @@ from ..monitors.messages.handlers.base_handler import BaseHandler
 
 
 class Benchmark(BaseBenchmark):
-    _bench_config: BenchConfig
     _bench_driver: BenchDriver
 
     def __new__(cls: Type[Benchmark],
@@ -32,8 +32,7 @@ class Benchmark(BaseBenchmark):
                 logger_level: int = logging.INFO) -> Benchmark:
         obj: Benchmark = super().__new__(cls, bench_config.identifier, workspace, logger_level)
 
-        obj._bench_config = bench_config
-        obj._bench_driver = bench_config.generate_driver()
+        obj._bench_driver = gen_driver(bench_config.name, bench_config.num_of_threads, CGroupEngine(obj))
 
         return obj
 
@@ -173,6 +172,9 @@ class Benchmark(BaseBenchmark):
                      workspace: Path,
                      logger_level: int = logging.INFO) -> None:
             self._cur_obj: Benchmark = Benchmark.__new__(Benchmark, bench_config, workspace, logger_level)
+
+            for builder in bench_config.constraint_builders:
+                self.build_constraint(builder)
 
         def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
             return monitor_builder \

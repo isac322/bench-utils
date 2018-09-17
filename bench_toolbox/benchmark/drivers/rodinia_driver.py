@@ -1,7 +1,6 @@
 # coding: UTF-8
 
 import asyncio
-import shlex
 from typing import ClassVar, Optional, Set
 
 import psutil
@@ -32,20 +31,8 @@ class RodiniaDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        if self._bound_sockets is None:
-            mem_flag = '--localalloc'
-        else:
-            mem_flag = f'--membind={self._bound_sockets}'
-
-        cmd = '--physcpubind={0} {1} {2}/openmp/{3}/run' \
-            .format(self._bound_cores, mem_flag, self._bench_home, self._name)
-
-        return await asyncio.create_subprocess_exec(
-                'numactl',
-                *shlex.split(cmd),
+        return await self._engine.launch(
+                f'{self._bench_home}/openmp/{self._name}/run',
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
-                env={
-                    'OMP_NUM_THREADS': str(self._num_threads),
-                    'GOMP_CPU_AFFINITY': str(self._bound_cores)
-                })
+                env={'OMP_NUM_THREADS': str(self._num_threads)})

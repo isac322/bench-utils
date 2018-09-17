@@ -1,7 +1,6 @@
 # coding: UTF-8
 
 import asyncio
-import shlex
 from typing import ClassVar, Dict, Optional, Set
 
 import psutil
@@ -42,13 +41,6 @@ class NPBDriver(BenchDriver):
         return None
 
     async def _launch_bench(self) -> asyncio.subprocess.Process:
-        if self._bound_sockets is None:
-            mem_flag = '--localalloc'
-        else:
-            mem_flag = f'--membind={self._bound_sockets}'
-
-        cmd = '--physcpubind={} {} {}/bin/{}'.format(self._bound_cores, mem_flag, self._bench_home, self._exec_name)
-
-        return await asyncio.create_subprocess_exec('numactl', *shlex.split(cmd),
-                                                    stdout=asyncio.subprocess.DEVNULL,
-                                                    env={'OMP_NUM_THREADS': str(self._num_threads)})
+        return await self._engine.launch(f'{self._bench_home}/bin/{self._exec_name}',
+                                         stdout=asyncio.subprocess.DEVNULL,
+                                         env={'OMP_NUM_THREADS': str(self._num_threads)})
