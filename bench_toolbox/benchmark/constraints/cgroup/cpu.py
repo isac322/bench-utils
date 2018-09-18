@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Optional, Type
+from typing import Optional, TYPE_CHECKING, Type
 
 from .base import BaseCgroupConstraint
 from ..base_builder import BaseBuilder
 from ....utils.cgroup.cpu import CPU
+
+# because of circular import
+if TYPE_CHECKING:
+    from ...benchmark import BaseBenchmark
 
 
 class CpuConstraint(BaseCgroupConstraint):
@@ -14,7 +18,7 @@ class CpuConstraint(BaseCgroupConstraint):
     _period: Optional[int]
     _quota: Optional[int]
 
-    def __new__(cls: Type[CpuConstraint], bench: 'BaseBenchmark',
+    def __new__(cls: Type[CpuConstraint], bench: BaseBenchmark,
                 period: Optional[int], quota: Optional[int]) -> CpuConstraint:
         obj: CpuConstraint = super().__new__(cls, bench)
 
@@ -50,5 +54,5 @@ class CpuConstraint(BaseCgroupConstraint):
             self._period = period
             self._quota = quota
 
-        def finalize(self, benchmark: 'BaseBenchmark') -> CpuConstraint:
+        def finalize(self, benchmark: BaseBenchmark) -> CpuConstraint:
             return CpuConstraint.__new__(CpuConstraint, benchmark, self._period, self._quota)
