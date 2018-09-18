@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
-
-# FIXME: circular import
-# from ..base_benchmark import BaseBenchmark
+# because of circular import
+if TYPE_CHECKING:
+    from ..base_benchmark import BaseBenchmark
 
 
 class BaseConstraint(metaclass=ABCMeta):
-    # _benchmark: BaseBenchmark
+    _benchmark: BaseBenchmark
 
-    # noinspection PyUnresolvedReferences
-    def __new__(cls: Type[BaseConstraint], bench: 'BaseBenchmark') -> BaseConstraint:
+    def __new__(cls: Type[BaseConstraint], bench: BaseBenchmark) -> BaseConstraint:
         obj: BaseConstraint = super().__new__(cls)
 
         obj._benchmark = bench

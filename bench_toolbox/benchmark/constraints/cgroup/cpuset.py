@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Optional, Type
+from typing import Optional, TYPE_CHECKING, Type
 
 from .base import BaseCgroupConstraint
 from ..base_builder import BaseBuilder
 from ....utils.cgroup.cpuset import Cpuset
+
+# because of circular import
+if TYPE_CHECKING:
+    from ...benchmark import BaseBenchmark
 
 
 class CpusetConstraint(BaseCgroupConstraint):
@@ -14,7 +18,7 @@ class CpusetConstraint(BaseCgroupConstraint):
     _cpus: Optional[str]
     _mems: Optional[str]
 
-    def __new__(cls: Type[CpusetConstraint], bench: 'BaseBenchmark',
+    def __new__(cls: Type[CpusetConstraint], bench: BaseBenchmark,
                 cpus: Optional[str], mems: Optional[str]) -> CpusetConstraint:
         obj: CpusetConstraint = super().__new__(cls, bench)
 
@@ -50,5 +54,5 @@ class CpusetConstraint(BaseCgroupConstraint):
             self._cpus = cpus
             self._mems = mems
 
-        def finalize(self, benchmark: 'BaseBenchmark') -> CpusetConstraint:
+        def finalize(self, benchmark: BaseBenchmark) -> CpusetConstraint:
             return CpusetConstraint.__new__(CpusetConstraint, benchmark, self._cpus, self._mems)

@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Dict, Tuple, Type
+from typing import Dict, TYPE_CHECKING, Tuple, Type
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
 from ...utils.dvfs import read_max_freqs, set_max_freq, set_max_freqs
+
+# because of circular import
+if TYPE_CHECKING:
+    from ..benchmark import BaseBenchmark
 
 
 class DVFSConstraint(BaseConstraint):
@@ -15,7 +19,7 @@ class DVFSConstraint(BaseConstraint):
     _core_ids: Tuple[int, ...]
     _orig_freq: Dict[int, int]
 
-    def __new__(cls: Type[DVFSConstraint], bench: 'BaseBenchmark',
+    def __new__(cls: Type[DVFSConstraint], bench: BaseBenchmark,
                 core_ids: Tuple[int, ...], freq: int) -> DVFSConstraint:
         obj: DVFSConstraint = super().__new__(cls, bench)
 
@@ -48,5 +52,5 @@ class DVFSConstraint(BaseConstraint):
             self._core_ids = core_ids
             self._target_freq = freq
 
-        def finalize(self, benchmark: 'BaseBenchmark') -> DVFSConstraint:
+        def finalize(self, benchmark: BaseBenchmark) -> DVFSConstraint:
             return DVFSConstraint.__new__(DVFSConstraint, benchmark, self._core_ids, self._target_freq)

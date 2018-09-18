@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Tuple, Type
+from typing import TYPE_CHECKING, Tuple, Type
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
 from ...utils import ResCtrl
 
-
-# FIXME: circular import
-# from ..benchmark import BaseBenchmark
+# because of circular import
+if TYPE_CHECKING:
+    from ..benchmark import BaseBenchmark
 
 
 class ResCtrlConstraint(BaseConstraint):
     _masks: Tuple[str, ...]
     _group: ResCtrl
 
-    # noinspection PyUnresolvedReferences
-    def __new__(cls: Type[ResCtrlConstraint], bench: 'BaseBenchmark', masks: Tuple[str, ...]) -> ResCtrlConstraint:
+    def __new__(cls: Type[ResCtrlConstraint], bench: BaseBenchmark, masks: Tuple[str, ...]) -> ResCtrlConstraint:
         obj: ResCtrlConstraint = super().__new__(cls, bench)
 
         obj._masks = masks
@@ -49,6 +48,5 @@ class ResCtrlConstraint(BaseConstraint):
         def __init__(self, masks: Tuple[str, ...] = tuple()) -> None:
             self._masks = masks
 
-        # noinspection PyUnresolvedReferences
-        def finalize(self, benchmark: 'BaseBenchmark') -> ResCtrlConstraint:
+        def finalize(self, benchmark: BaseBenchmark) -> ResCtrlConstraint:
             return ResCtrlConstraint.__new__(ResCtrlConstraint, benchmark, self._masks)
