@@ -68,7 +68,11 @@ class PerfMonitor(BaseMonitor[T]):
                 msg = await self.create_message(record)
                 await self._emitter(msg)
 
-        perf_proc.kill()
+        if perf_proc.returncode is None:
+            try:
+                perf_proc.kill()
+            except ProcessLookupError as e:
+                logger.debug(f'The perf killed before explicit killing : {e}')
 
     async def stop(self) -> None:
         self._is_stopped = True
