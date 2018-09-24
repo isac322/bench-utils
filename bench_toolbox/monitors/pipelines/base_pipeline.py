@@ -29,6 +29,12 @@ class BasePipeline(metaclass=ABCMeta):
             if message is None:
                 break
 
+    async def on_end(self) -> None:
+        await asyncio.wait(tuple(handler.on_end() for handler in self._handlers))
+
+    async def on_destroy(self) -> None:
+        await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))
+
     @property
     def handlers(self) -> Tuple[BaseHandler]:
         return tuple(self._handlers)

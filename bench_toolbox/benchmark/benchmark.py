@@ -41,30 +41,27 @@ class Benchmark(BaseBenchmark):
 
     @ensure_not_running
     async def start_and_pause(self, silent: bool = False) -> None:
-        self._remove_logger_handlers()
+        await super().start_and_pause(silent)
 
-        # setup for loggers
         logger = logging.getLogger(self._identifier)
 
-        fh = logging.FileHandler(self._log_path, mode='w')
-        fh.setFormatter(Benchmark._file_formatter)
-        logger.addHandler(fh)
+        # noinspection PyBroadException
+        try:
+            logger.info('Starting benchmark...')
+            await self._bench_driver.run()
+            logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
 
-        if not silent:
-            stream_handler = logging.StreamHandler()
-            stream_handler.setFormatter(Benchmark._stream_formatter)
-            logger.addHandler(stream_handler)
+            self.pause()
 
-        # launching benchmark
+        except CancelledError as e:
+            logger.debug(f'The task cancelled : {e}')
+            if self._bench_driver.is_running:
+                self._stop()
 
-        if len(self._constraints) is not 0:
-            await asyncio.wait(tuple(con.on_init() for con in self._constraints))
-
-        logger.info('Starting benchmark...')
-        await self._bench_driver.run()
-        logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
-
-        self.pause()
+        except Exception as e:
+            logger.critical(f'The following errors occurred during startup : {e}')
+            if self.is_running:
+                self._stop()
 
     @ensure_running
     async def monitor(self) -> None:
@@ -107,10 +104,18 @@ class Benchmark(BaseBenchmark):
 
         finally:
             logger.info('The benchmark is ended.')
+
+            # destroy monitors
             await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
             await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
+
+            # destroy constraints
             if len(self._constraints) is not 0:
                 await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+
+            # destroy pipeline
+            await self._pipeline.on_end()
+            await self._pipeline.on_destroy()
 
             self._remove_logger_handlers()
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
@@ -49,9 +50,27 @@ class BaseBenchmark(metaclass=ABCMeta):
 
         return obj
 
-    @abstractmethod
     async def start_and_pause(self, silent: bool = False) -> None:
-        pass
+        self._remove_logger_handlers()
+
+        # setup for loggers
+        logger = logging.getLogger(self._identifier)
+
+        fh = logging.FileHandler(self._log_path, mode='w')
+        fh.setFormatter(BaseBenchmark._file_formatter)
+        logger.addHandler(fh)
+
+        if not silent:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setFormatter(BaseBenchmark._stream_formatter)
+            logger.addHandler(stream_handler)
+
+        # initialize constraints & pipeline
+
+        if len(self._constraints) is not 0:
+            await asyncio.wait(tuple(con.on_init() for con in self._constraints))
+
+        await self._pipeline.on_init()
 
     @abstractmethod
     async def monitor(self) -> None:

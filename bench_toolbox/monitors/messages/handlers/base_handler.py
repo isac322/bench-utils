@@ -13,3 +13,9 @@ class BaseHandler(metaclass=ABCMeta):
     @abstractmethod
     async def on_message(self, message: BaseMessage) -> Optional[BaseMessage]:
         pass
+
+    async def on_end(self) -> None:
+        pass
+
+    async def on_destroy(self) -> None:
+        pass
