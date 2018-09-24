@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Coroutine, Generic, Type, TypeVar
+from typing import Callable, Coroutine, Generic, TYPE_CHECKING, Type, TypeVar
 
 from . import MonitorData
-from .messages import BaseMessage
 from ..benchmark.constraints.base import BaseConstraint
+
+# because of circular import
+if TYPE_CHECKING:
+    from .messages import BaseMessage
 
 _CT = TypeVar('_CT', bound=BaseConstraint)
 

@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
-from .base_message import BaseMessage
+from .base_message import MonitoredMessage
 
 
 @dataclass(frozen=True)
-class SystemMessage(BaseMessage):
+class SystemMessage(MonitoredMessage):
     pass
