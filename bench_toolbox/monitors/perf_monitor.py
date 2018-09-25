@@ -42,30 +42,33 @@ class PerfMonitor(BaseMonitor[T]):
                 '-p', str(self._benchmark.pid), '-x', ',', '-I', str(self._perf_config.interval),
                 stderr=asyncio.subprocess.PIPE)
 
-        num_of_events = len(self._perf_config.events)
         if self._perf_config.interval < 100:
             # remove warning message of perf from buffer
             await perf_proc.stderr.readline()
 
-        while not self._is_stopped:
-            record = dict()
+        record = dict.fromkeys(event.alias for event in self._perf_config.events)
 
-            for idx in range(num_of_events):
+        while not self._is_stopped:
+            ignored = False
+
+            for event in self._perf_config.events:
                 raw_line = await perf_proc.stderr.readline()
 
-                line = raw_line.decode().strip()
+                line: str = raw_line.decode().strip()
                 line_split = line.split(',')
+
                 try:
-                    value = line_split[1]
-                    float(value)
-                    record[self._perf_config.events[idx].alias] = value
+                    if line_split[1].isdigit():
+                        record[event.alias] = int(line_split[1])
+                    else:
+                        record[event.alias] = float(line_split[1])
                 except (IndexError, ValueError) as e:
-                    record[self._perf_config.events[idx].alias] = None
+                    ignored = True
                     logger.debug(f'a line that perf printed was ignored due to following exception : {e}'
                                  f' and the line is : {line}')
 
-            if not self._is_stopped:
-                msg = await self.create_message(record)
+            if not self._is_stopped and not ignored:
+                msg = await self.create_message(record.copy())
                 await self._emitter(msg)
 
         if perf_proc.returncode is None:
