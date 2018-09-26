@@ -1,0 +1,6 @@
+{
+	"host": "localhost",
+	"queue_name": {
+		"workload_creation": "workload_creation"
+	}
+}
