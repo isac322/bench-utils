@@ -15,7 +15,7 @@ T = TypeVar('T', bound=BaseMonitor)
 class BaseBuilder(Generic[T], metaclass=ABCMeta):
     _is_finalized: bool
     _cur_bench: Optional[BaseBenchmark]
-    _cur_emitter: Optional[Callable[[BaseMessage], Coroutine[None, None, None]]]
+    _cur_emitter: Callable[[BaseMessage], Coroutine[None, None, None]]
 
     def __init__(self) -> None:
         self._is_finalized = False
@@ -42,6 +42,8 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
     def finalize(self) -> T:
         if self._is_finalized:
             raise AssertionError('Can\'t not reuse the finalized builder.')
+        if self._cur_emitter is None:
+            raise ValueError('emitter is not set')
 
         ret = self._finalize()
 
