@@ -6,7 +6,8 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from ..benchmark_launcher import parse_launcher_cfg, parse_perf_cfg, parse_rabbit_mq_cfg, parse_workload_cfg
+# FIXME
+# from ..benchmark_launcher import parse_launcher_cfg, parse_perf_cfg, parse_rabbit_mq_cfg, parse_workload_cfg
 from ..containers.bench import BenchConfig
 from ..containers.launcher import LauncherConfig
 from ..containers.perf import PerfConfig
@@ -37,6 +38,7 @@ def read_result(workspace: Path) -> List[WorkloadResult]:
     metric_path = workspace / 'perf'
 
     if not result_file.is_file() or not metric_path.is_dir():
+        # FIXME
         raise ValueError('run benchmark_launcher.py first!')
 
     with result_file.open() as result_fp:
@@ -67,6 +69,7 @@ def read_config(workspace: Path, global_cfg_path: Path) -> \
     local_cfg_path = workspace / 'config.json'
 
     if not local_cfg_path.is_file() or not global_cfg_path.is_file():
+        # FIXME
         raise ValueError('run benchmark_launcher.py first!')
 
     with local_cfg_path.open() as local_fp, \
