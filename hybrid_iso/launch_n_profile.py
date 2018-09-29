@@ -12,11 +12,13 @@ from pathlib import Path
 from typing import Tuple
 
 from bench_toolbox.benchmark import LaunchableBenchmark
-from bench_toolbox.benchmark.constraints import RabbitMQConstraint, ResCtrlConstraint
+from bench_toolbox.benchmark.constraints import ResCtrlConstraint
 from bench_toolbox.configs.parser import Parser
 from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
-from bench_toolbox.monitors.messages.handlers import HybridIsoMerger, PrintHandler, RabbitMQHandler
+from bench_toolbox.monitors.messages.handlers import RabbitMQHandler
 from bench_toolbox.utils.hyperthreading import hyper_threading_guard
+from .benchmark.constraints.rabbit_mq import RabbitMQConstraint
+from .monitors.messages.handlers.hybrid_iso_merger import HybridIsoMerger
 
 MIN_PYTHON = (3, 7)
 
@@ -77,6 +79,9 @@ async def launch(workspace: Path,
 
 
 async def main() -> None:
+    if sys.version_info < MIN_PYTHON:
+        sys.exit('Python {}.{} or later is required.\n'.format(*MIN_PYTHON))
+
     parser = argparse.ArgumentParser(description='Launch benchmark written in config file.')
     parser.add_argument('config_dir', metavar='PARENT_DIR_OF_CONFIG_FILE', type=str, nargs='+',
                         help='Directory path where the config file (config.json) exist. (support wildcard *)')
@@ -104,7 +109,4 @@ async def main() -> None:
 
 
 if __name__ == '__main__':
-    if sys.version_info < MIN_PYTHON:
-        sys.exit('Python {}.{} or later is required.\n'.format(*MIN_PYTHON))
-
     asyncio.run(main())
