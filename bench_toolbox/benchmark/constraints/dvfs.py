@@ -9,9 +9,8 @@ from .base import BaseConstraint
 from .base_builder import BaseBuilder
 from ...utils.dvfs import read_max_freqs, set_max_freq, set_max_freqs
 
-# because of circular import
 if TYPE_CHECKING:
-    from ..benchmark import BaseBenchmark
+    from ..base import BaseBenchmark
 
 
 class DVFSConstraint(BaseConstraint):

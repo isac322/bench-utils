@@ -7,9 +7,8 @@ from typing import Generic, TYPE_CHECKING, TypeVar
 
 from .base import BaseConstraint
 
-# because of circular import
 if TYPE_CHECKING:
-    from ..base_benchmark import BaseBenchmark
+    from ..base import BaseBenchmark
 
 T = TypeVar('T', bound=BaseConstraint)
 

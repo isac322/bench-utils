@@ -6,11 +6,10 @@ from typing import Optional, TYPE_CHECKING, Type
 
 from .base import BaseCgroupConstraint
 from ..base_builder import BaseBuilder
-from ....utils.cgroup.cpu import CPU
+from ....utils.cgroup import CPU
 
-# because of circular import
 if TYPE_CHECKING:
-    from ...benchmark import BaseBenchmark
+    from ...base import BaseBenchmark
 
 
 class CpuConstraint(BaseCgroupConstraint):

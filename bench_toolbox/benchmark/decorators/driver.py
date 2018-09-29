@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ..drivers import BenchDriver
 
 
-# TODO: generalize or move into benchmark.py
+# TODO: generalize or move into launchable.py
 
 
 def ensure_running(func: Callable[[BenchDriver, Any], Any]):

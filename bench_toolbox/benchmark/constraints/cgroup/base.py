@@ -1,9 +1,14 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 from abc import ABCMeta
+from typing import TYPE_CHECKING
 
 from ..base import BaseConstraint
-from ....utils.cgroup.base import BaseCGroup
+
+if TYPE_CHECKING:
+    from ....utils.cgroup.base import BaseCGroup
 
 
 class BaseCgroupConstraint(BaseConstraint, metaclass=ABCMeta):

@@ -1,9 +1,13 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 from abc import ABCMeta, abstractmethod
+from typing import TYPE_CHECKING
 
-from ...benchmark import BaseBenchmark
+if TYPE_CHECKING:
+    from ...base import BaseBenchmark
 
 
 class BaseEngine(metaclass=ABCMeta):
