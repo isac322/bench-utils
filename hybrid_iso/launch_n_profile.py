@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # coding: UTF-8
 
 import argparse
@@ -106,7 +105,3 @@ async def main() -> None:
 
         if not await launch(Path(workspace), silent, print_metric_log and silent, verbose and silent):
             break
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
