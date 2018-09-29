@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Type
+from typing import Type
 
-# because of circular import
-if TYPE_CHECKING:
-    from ..base import BaseBenchmark
+from ..base import BaseBenchmark
 
 
 class BaseConstraint(metaclass=ABCMeta):

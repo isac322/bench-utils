@@ -6,13 +6,10 @@ import asyncio
 from abc import ABCMeta, abstractmethod
 from typing import Callable, Coroutine, Generic, Mapping, TYPE_CHECKING, Tuple, Type, TypeVar
 
-from ..benchmark.constraints import BaseConstraint
-
 # because of circular import
 if TYPE_CHECKING:
     from .messages.base import BaseMessage
 
-_CT = TypeVar('_CT', bound=BaseConstraint)
 MonitorData = TypeVar('MonitorData', int, float, Tuple, Mapping)
 
 

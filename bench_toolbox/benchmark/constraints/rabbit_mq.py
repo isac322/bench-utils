@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING, Type
+from typing import Optional, Type
 
 import aio_pika
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
+from ..base import BaseBenchmark
 from ...containers import RabbitMQConfig
-
-# because of circular import
-if TYPE_CHECKING:
-    from ..base import BaseBenchmark
 
 
 class RabbitMQConstraint(BaseConstraint):

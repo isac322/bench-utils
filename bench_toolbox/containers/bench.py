@@ -1,10 +1,15 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from .base import BaseConfig
-from ..benchmark.constraints import BaseBuilder
+
+# because of circular import
+if TYPE_CHECKING:
+    from ..benchmark.constraints import BaseBuilder
 
 
 @dataclass(frozen=True)

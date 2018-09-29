@@ -6,13 +6,16 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import ClassVar, Tuple, Type
+from typing import ClassVar, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
-from .constraints.base import BaseConstraint
 from ..monitors import BaseMonitor, MonitorData
 from ..monitors.pipelines import BasePipeline, DefaultPipeline
+
+# because of circular import
+if TYPE_CHECKING:
+    from .constraints.base import BaseConstraint
 
 
 class BaseBenchmark(metaclass=ABCMeta):
