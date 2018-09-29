@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import Callable, Coroutine, Mapping, Type, Union
 
 from .base import BaseMonitor
@@ -36,7 +35,6 @@ class PerfMonitor(BaseMonitor[T]):
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
     async def _monitor(self) -> None:
-        logger = logging.getLogger(__name__)
         perf_proc = await asyncio.create_subprocess_exec(
                 'perf', 'stat', '-e', self._perf_config.event_str,
                 '-p', str(self._benchmark.pid), '-x', ',', '-I', str(self._perf_config.interval),
@@ -64,8 +62,6 @@ class PerfMonitor(BaseMonitor[T]):
                         record[event.alias] = float(line_split[1])
                 except (IndexError, ValueError) as e:
                     ignored = True
-                    logger.debug(f'a line that perf printed was ignored due to following exception : {e}'
-                                 f' and the line is : {line}')
 
             if not self._is_stopped and not ignored:
                 msg = await self.create_message(record.copy())
@@ -74,8 +70,8 @@ class PerfMonitor(BaseMonitor[T]):
         if perf_proc.returncode is None:
             try:
                 perf_proc.kill()
-            except ProcessLookupError as e:
-                logger.debug(f'The perf killed before explicit killing : {e}')
+            except ProcessLookupError:
+                pass
 
     async def stop(self) -> None:
         self._is_stopped = True
