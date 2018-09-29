@@ -189,11 +189,12 @@ class LaunchableBenchmark(BaseBenchmark):
         await self._bench_driver.join()
 
     class Builder(BaseBuilder['LaunchableBenchmark']):
+        _cur_obj: LaunchableBenchmark
+
         def __init__(self, bench_config: BenchConfig, workspace: Path, logger_level: int = logging.INFO) -> None:
             super().__init__()
 
-            self._cur_obj: LaunchableBenchmark = LaunchableBenchmark.__new__(LaunchableBenchmark, bench_config,
-                                                                             workspace, logger_level)
+            self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, bench_config, workspace, logger_level)
 
             for builder in bench_config.constraint_builders:
                 self.build_constraint(builder)
