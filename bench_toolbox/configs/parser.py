@@ -132,7 +132,10 @@ def _gen_bench_config(config: WorkloadJson, identifier: str) -> BenchConfig:
         cpu_freq: int = int(config['cpu_freq'] * 1_000_000)
         constrains.append(DVFSConstraint.Builder(tuple(bound_cores), cpu_freq))
 
-    return BenchConfig(config['name'], config['num_of_threads'], tuple(constrains), identifier)
+    if 'type' not in config:
+        config['type'] = 'fg'
+
+    return BenchConfig(config['name'], config['num_of_threads'], config['type'], tuple(constrains), identifier)
 
 
 class Parser:

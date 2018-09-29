@@ -30,7 +30,7 @@ class Benchmark(BaseBenchmark):
                 bench_config: BenchConfig,
                 workspace: Path,
                 logger_level: int = logging.INFO) -> Benchmark:
-        obj: Benchmark = super().__new__(cls, bench_config.identifier, workspace, logger_level)
+        obj: Benchmark = super().__new__(cls, bench_config.identifier, bench_config.wl_type, workspace, logger_level)
 
         obj._bench_driver = gen_driver(bench_config.name, bench_config.num_of_threads, CGroupEngine(obj))
 
