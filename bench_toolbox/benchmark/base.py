@@ -11,8 +11,7 @@ from typing import ClassVar, Tuple, Type
 from coloredlogs import ColoredFormatter
 
 from .constraints.base import BaseConstraint
-from ..monitors import MonitorData
-from ..monitors.base import BaseMonitor
+from ..monitors import BaseMonitor, MonitorData
 from ..monitors.pipelines import BasePipeline, DefaultPipeline
 
 

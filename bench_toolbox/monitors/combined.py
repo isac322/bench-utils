@@ -5,11 +5,9 @@ from __future__ import annotations
 import asyncio
 from typing import Callable, ClassVar, Coroutine, Iterable, List, Tuple, Type, TypeVar
 
-from . import MonitorData
-from .base import BaseMonitor
+from .base import BaseMonitor, MonitorData
 from .base_builder import BaseBuilder
-from .messages import BaseMessage, MonitoredMessage
-from .messages.per_bench import PerBenchMessage
+from .messages import BaseMessage, MonitoredMessage, PerBenchMessage
 from .oneshot import OneShotMonitor
 
 
@@ -61,7 +59,7 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
 
     @classmethod
     def _default_merger(cls, data: Iterable[MonitoredMessage[MonitorData]]) -> MonitorData:
-        return dict((m.source, m.data for m in data))
+        return dict((m.source, m.data) for m in data)
 
     class Builder(BaseBuilder['CombinedOneShotMonitor']):
         _T: ClassVar[TypeVar] = TypeVar('_T', bound=OneShotMonitor)

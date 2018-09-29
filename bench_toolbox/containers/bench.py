@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from .base import BaseConfig
-from ..benchmark.constraints.base_builder import BaseBuilder
+from ..benchmark.constraints import BaseBuilder
 
 
 @dataclass(frozen=True)

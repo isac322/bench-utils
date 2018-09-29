@@ -10,9 +10,8 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
-from ..benchmark.constraints.base_builder import BaseBuilder
-from ..benchmark.constraints.cgroup.cpuset import CpusetConstraint
-from ..benchmark.constraints.dvfs import DVFSConstraint
+from ..benchmark.constraints import BaseBuilder, DVFSConstraint
+from ..benchmark.constraints.cgroup import CpusetConstraint
 from ..benchmark.drivers import bench_drivers
 from ..containers import BenchConfig, PerfConfig, PerfEvent, RabbitMQConfig
 from ..utils.hyphen import convert_to_hyphen, convert_to_set

@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Coroutine, Mapping, Type, Union
+from typing import Callable, Coroutine, Mapping, TYPE_CHECKING, Type, Union
 
 from .base import BaseMonitor
 from .base_builder import BaseBuilder
-from .messages import BaseMessage
-from .messages.per_bench import PerBenchMessage
-from ..benchmark import BaseBenchmark
+from .messages import BaseMessage, PerBenchMessage
 from ..containers import PerfConfig
+
+# because of circular import
+if TYPE_CHECKING:
+    from ..benchmark import BaseBenchmark
 
 T = Mapping[str, Union[int, float]]
 

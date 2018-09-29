@@ -7,7 +7,7 @@ from abc import ABCMeta
 from typing import List, Tuple
 
 from ..messages import BaseMessage
-from ..messages.handlers.base import BaseHandler
+from ..messages.handlers import BaseHandler
 
 
 class BasePipeline(metaclass=ABCMeta):

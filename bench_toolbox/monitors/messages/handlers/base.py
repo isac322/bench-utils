@@ -3,7 +3,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional
 
-from .. import BaseMessage
+from ..base import BaseMessage
 
 
 class BaseHandler(metaclass=ABCMeta):

@@ -6,7 +6,7 @@ import asyncio
 from abc import ABCMeta, abstractmethod
 from typing import Callable, Coroutine, Optional, Type
 
-from . import MonitorData
+from .base import MonitorData
 from .messages import BaseMessage
 from .oneshot import OneShotMonitor
 

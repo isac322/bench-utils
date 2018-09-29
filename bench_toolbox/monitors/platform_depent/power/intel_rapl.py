@@ -9,8 +9,7 @@ import aiofiles
 
 from ...base import BaseMonitor
 from ...base_builder import BaseBuilder
-from ...messages.base import BaseMessage
-from ...messages.system import SystemMessage
+from ...messages import BaseMessage, SystemMessage
 
 _ENERGY_FILE_NAME = 'energy_uj'
 _MAX_ENERGY_VALUE_FILE_NAME = 'max_energy_range_uj'

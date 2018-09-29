@@ -6,11 +6,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Generic, List, Optional, Type, TypeVar
 
 from .base import BaseBenchmark
-from .constraints.base import BaseConstraint
-from .constraints.base_builder import BaseBuilder as ConstraintBuilder
-from ..monitors import MonitorData
-from ..monitors.base import BaseMonitor
-from ..monitors.base_builder import BaseBuilder as MonitorBuilder
+from .constraints import BaseBuilder as ConstraintBuilder, BaseConstraint
+from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
 
 T = TypeVar('T', bound=BaseBenchmark)
 _CT = TypeVar('_CT', bound=BaseConstraint)

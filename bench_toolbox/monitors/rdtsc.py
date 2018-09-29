@@ -8,8 +8,7 @@ import rdtsc
 
 from .base_builder import BaseBuilder
 from .iteration_dependent import IterationDependentMonitor
-from .messages import BaseMessage
-from .messages.system import SystemMessage
+from .messages import BaseMessage, SystemMessage
 
 
 class RDTSCMonitor(IterationDependentMonitor[int]):

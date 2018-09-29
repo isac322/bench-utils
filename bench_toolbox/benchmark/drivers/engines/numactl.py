@@ -3,7 +3,7 @@
 import asyncio
 
 from .base import BaseEngine
-from ...constraints.cgroup.cpuset import CpusetConstraint
+from ...constraints.cgroup import CpusetConstraint
 
 
 class NumaCtlEngine(BaseEngine):

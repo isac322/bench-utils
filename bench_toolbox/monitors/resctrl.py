@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Callable, Coroutine, Dict, List, Mapping, Optional, Tuple, Type
+from typing import Callable, Coroutine, Dict, List, Mapping, Optional, TYPE_CHECKING, Tuple, Type
 
 from .base_builder import BaseBuilder
 from .iteration_dependent import IterationDependentMonitor
-from .messages import BaseMessage, MonitoredMessage
-from .messages.per_bench import PerBenchMessage
-from .messages.system import SystemMessage
-from ..benchmark import BaseBenchmark
+from .messages import BaseMessage, MonitoredMessage, PerBenchMessage, SystemMessage
 from ..utils import ResCtrl
+
+# because of circular import
+if TYPE_CHECKING:
+    from ..benchmark import BaseBenchmark
 
 T = Tuple[Mapping[str, int], ...]
 

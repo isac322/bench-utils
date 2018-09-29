@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import time
-from typing import Callable, Coroutine, Type
+from typing import Callable, Coroutine, TYPE_CHECKING, Type
 
-from . import MonitorData
 from .base import BaseMonitor
 from .base_builder import BaseBuilder
-from .messages import BaseMessage
-from .messages.per_bench import PerBenchMessage
-from ..benchmark import BaseBenchmark
+from .messages import BaseMessage, PerBenchMessage
+
+# because of circular import
+if TYPE_CHECKING:
+    from ..benchmark import BaseBenchmark
 
 
 # TODO: handle pause and resume of Benchmark
@@ -19,7 +20,7 @@ class RuntimeMonitor(BaseMonitor[float]):
     _benchmark: BaseBenchmark
 
     def __new__(cls: Type[BaseMonitor],
-                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
+                emitter: Callable[[BaseMessage[float]], Coroutine[None, None, None]],
                 benchmark: BaseBenchmark) -> RuntimeMonitor:
         obj: RuntimeMonitor = super().__new__(cls, emitter)
 

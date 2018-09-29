@@ -1,7 +1,6 @@
 # coding: UTF-8
 
-from typing import TypeVar
-
 from .base import BaseMessage, GeneratedMessage, MonitoredMessage
-
-MessageType = TypeVar('MessageType', bound=BaseMessage)
+from .per_bench import PerBenchMessage
+from .rabbit_mq import RabbitMQMessage
+from .system import SystemMessage

@@ -14,13 +14,11 @@ from .base import BaseBenchmark
 from .base_builder import BaseBuilder
 from .decorators.benchmark import ensure_invoked, ensure_not_running, ensure_running
 from .drivers import BenchDriver, gen_driver
-from .drivers.engines.cgroup import CGroupEngine
+from .drivers.engines import CGroupEngine
 from ..containers import BenchConfig
-from ..monitors import MonitorData
-from ..monitors.base import BaseMonitor
-from ..monitors.base_builder import BaseBuilder as MonitorBuilder
+from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
 from ..monitors.idle import IdleMonitor
-from ..monitors.messages.handlers.base import BaseHandler
+from ..monitors.messages.handlers import BaseHandler
 
 
 class LaunchableBenchmark(BaseBenchmark):
