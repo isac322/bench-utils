@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Optional, Type
+from typing import Optional, TYPE_CHECKING, Type
 
 from .base import BaseCgroupConstraint
 from ..base_builder import BaseBuilder
-from ...base import BaseBenchmark
 from ....utils.cgroup import CPU
+
+if TYPE_CHECKING:
+    from ...base import BaseBenchmark
 
 
 class CpuConstraint(BaseCgroupConstraint):

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
-from ..base import BaseBenchmark
+if TYPE_CHECKING:
+    from ..base import BaseBenchmark
 
 
 class BaseConstraint(metaclass=ABCMeta):

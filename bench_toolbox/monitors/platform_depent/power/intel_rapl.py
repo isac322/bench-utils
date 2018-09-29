@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, ClassVar, Coroutine, Dict, List, Tuple, Type, Union
+from typing import Callable, ClassVar, Coroutine, Dict, List, TYPE_CHECKING, Tuple, Type, Union
 
 import aiofiles
 
 from ...base import BaseMonitor
 from ...base_builder import BaseBuilder
-from ...messages import BaseMessage, SystemMessage
+from ...messages import SystemMessage
+
+if TYPE_CHECKING:
+    from ...messages import BaseMessage
 
 _ENERGY_FILE_NAME = 'energy_uj'
 _MAX_ENERGY_VALUE_FILE_NAME = 'max_energy_range_uj'

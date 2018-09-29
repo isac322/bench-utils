@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Optional, Type
+from typing import Optional, TYPE_CHECKING, Type
 
 import aio_pika
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
-from ..base import BaseBenchmark
 from ...containers import RabbitMQConfig
+
+if TYPE_CHECKING:
+    from ..base import BaseBenchmark
 
 
 class RabbitMQConstraint(BaseConstraint):

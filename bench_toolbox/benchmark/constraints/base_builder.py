@@ -1,11 +1,14 @@
 # coding: UTF-8
 
+from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic, TYPE_CHECKING, TypeVar
 
 from .base import BaseConstraint
-from ..base import BaseBenchmark
+
+if TYPE_CHECKING:
+    from ..base import BaseBenchmark
 
 T = TypeVar('T', bound=BaseConstraint)
 

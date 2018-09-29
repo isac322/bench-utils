@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta
-from typing import List, Tuple
+from typing import List, TYPE_CHECKING, Tuple
 
-from ..messages import BaseMessage
-from ..messages.handlers import BaseHandler
+if TYPE_CHECKING:
+    from ..messages import BaseMessage
+    from ..messages.handlers import BaseHandler
 
 
 class BasePipeline(metaclass=ABCMeta):

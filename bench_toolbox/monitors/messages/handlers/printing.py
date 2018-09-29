@@ -1,9 +1,13 @@
 # coding: UTF-8
 
-from typing import Optional
+from __future__ import annotations
+
+from typing import Optional, TYPE_CHECKING
 
 from .base import BaseHandler
-from ..base import MonitoredMessage
+
+if TYPE_CHECKING:
+    from ..base import MonitoredMessage
 
 
 class PrintHandler(BaseHandler):

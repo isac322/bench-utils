@@ -6,19 +6,22 @@ import asyncio
 import logging
 from concurrent.futures import CancelledError
 from pathlib import Path
-from typing import Optional, Tuple, Type
+from typing import Optional, TYPE_CHECKING, Tuple, Type
 
 import psutil
 
 from .base import BaseBenchmark
 from .base_builder import BaseBuilder
 from .decorators.benchmark import ensure_invoked, ensure_not_running, ensure_running
-from .drivers import BenchDriver, gen_driver
+from .drivers import gen_driver
 from .drivers.engines import CGroupEngine
-from ..containers import BenchConfig
-from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
 from ..monitors.idle import IdleMonitor
-from ..monitors.messages.handlers import BaseHandler
+
+if TYPE_CHECKING:
+    from .drivers import BenchDriver
+    from ..containers import BenchConfig
+    from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
+    from ..monitors.messages.handlers import BaseHandler
 
 
 class LaunchableBenchmark(BaseBenchmark):

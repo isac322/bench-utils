@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, ClassVar, Coroutine, Iterable, List, Tuple, Type, TypeVar
+from typing import Callable, ClassVar, Coroutine, Iterable, List, TYPE_CHECKING, Tuple, Type, TypeVar
 
 from .base import BaseMonitor, MonitorData
 from .base_builder import BaseBuilder
-from .messages import BaseMessage, MonitoredMessage, PerBenchMessage
+from .messages import BaseMessage, PerBenchMessage
 from .oneshot import OneShotMonitor
+
+# because of circular import
+if TYPE_CHECKING:
+    from .messages import BaseMessage, MonitoredMessage
 
 
 async def _gen_message(monitor: OneShotMonitor[MonitorData]) -> BaseMessage[MonitorData]:

@@ -6,10 +6,10 @@ from abc import ABCMeta, abstractmethod
 from typing import Callable, Coroutine, Generic, Optional, TYPE_CHECKING, TypeVar
 
 from .base import BaseMonitor
-from .messages.base import BaseMessage
 
-# because of circular import
 if TYPE_CHECKING:
+    from .messages.base import BaseMessage
+    # because of circular import
     from ..benchmark import BaseBenchmark
 
 T = TypeVar('T', bound=BaseMonitor)

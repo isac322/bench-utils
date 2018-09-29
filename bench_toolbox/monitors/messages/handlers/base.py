@@ -1,9 +1,12 @@
 # coding: UTF-8
 
-from abc import ABCMeta, abstractmethod
-from typing import Optional
+from __future__ import annotations
 
-from ..base import BaseMessage
+from abc import ABCMeta, abstractmethod
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..base import BaseMessage
 
 
 class BaseHandler(metaclass=ABCMeta):

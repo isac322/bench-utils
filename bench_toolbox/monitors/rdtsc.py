@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Callable, Coroutine, Type
+from typing import Callable, Coroutine, TYPE_CHECKING, Type
 
 import rdtsc
 
 from .base_builder import BaseBuilder
 from .iteration_dependent import IterationDependentMonitor
-from .messages import BaseMessage, SystemMessage
+from .messages import SystemMessage
+
+if TYPE_CHECKING:
+    from .messages import BaseMessage
 
 
 class RDTSCMonitor(IterationDependentMonitor[int]):

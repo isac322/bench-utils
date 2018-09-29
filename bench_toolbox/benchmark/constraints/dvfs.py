@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Dict, Tuple, Type
+from typing import Dict, TYPE_CHECKING, Tuple, Type
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
-from ..base import BaseBenchmark
 from ...utils.dvfs import read_max_freqs, set_max_freq, set_max_freqs
+
+if TYPE_CHECKING:
+    from ..base import BaseBenchmark
 
 
 class DVFSConstraint(BaseConstraint):

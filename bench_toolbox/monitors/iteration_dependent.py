@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Coroutine, Optional, Type
+from typing import Callable, Coroutine, Optional, TYPE_CHECKING, Type
 
 from .base import MonitorData
-from .messages import BaseMessage
 from .oneshot import OneShotMonitor
+
+if TYPE_CHECKING:
+    from .messages import BaseMessage
 
 
 # FIXME: rename

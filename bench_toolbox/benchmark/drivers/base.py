@@ -1,15 +1,19 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import ClassVar, Optional, Set, Tuple
+from typing import ClassVar, Optional, Set, TYPE_CHECKING, Tuple
 
 import psutil
 
-from .engines.base import BaseEngine
 from ..decorators.driver import ensure_invoked, ensure_not_running, ensure_running
+
+if TYPE_CHECKING:
+    from .engines.base import BaseEngine
 
 
 class BenchDriver(metaclass=ABCMeta):

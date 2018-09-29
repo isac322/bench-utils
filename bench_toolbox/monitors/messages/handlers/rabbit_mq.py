@@ -1,14 +1,18 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import json
 from asyncio import iscoroutine
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import aio_pika
 
 from .base import BaseHandler
 from ..rabbit_mq import RabbitMQMessage
-from ....containers import RabbitMQConfig
+
+if TYPE_CHECKING:
+    from ....containers import RabbitMQConfig
 
 
 class RabbitMQHandler(BaseHandler):

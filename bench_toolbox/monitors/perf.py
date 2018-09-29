@@ -7,11 +7,12 @@ from typing import Callable, Coroutine, Mapping, TYPE_CHECKING, Type, Union
 
 from .base import BaseMonitor
 from .base_builder import BaseBuilder
-from .messages import BaseMessage, PerBenchMessage
-from ..containers import PerfConfig
+from .messages import PerBenchMessage
 
-# because of circular import
 if TYPE_CHECKING:
+    from .messages import BaseMessage
+    from ..containers import PerfConfig
+    # because of circular import
     from ..benchmark import BaseBenchmark
 
 T = Mapping[str, Union[int, float]]

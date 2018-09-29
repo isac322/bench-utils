@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Coroutine, Type
+from typing import Callable, Coroutine, TYPE_CHECKING, Type
 
 from .base import BaseMonitor, MonitorData
-from .messages import BaseMessage
+
+if TYPE_CHECKING:
+    from .messages import BaseMessage
 
 
 # FIXME: rename

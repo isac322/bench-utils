@@ -6,11 +6,12 @@ from typing import Callable, Coroutine, Dict, List, Mapping, Optional, TYPE_CHEC
 
 from .base_builder import BaseBuilder
 from .iteration_dependent import IterationDependentMonitor
-from .messages import BaseMessage, MonitoredMessage, PerBenchMessage, SystemMessage
+from .messages import PerBenchMessage, SystemMessage
 from ..utils import ResCtrl
 
-# because of circular import
 if TYPE_CHECKING:
+    from .messages import BaseMessage, MonitoredMessage
+    # because of circular import
     from ..benchmark import BaseBenchmark
 
 T = Tuple[Mapping[str, int], ...]

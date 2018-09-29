@@ -7,10 +7,11 @@ from typing import Callable, Coroutine, TYPE_CHECKING, Type
 
 from .base import BaseMonitor
 from .base_builder import BaseBuilder
-from .messages import BaseMessage, PerBenchMessage
+from .messages import PerBenchMessage
 
-# because of circular import
 if TYPE_CHECKING:
+    from .messages import BaseMessage
+    # because of circular import
     from ..benchmark import BaseBenchmark
 
 

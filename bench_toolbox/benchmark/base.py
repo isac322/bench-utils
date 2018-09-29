@@ -10,11 +10,12 @@ from typing import ClassVar, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
-from ..monitors import BaseMonitor, MonitorData
-from ..monitors.pipelines import BasePipeline, DefaultPipeline
+from ..monitors.pipelines import DefaultPipeline
 
-# because of circular import
 if TYPE_CHECKING:
+    from ..monitors import BaseMonitor, MonitorData
+    from ..monitors.pipelines import BasePipeline
+    # because of circular import
     from .constraints.base import BaseConstraint
 
 

@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Callable, Coroutine, Type
+from typing import Callable, Coroutine, TYPE_CHECKING, Type
 
 from . import MonitorData
 from .base import BaseMonitor
 from .base_builder import BaseBuilder
-from .messages import BaseMessage
-from ..benchmark import BaseBenchmark
+
+if TYPE_CHECKING:
+    from .messages import BaseMessage
+    from ..benchmark import BaseBenchmark
 
 
 class IdleMonitor(BaseMonitor[MonitorData]):

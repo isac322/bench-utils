@@ -1,15 +1,19 @@
 # coding: UTF-8
 
-from typing import Dict, Optional, Type, Union
+from __future__ import annotations
+
+from typing import Dict, Optional, TYPE_CHECKING, Type, Union
 
 from .base import BaseHandler
 from ..base import MonitoredMessage
 from ..rabbit_mq import RabbitMQMessage
-from ... import MonitorData
-from ...base import BaseMonitor
 from ...perf import PerfMonitor
 from ...rdtsc import RDTSCMonitor
 from ...resctrl import ResCtrlMonitor
+
+if TYPE_CHECKING:
+    from ... import MonitorData
+    from ...base import BaseMonitor
 
 
 class HybridIsoMerger(BaseHandler):

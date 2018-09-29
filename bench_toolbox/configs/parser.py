@@ -8,13 +8,16 @@ from dataclasses import dataclass
 from importlib import resources
 from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple, Union
 
-from ..benchmark.constraints import BaseBuilder, DVFSConstraint
+from ..benchmark.constraints import DVFSConstraint
 from ..benchmark.constraints.cgroup import CpusetConstraint
 from ..benchmark.drivers import bench_drivers
 from ..containers import BenchConfig, PerfConfig, PerfEvent, RabbitMQConfig
 from ..utils.hyphen import convert_to_hyphen, convert_to_set
+
+if TYPE_CHECKING:
+    from ..benchmark.constraints import BaseBuilder
 
 PerfConfigJson = Dict[str, Union[int, List[Dict[str, Union[str, Dict[str, str]]]]]]
 WorkloadJson = Dict[str, Union[float, str, int]]

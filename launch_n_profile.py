@@ -15,7 +15,7 @@ from bench_toolbox.benchmark import LaunchableBenchmark
 from bench_toolbox.benchmark.constraints import RabbitMQConstraint, ResCtrlConstraint
 from bench_toolbox.configs.parser import Parser
 from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
-from bench_toolbox.monitors.messages.handlers import HybridIsoMerger, RabbitMQHandler
+from bench_toolbox.monitors.messages.handlers import HybridIsoMerger, PrintHandler, RabbitMQHandler
 from bench_toolbox.utils.hyperthreading import hyper_threading_guard
 
 MIN_PYTHON = (3, 7)

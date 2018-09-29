@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Tuple, Type
+from typing import TYPE_CHECKING, Tuple, Type
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
-from ..base import BaseBenchmark
 from ...utils import ResCtrl
+
+if TYPE_CHECKING:
+    from ..base import BaseBenchmark
 
 
 class ResCtrlConstraint(BaseConstraint):
