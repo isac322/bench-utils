@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Mapping, Union
 
-from .base_message import GeneratedMessage
+from .base import GeneratedMessage
 
 _MT = Mapping[str, Union[int, float, str]]
 

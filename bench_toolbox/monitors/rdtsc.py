@@ -7,9 +7,9 @@ from typing import Callable, Coroutine, Type
 import rdtsc
 
 from .base_builder import BaseBuilder
-from .iteration_dependent_monitor import IterationDependentMonitor
+from .iteration_dependent import IterationDependentMonitor
 from .messages import BaseMessage
-from .messages.system_message import SystemMessage
+from .messages.system import SystemMessage
 
 
 class RDTSCMonitor(IterationDependentMonitor[int]):

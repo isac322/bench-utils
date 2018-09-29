@@ -2,14 +2,14 @@
 
 from typing import Dict, Optional, Type, Union
 
-from .base_handler import BaseHandler
-from ..base_message import MonitoredMessage
-from ..rabbit_mq_message import RabbitMQMessage
+from .base import BaseHandler
+from ..base import MonitoredMessage
+from ..rabbit_mq import RabbitMQMessage
 from ... import MonitorData
-from ...base_monitor import BaseMonitor
-from ...perf_monitor import PerfMonitor
-from ...rdtsc_monitor import RDTSCMonitor
-from ...resctrl_monitor import ResCtrlMonitor
+from ...base import BaseMonitor
+from ...perf import PerfMonitor
+from ...rdtsc import RDTSCMonitor
+from ...resctrl import ResCtrlMonitor
 
 
 class HybridIsoMerger(BaseHandler):

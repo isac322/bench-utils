@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Callable, Coroutine, Generic, Optional, TypeVar
 
-from .base_monitor import BaseMonitor
+from .base import BaseMonitor
 from .messages import BaseMessage
 from ..benchmark import BaseBenchmark
 

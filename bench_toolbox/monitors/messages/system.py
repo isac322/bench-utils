@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from .base_message import MonitoredMessage
+from .base import MonitoredMessage
 
 
 @dataclass(frozen=True)

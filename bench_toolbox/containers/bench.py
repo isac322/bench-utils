@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Tuple
 
-from .base_config import BaseConfig
+from .base import BaseConfig
 from ..benchmark.constraints.base_builder import BaseBuilder
 
 

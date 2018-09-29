@@ -3,7 +3,7 @@
 import asyncio
 from abc import ABCMeta, abstractmethod
 
-from ...benchmark import BaseBenchmark
+from ...base import BaseBenchmark
 
 
 class BaseEngine(metaclass=ABCMeta):

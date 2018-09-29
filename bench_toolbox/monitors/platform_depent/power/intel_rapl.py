@@ -7,10 +7,10 @@ from typing import Callable, ClassVar, Coroutine, Dict, List, Tuple, Type, Union
 
 import aiofiles
 
+from ...base import BaseMonitor
 from ...base_builder import BaseBuilder
-from ...base_monitor import BaseMonitor
-from ...messages.base_message import BaseMessage
-from ...messages.system_message import SystemMessage
+from ...messages.base import BaseMessage
+from ...messages.system import SystemMessage
 
 _ENERGY_FILE_NAME = 'energy_uj'
 _MAX_ENERGY_VALUE_FILE_NAME = 'max_energy_range_uj'

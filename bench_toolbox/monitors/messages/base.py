@@ -6,11 +6,11 @@ from abc import ABCMeta
 from dataclasses import dataclass
 from typing import Generic, TYPE_CHECKING, TypeVar
 
-from ..base_monitor import BaseMonitor
+from ..base import BaseMonitor
 
 # because of circular import
 if TYPE_CHECKING:
-    from .handlers.base_handler import BaseHandler
+    from .handlers.base import BaseHandler
 
 T = TypeVar('T')
 

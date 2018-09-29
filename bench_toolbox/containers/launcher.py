@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
-from .base_config import BaseConfig
+from .base import BaseConfig
 
 
 @dataclass(frozen=True)

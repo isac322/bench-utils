@@ -12,7 +12,7 @@ from coloredlogs import ColoredFormatter
 
 from .constraints.base import BaseConstraint
 from ..monitors import MonitorData
-from ..monitors.base_monitor import BaseMonitor
+from ..monitors.base import BaseMonitor
 from ..monitors.pipelines import BasePipeline, DefaultPipeline
 
 

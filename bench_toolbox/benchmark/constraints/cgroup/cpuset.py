@@ -10,7 +10,7 @@ from ....utils.cgroup.cpuset import Cpuset
 
 # because of circular import
 if TYPE_CHECKING:
-    from ...benchmark import BaseBenchmark
+    from ...base import BaseBenchmark
 
 
 class CpusetConstraint(BaseCgroupConstraint):

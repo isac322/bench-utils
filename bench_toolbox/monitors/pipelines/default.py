@@ -1,6 +1,6 @@
 # coding: UTF-8
 
-from .base_pipeline import BasePipeline
+from .base import BasePipeline
 
 
 class DefaultPipeline(BasePipeline):

@@ -2,8 +2,8 @@
 
 from typing import Optional
 
-from .base_handler import BaseHandler
-from ..base_message import MonitoredMessage
+from .base import BaseHandler
+from ..base import MonitoredMessage
 
 
 class PrintHandler(BaseHandler):

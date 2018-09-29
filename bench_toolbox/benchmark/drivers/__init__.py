@@ -2,12 +2,12 @@
 
 from typing import Type
 
-from .base_driver import BenchDriver
+from .base import BenchDriver
 from .engines.base import BaseEngine
-from .npb_driver import NPBDriver
-from .parsec_driver import ParsecDriver
-from .rodinia_driver import RodiniaDriver
-from .spec_driver import SpecDriver
+from .npb import NPBDriver
+from .parsec import ParsecDriver
+from .rodinia import RodiniaDriver
+from .spec import SpecDriver
 
 bench_drivers = (SpecDriver, ParsecDriver, RodiniaDriver, NPBDriver)
 

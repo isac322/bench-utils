@@ -10,17 +10,17 @@ from typing import Optional, Tuple, Type
 
 import psutil
 
-from .base_benchmark import BaseBenchmark
+from .base import BaseBenchmark
 from .base_builder import BaseBuilder
 from .decorators.benchmark import ensure_invoked, ensure_not_running, ensure_running
 from .drivers import BenchDriver, gen_driver
 from .drivers.engines.cgroup import CGroupEngine
 from ..containers import BenchConfig
 from ..monitors import MonitorData
+from ..monitors.base import BaseMonitor
 from ..monitors.base_builder import BaseBuilder as MonitorBuilder
-from ..monitors.base_monitor import BaseMonitor
-from ..monitors.idle_monitor import IdleMonitor
-from ..monitors.messages.handlers.base_handler import BaseHandler
+from ..monitors.idle import IdleMonitor
+from ..monitors.messages.handlers.base import BaseHandler
 
 
 class Benchmark(BaseBenchmark):

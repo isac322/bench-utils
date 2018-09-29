@@ -8,7 +8,7 @@ import aio_pika
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
-from ..base_benchmark import BaseBenchmark
+from ..base import BaseBenchmark
 from ...containers import RabbitMQConfig
 
 

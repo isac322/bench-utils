@@ -5,7 +5,7 @@ from typing import ClassVar, Dict, Optional, Set
 
 import psutil
 
-from .base_driver import BenchDriver
+from .base import BenchDriver
 
 
 class NPBDriver(BenchDriver):

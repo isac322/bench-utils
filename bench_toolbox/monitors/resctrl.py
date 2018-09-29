@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import Callable, Coroutine, Dict, List, Mapping, Optional, Tuple, Type
 
 from .base_builder import BaseBuilder
-from .iteration_dependent_monitor import IterationDependentMonitor
-from .messages import BaseMessage
-from .messages.per_bench_message import PerBenchMessage
-from .messages.system_message import SystemMessage
+from .iteration_dependent import IterationDependentMonitor
+from .messages import BaseMessage, MonitoredMessage
+from .messages.per_bench import PerBenchMessage
+from .messages.system import SystemMessage
 from ..benchmark import BaseBenchmark
 from ..utils import ResCtrl
 
@@ -70,7 +70,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
 
         return tuple(result)
 
-    async def create_message(self, data: T) -> BaseMessage[T]:
+    async def create_message(self, data: T) -> MonitoredMessage[T]:
         if self._benchmark is None:
             return SystemMessage(data, self)
         else:

@@ -6,8 +6,8 @@ from typing import Optional
 
 import aio_pika
 
-from .base_handler import BaseHandler
-from ..rabbit_mq_message import RabbitMQMessage
+from .base import BaseHandler
+from ..rabbit_mq import RabbitMQMessage
 from ....containers import RabbitMQConfig
 
 

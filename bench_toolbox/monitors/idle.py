@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Callable, Coroutine, Type
 
 from . import MonitorData
+from .base import BaseMonitor
 from .base_builder import BaseBuilder
-from .base_monitor import BaseMonitor
 from .messages import BaseMessage
 from ..benchmark import BaseBenchmark
 

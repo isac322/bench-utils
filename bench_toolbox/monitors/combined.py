@@ -6,11 +6,11 @@ import asyncio
 from typing import Callable, ClassVar, Coroutine, Iterable, List, Tuple, Type, TypeVar
 
 from . import MonitorData
+from .base import BaseMonitor
 from .base_builder import BaseBuilder
-from .base_monitor import BaseMonitor
-from .messages import BaseMessage
-from .messages.per_bench_message import PerBenchMessage
-from .oneshot_monitor import OneShotMonitor
+from .messages import BaseMessage, MonitoredMessage
+from .messages.per_bench import PerBenchMessage
+from .oneshot import OneShotMonitor
 
 
 async def _gen_message(monitor: OneShotMonitor[MonitorData]) -> BaseMessage[MonitorData]:
@@ -22,13 +22,14 @@ async def _gen_message(monitor: OneShotMonitor[MonitorData]) -> BaseMessage[Moni
 class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
     _interval: float
     _monitors: Iterable[OneShotMonitor[MonitorData]]
-    _data_merger: Callable[[Iterable[MonitorData]], MonitorData]
+    _data_merger: Callable[[Iterable[MonitoredMessage[MonitorData]]], MonitorData]
 
     def __new__(cls: Type[BaseMonitor],
                 emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
                 interval: int,
                 monitors: Iterable[OneShotMonitor[MonitorData]],
-                data_merger: Callable[[Iterable[MonitorData]], MonitorData] = None) -> CombinedOneShotMonitor:
+                data_merger: Callable[[Iterable[MonitoredMessage[MonitorData]]], MonitorData] = None) -> \
+            CombinedOneShotMonitor:
         obj: CombinedOneShotMonitor = super().__new__(cls, emitter)
 
         obj._interval = interval / 1000
@@ -59,7 +60,7 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
         return PerBenchMessage(data, self, None)
 
     @classmethod
-    def _default_merger(cls, data: Iterable[BaseMessage[MonitorData]]) -> MonitorData:
+    def _default_merger(cls, data: Iterable[MonitoredMessage[MonitorData]]) -> MonitorData:
         return dict((m.source, m.data for m in data))
 
     class Builder(BaseBuilder['CombinedOneShotMonitor']):

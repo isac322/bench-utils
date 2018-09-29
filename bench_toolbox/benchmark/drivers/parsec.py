@@ -6,7 +6,7 @@ from typing import ClassVar, Optional, Set
 
 import psutil
 
-from .base_driver import BenchDriver
+from .base import BenchDriver
 
 
 class ParsecDriver(BenchDriver):

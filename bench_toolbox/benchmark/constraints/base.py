@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Type
 
 # because of circular import
 if TYPE_CHECKING:
-    from ..base_benchmark import BaseBenchmark
+    from ..base import BaseBenchmark
 
 
 class BaseConstraint(metaclass=ABCMeta):

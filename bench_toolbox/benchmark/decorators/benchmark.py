@@ -7,10 +7,10 @@ from typing import Any, Callable, TYPE_CHECKING
 
 # because of circular import
 if TYPE_CHECKING:
-    from ..benchmark import Benchmark
+    from ..launchable import Benchmark
 
 
-# TODO: generalize or move into benchmark.py
+# TODO: generalize or move into launchable.py
 
 
 def ensure_running(func: Callable[[Benchmark, Any], Any]):

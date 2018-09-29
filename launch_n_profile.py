@@ -17,12 +17,12 @@ from bench_toolbox.benchmark.constraints.resctrl import ResCtrlConstraint
 from bench_toolbox.configs.parser import Parser
 from bench_toolbox.monitors.messages.handlers import PrintHandler
 from bench_toolbox.monitors.messages.handlers.hybrid_iso_merger import HybridIsoMerger
-from bench_toolbox.monitors.messages.handlers.rabbit_mq_handler import RabbitMQHandler
-from bench_toolbox.monitors.perf_monitor import PerfMonitor
-from bench_toolbox.monitors.power_monitor import PowerMonitor
-from bench_toolbox.monitors.rdtsc_monitor import RDTSCMonitor
-from bench_toolbox.monitors.resctrl_monitor import ResCtrlMonitor
-from bench_toolbox.monitors.runtime_monitor import RuntimeMonitor
+from bench_toolbox.monitors.messages.handlers.rabbit_mq import RabbitMQHandler
+from bench_toolbox.monitors.perf import PerfMonitor
+from bench_toolbox.monitors.power import PowerMonitor
+from bench_toolbox.monitors.rdtsc import RDTSCMonitor
+from bench_toolbox.monitors.resctrl import ResCtrlMonitor
+from bench_toolbox.monitors.runtime import RuntimeMonitor
 from bench_toolbox.utils.hyperthreading import hyper_threading_guard
 
 MIN_PYTHON = (3, 7)

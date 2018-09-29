@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from .base_config import HandlerConfig
+from .base import HandlerConfig
 
 
 @dataclass(frozen=True)

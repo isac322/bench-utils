@@ -8,7 +8,7 @@ from typing import Callable, Coroutine, Optional, Type
 
 from . import MonitorData
 from .messages import BaseMessage
-from .oneshot_monitor import OneShotMonitor
+from .oneshot import OneShotMonitor
 
 
 # FIXME: rename

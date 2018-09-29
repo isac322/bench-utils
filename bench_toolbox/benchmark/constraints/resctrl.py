@@ -10,7 +10,7 @@ from ...utils import ResCtrl
 
 # because of circular import
 if TYPE_CHECKING:
-    from ..benchmark import BaseBenchmark
+    from ..base import BaseBenchmark
 
 
 class ResCtrlConstraint(BaseConstraint):

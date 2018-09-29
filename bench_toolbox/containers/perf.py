@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Generator, Tuple
 
-from .base_config import MonitorConfig
+from .base import MonitorConfig
 
 
 @dataclass(frozen=True)
