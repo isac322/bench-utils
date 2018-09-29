@@ -23,14 +23,15 @@ from ..monitors.idle import IdleMonitor
 from ..monitors.messages.handlers.base import BaseHandler
 
 
-class Benchmark(BaseBenchmark):
+class LaunchableBenchmark(BaseBenchmark):
     _bench_driver: BenchDriver
 
-    def __new__(cls: Type[Benchmark],
+    def __new__(cls: Type[LaunchableBenchmark],
                 bench_config: BenchConfig,
                 workspace: Path,
-                logger_level: int = logging.INFO) -> Benchmark:
-        obj: Benchmark = super().__new__(cls, bench_config.identifier, bench_config.wl_type, workspace, logger_level)
+                logger_level: int = logging.INFO) -> LaunchableBenchmark:
+        obj: LaunchableBenchmark = super().__new__(cls, bench_config.identifier,
+                                                   bench_config.wl_type, workspace, logger_level)
 
         obj._bench_driver = gen_driver(bench_config.name, bench_config.num_of_threads, CGroupEngine(obj))
 
@@ -186,11 +187,12 @@ class Benchmark(BaseBenchmark):
     async def join(self) -> None:
         await self._bench_driver.join()
 
-    class Builder(BaseBuilder['Benchmark']):
+    class Builder(BaseBuilder['LaunchableBenchmark']):
         def __init__(self, bench_config: BenchConfig, workspace: Path, logger_level: int = logging.INFO) -> None:
             super().__init__()
 
-            self._cur_obj: Benchmark = Benchmark.__new__(Benchmark, bench_config, workspace, logger_level)
+            self._cur_obj: LaunchableBenchmark = LaunchableBenchmark.__new__(LaunchableBenchmark, bench_config,
+                                                                             workspace, logger_level)
 
             for builder in bench_config.constraint_builders:
                 self.build_constraint(builder)
@@ -201,7 +203,7 @@ class Benchmark(BaseBenchmark):
                 .set_emitter(self._cur_obj._pipeline.on_message) \
                 .finalize()
 
-        def add_handler(self, handler: BaseHandler) -> Benchmark.Builder:
+        def add_handler(self, handler: BaseHandler) -> LaunchableBenchmark.Builder:
             self._cur_obj._pipeline.add_handler(handler)
             return self
 

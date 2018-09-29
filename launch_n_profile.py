@@ -11,7 +11,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Tuple
 
-from bench_toolbox.benchmark import Benchmark
+from bench_toolbox.benchmark import LaunchableBenchmark
 from bench_toolbox.benchmark.constraints.rabbit_mq import RabbitMQConstraint
 from bench_toolbox.benchmark.constraints.resctrl import ResCtrlConstraint
 from bench_toolbox.configs.parser import Parser
@@ -36,8 +36,8 @@ async def launch(workspace: Path,
     perf_config = parser.perf_config()
     rabbit_mq_config = parser.rabbit_mq_config()
 
-    benches: Tuple[Benchmark, ...] = tuple(
-            Benchmark
+    benches: Tuple[LaunchableBenchmark, ...] = tuple(
+            LaunchableBenchmark
                 .Builder(bench_cfg, workspace, logging.DEBUG if verbose else logging.INFO)
                 .build_constraint(ResCtrlConstraint.Builder(('fffff', 'fffff')))
                 .build_constraint(RabbitMQConstraint.Builder(rabbit_mq_config))

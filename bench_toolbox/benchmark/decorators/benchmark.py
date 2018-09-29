@@ -7,15 +7,15 @@ from typing import Any, Callable, TYPE_CHECKING
 
 # because of circular import
 if TYPE_CHECKING:
-    from ..launchable import Benchmark
+    from ..launchable import LaunchableBenchmark
 
 
 # TODO: generalize or move into launchable.py
 
 
-def ensure_running(func: Callable[[Benchmark, Any], Any]):
+def ensure_running(func: Callable[[LaunchableBenchmark, Any], Any]):
     @functools.wraps(func)
-    def decorator(self: Benchmark, *args, **kwargs):
+    def decorator(self: LaunchableBenchmark, *args, **kwargs):
         if not self.is_running:
             raise RuntimeError(f'The benchmark ({self._identifier}) has already ended or never been invoked.'
                                ' Run benchmark first via invoking `run()`!')
@@ -24,9 +24,9 @@ def ensure_running(func: Callable[[Benchmark, Any], Any]):
     return decorator
 
 
-def ensure_not_running(func: Callable[[Benchmark, Any], Any]):
+def ensure_not_running(func: Callable[[LaunchableBenchmark, Any], Any]):
     @functools.wraps(func)
-    def decorator(self: Benchmark, *args, **kwargs):
+    def decorator(self: LaunchableBenchmark, *args, **kwargs):
         if self.is_running:
             raise RuntimeError(f'benchmark {self._bench_driver.pid} is already in running.')
         return func(self, *args, **kwargs)
@@ -35,9 +35,9 @@ def ensure_not_running(func: Callable[[Benchmark, Any], Any]):
 
 
 # TODO: clarify purpose
-def ensure_invoked(func: Callable[[Benchmark, Any], Any]):
+def ensure_invoked(func: Callable[[LaunchableBenchmark, Any], Any]):
     @functools.wraps(func)
-    def decorator(self: Benchmark, *args, **kwargs):
+    def decorator(self: LaunchableBenchmark, *args, **kwargs):
         if not self._bench_driver.has_invoked:
             raise RuntimeError(f'benchmark {self._identifier} is never invoked.')
         return func(self, *args, **kwargs)
