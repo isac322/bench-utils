@@ -35,7 +35,7 @@ class RabbitMQConstraint(BaseConstraint):
         await self._channel.declare_queue(self._creation_q_name)
 
         await self._channel.default_exchange.publish(
-                aio_pika.Message(f'{self._benchmark.identifier},{self._benchmark.pid}'.encode()),
+                aio_pika.Message(f'{self._benchmark.identifier},{self._benchmark.type},{self._benchmark.pid}'.encode()),
                 routing_key=self._creation_q_name
         )
 

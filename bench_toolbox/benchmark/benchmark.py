@@ -30,7 +30,7 @@ class Benchmark(BaseBenchmark):
                 bench_config: BenchConfig,
                 workspace: Path,
                 logger_level: int = logging.INFO) -> Benchmark:
-        obj: Benchmark = super().__new__(cls, bench_config.identifier, workspace, logger_level)
+        obj: Benchmark = super().__new__(cls, bench_config.identifier, bench_config.wl_type, workspace, logger_level)
 
         obj._bench_driver = gen_driver(bench_config.name, bench_config.num_of_threads, CGroupEngine(obj))
 
@@ -58,10 +58,26 @@ class Benchmark(BaseBenchmark):
             if self._bench_driver.is_running:
                 self._stop()
 
+                # destroy constraints
+                if len(self._constraints) is not 0:
+                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+
+                # destroy pipeline
+                await self._pipeline.on_end()
+                await self._pipeline.on_destroy()
+
         except Exception as e:
             logger.critical(f'The following errors occurred during startup : {e}')
             if self.is_running:
                 self._stop()
+
+                # destroy constraints
+                if len(self._constraints) is not 0:
+                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+
+                # destroy pipeline
+                await self._pipeline.on_end()
+                await self._pipeline.on_destroy()
 
     @ensure_running
     async def monitor(self) -> None:

@@ -23,6 +23,7 @@ class BaseBenchmark(metaclass=ABCMeta):
             '%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
 
     _identifier: str
+    _type: str
     _monitors: Tuple[BaseMonitor[MonitorData], ...]
     _constraints: Tuple[BaseConstraint, ...]
     _pipeline: BasePipeline
@@ -30,11 +31,13 @@ class BaseBenchmark(metaclass=ABCMeta):
 
     def __new__(cls: Type[BaseBenchmark],
                 identifier: str,
+                wl_type: str,
                 workspace: Path,
                 logger_level: int = logging.INFO) -> BaseBenchmark:
         obj: BaseBenchmark = super().__new__(cls)
 
         obj._identifier = identifier
+        obj._wl_type = wl_type
 
         obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
         obj._pipeline: BasePipeline = DefaultPipeline()
@@ -109,6 +112,10 @@ class BaseBenchmark(metaclass=ABCMeta):
     @abstractmethod
     def pid(self) -> int:
         pass
+
+    @property
+    def type(self) -> str:
+        return self._wl_type
 
     @abstractmethod
     def all_child_tid(self) -> Tuple[int, ...]:

@@ -54,9 +54,11 @@ async def launch(workspace: Path,
     )
 
     current_tasks: Tuple[asyncio.Task, ...] = tuple()
+    is_cancelled: bool = False
 
     def cancel_current_tasks() -> None:
-        nonlocal current_tasks
+        nonlocal current_tasks, is_cancelled
+        is_cancelled = True
         for t in current_tasks:  # type: asyncio.Task
             t.cancel()
 
@@ -67,17 +69,18 @@ async def launch(workspace: Path,
         current_tasks = tuple(asyncio.create_task(bench.start_and_pause(silent)) for bench in benches)
         await asyncio.wait(current_tasks)
 
-        for bench in benches:
-            bench.resume()
+        if not is_cancelled:
+            for bench in benches:
+                bench.resume()
 
-        await asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)
 
-        current_tasks = tuple(asyncio.create_task(bench.monitor()) for bench in benches)
-        await asyncio.wait(current_tasks)
+            current_tasks = tuple(asyncio.create_task(bench.monitor()) for bench in benches)
+            await asyncio.wait(current_tasks)
 
     loop.remove_signal_handler(signal.SIGINT)
 
-    return not any(map(lambda f: f.cancelled(), current_tasks))
+    return not is_cancelled
 
 
 async def main() -> None:
