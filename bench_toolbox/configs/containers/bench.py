@@ -9,7 +9,7 @@ from .base import BaseConfig
 
 # because of circular import
 if TYPE_CHECKING:
-    from ..benchmark.constraints import BaseBuilder
+    from ...benchmark.constraints import BaseBuilder
 
 
 @dataclass(frozen=True)

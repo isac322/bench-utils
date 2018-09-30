@@ -11,7 +11,7 @@ from .messages import PerBenchMessage
 
 if TYPE_CHECKING:
     from .messages import BaseMessage
-    from ..containers import PerfConfig
+    from ..configs.containers import PerfConfig
     # because of circular import
     from ..benchmark import BaseBenchmark
 

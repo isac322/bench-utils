@@ -12,7 +12,7 @@ from .base import BaseHandler
 from ..rabbit_mq import RabbitMQMessage
 
 if TYPE_CHECKING:
-    from ....containers import RabbitMQConfig
+    from ....configs.containers import RabbitMQConfig
 
 
 class RabbitMQHandler(BaseHandler):

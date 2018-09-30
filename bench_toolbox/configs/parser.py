@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tupl
 from ..benchmark.constraints import DVFSConstraint
 from ..benchmark.constraints.cgroup import CpusetConstraint
 from ..benchmark.drivers import bench_drivers
-from ..containers import BenchConfig, PerfConfig, PerfEvent, RabbitMQConfig
+from ..configs.containers import BenchConfig, PerfConfig, PerfEvent, RabbitMQConfig
 from ..utils.hyphen import convert_to_hyphen, convert_to_set
 
 if TYPE_CHECKING:

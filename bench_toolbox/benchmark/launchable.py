@@ -19,7 +19,7 @@ from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
     from .drivers import BenchDriver
-    from ..containers import BenchConfig
+    from ..configs.containers import BenchConfig
     from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
 

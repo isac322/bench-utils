@@ -8,7 +8,8 @@ from typing import Any, Dict, List, Tuple
 
 # FIXME
 # from ..benchmark_launcher import parse_launcher_cfg, parse_perf_cfg, parse_rabbit_mq_cfg, parse_workload_cfg
-from ..containers import BenchConfig, LauncherConfig, PerfConfig, RabbitMQConfig
+from bench_toolbox.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
+from hybrid_iso.containers.launcher import LauncherConfig
 
 
 class WorkloadResult:

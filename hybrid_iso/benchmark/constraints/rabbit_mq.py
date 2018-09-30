@@ -8,7 +8,7 @@ import aio_pika
 
 from bench_toolbox.benchmark.constraints.base import BaseConstraint
 from bench_toolbox.benchmark.constraints.base_builder import BaseBuilder
-from bench_toolbox.containers import RabbitMQConfig
+from bench_toolbox.configs.containers import RabbitMQConfig
 
 if TYPE_CHECKING:
     from bench_toolbox.benchmark.base import BaseBenchmark
