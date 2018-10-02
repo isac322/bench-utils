@@ -104,5 +104,5 @@ async def main() -> None:
         if i is not 0:
             await asyncio.sleep(interval)
 
-        if not await launch(Path(workspace), silent, print_metric_log and silent, verbose and silent):
+        if not await launch(Path(workspace), silent, print_metric_log and silent, verbose and not silent):
             break
