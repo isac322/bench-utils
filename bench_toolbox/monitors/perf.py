@@ -63,7 +63,7 @@ class PerfMonitor(BaseMonitor[T]):
                         record[event.alias] = int(line_split[1])
                     else:
                         record[event.alias] = float(line_split[1])
-                except (IndexError, ValueError) as e:
+                except (IndexError, ValueError):
                     ignored = True
 
             if not self._is_stopped and not ignored:
