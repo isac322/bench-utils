@@ -84,6 +84,7 @@ class LaunchableBenchmark(BaseBenchmark):
     @ensure_running
     async def monitor(self) -> None:
         logger = logging.getLogger(self._identifier)
+        logger.info('start monitoring...')
 
         monitoring_tasks: Optional[asyncio.Task] = None
 
