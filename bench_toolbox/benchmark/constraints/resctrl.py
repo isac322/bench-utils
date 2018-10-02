@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Tuple, Type, Iterable
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
@@ -44,7 +44,7 @@ class ResCtrlConstraint(BaseConstraint):
     class Builder(BaseBuilder['ResCtrlConstraint']):
         _masks: Tuple[str, ...] = tuple()
 
-        def __init__(self, masks: Tuple[str, ...] = tuple()) -> None:
+        def __init__(self, masks: Iterable[str] = tuple()) -> None:
             self._masks = masks
 
         def finalize(self, benchmark: BaseBenchmark) -> ResCtrlConstraint:

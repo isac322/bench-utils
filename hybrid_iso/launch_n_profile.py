@@ -11,8 +11,9 @@ from pathlib import Path
 from typing import Tuple
 
 from bench_toolbox.benchmark import LaunchableBenchmark
-from bench_toolbox.benchmark.constraints import ResCtrlConstraint
+from bench_toolbox.configs.containers import PerfConfig, RabbitMQConfig
 from bench_toolbox.configs.parser import Parser
+from bench_toolbox.configs.parsers import BenchParser, PerfParser, RabbitMQParser
 from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
 from bench_toolbox.monitors.messages.handlers import RabbitMQHandler
 from bench_toolbox.utils.hyperthreading import hyper_threading_guard
@@ -26,14 +27,14 @@ async def launch(workspace: Path,
                  silent: bool,
                  print_metric_log: bool,
                  verbose: bool) -> bool:
-    parser = Parser().feed(workspace / 'config.json')
-    perf_config = parser.perf_config()
-    rabbit_mq_config = parser.rabbit_mq_config()
+    parser = Parser(PerfParser(), RabbitMQParser(), BenchParser()) \
+        .set_local_cfg(workspace / 'config.json')
+    perf_config: PerfConfig = parser.parse('perf')
+    rabbit_mq_config: RabbitMQConfig = parser.parse('rabbit_mq')
 
     benches: Tuple[LaunchableBenchmark, ...] = tuple(
             LaunchableBenchmark
                 .Builder(bench_cfg, workspace, logging.DEBUG if verbose else logging.INFO)
-                .build_constraint(ResCtrlConstraint.Builder(('fffff', 'fffff')))
                 .build_constraint(RabbitMQConstraint.Builder(rabbit_mq_config))
                 .build_monitor(RDTSCMonitor.Builder(perf_config.interval))
                 .build_monitor(ResCtrlMonitor.Builder(perf_config.interval))
@@ -44,7 +45,7 @@ async def launch(workspace: Path,
                 # .add_handler(PrintHandler())
                 .add_handler(RabbitMQHandler(rabbit_mq_config))
                 .finalize()
-            for bench_cfg in parser.parse_workloads()
+            for bench_cfg in parser.parse('bench')
     )
 
     current_tasks: Tuple[asyncio.Task, ...] = tuple()
