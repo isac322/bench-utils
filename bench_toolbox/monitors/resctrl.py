@@ -79,7 +79,10 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
             return PerBenchMessage(data, self, self._benchmark)
 
     async def on_end(self) -> None:
-        await self._group.end_read()
+        try:
+            await self._group.end_read()
+        except AssertionError:
+            pass
 
     class Builder(BaseBuilder['ResCtrlMonitor']):
         _interval: int
