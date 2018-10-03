@@ -12,13 +12,10 @@ from .base_builder import BaseBuilder
 from .decorators.benchmark import ensure_invoked, ensure_running
 from .drivers import gen_driver
 from .drivers.engines import CGroupEngine
-from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
     from .drivers import BenchDriver
     from ..configs.containers import LaunchableConfig
-    from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
-    from ..monitors.messages.handlers import BaseHandler
 
 
 class LaunchableBenchmark(BaseBenchmark):
@@ -94,24 +91,10 @@ class LaunchableBenchmark(BaseBenchmark):
     class Builder(BaseBuilder['LaunchableBenchmark']):
         _cur_obj: LaunchableBenchmark
 
-        def __init__(self, bench_config: LaunchableConfig, logger_level: int = logging.INFO) -> None:
+        def __init__(self, launchable_config: LaunchableConfig, logger_level: int = logging.INFO) -> None:
             super().__init__()
 
-            self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, bench_config, logger_level)
+            self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, launchable_config, logger_level)
 
-            for builder in bench_config.constraint_builders:
+            for builder in launchable_config.constraint_builders:
                 self.build_constraint(builder)
-
-        def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
-            return monitor_builder \
-                .set_benchmark(self._cur_obj) \
-                .set_emitter(self._cur_obj._pipeline.on_message) \
-                .finalize()
-
-        def add_handler(self, handler: BaseHandler) -> LaunchableBenchmark.Builder:
-            self._cur_obj._pipeline.add_handler(handler)
-            return self
-
-        def _finalize(self) -> None:
-            if len(self._monitors) is 0:
-                self.build_monitor(IdleMonitor.Builder())

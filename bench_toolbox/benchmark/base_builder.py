@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
-from typing import Dict, Generic, List, Optional, TYPE_CHECKING, Type, TypeVar
+from abc import ABCMeta
+from typing import Dict, Generic, List, TYPE_CHECKING, Type, TypeVar
 
 from .base import BaseBenchmark
 from .constraints.base import BaseConstraint
+from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
     from .constraints import BaseBuilder as ConstraintBuilder
     from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
+    from ..monitors.messages.handlers import BaseHandler
 
 T = TypeVar('T', bound=BaseBenchmark)
 _CT = TypeVar('_CT', bound=BaseConstraint)
@@ -18,7 +20,7 @@ _CT = TypeVar('_CT', bound=BaseConstraint)
 
 class BaseBuilder(Generic[T], metaclass=ABCMeta):
     _is_finalized: bool = False
-    _cur_obj: Optional[T] = None
+    _cur_obj: T
     _monitors: List[BaseMonitor[MonitorData]]
     # TODO: change key type to _CT not ConstraintBuilder[_CT]
     _constraint_builders: Dict[Type[ConstraintBuilder[_CT]], _CT]
@@ -27,9 +29,15 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         self._monitors = list()
         self._constraint_builders = dict()
 
-    @abstractmethod
+    def add_handler(self, handler: BaseHandler) -> T.Builder:
+        self._cur_obj._pipeline.add_handler(handler)
+        return self
+
     def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
-        pass
+        return monitor_builder \
+            .set_benchmark(self._cur_obj) \
+            .set_emitter(self._cur_obj._pipeline.on_message) \
+            .finalize()
 
     def build_monitor(self, monitor_builder: MonitorBuilder) -> BaseBuilder[T]:
         if self._is_finalized:
@@ -44,9 +52,9 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         self._constraint_builders[type(constraint_builder)] = constraint_builder.finalize(self._cur_obj)
         return self
 
-    @abstractmethod
     def _finalize(self) -> None:
-        pass
+        if len(self._monitors) is 0:
+            self.build_monitor(IdleMonitor.Builder())
 
     def finalize(self) -> T:
         if self._is_finalized:
