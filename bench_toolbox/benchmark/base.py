@@ -61,6 +61,7 @@ class BaseBenchmark(metaclass=ABCMeta):
 
         fh = logging.FileHandler(self._log_path, mode='w')
         fh.setFormatter(BaseBenchmark._file_formatter)
+        fh.setLevel(logging.DEBUG)
         logger.addHandler(fh)
 
         if not silent:
@@ -71,46 +72,36 @@ class BaseBenchmark(metaclass=ABCMeta):
             stream_handler.setFormatter(formatter)
             logger.addHandler(stream_handler)
 
-        # initialize constraints & pipeline
-
-        if len(self._constraints) is not 0:
-            await asyncio.wait(tuple(con.on_init() for con in self._constraints))
-
-        await self._pipeline.on_init()
-
         # noinspection PyBroadException
         try:
+            # initialize constraints & pipeline
+            if len(self._constraints) is not 0:
+                await asyncio.wait(tuple(con.on_init() for con in self._constraints))
+                logger.debug('Constraints are initialized')
+
+            await self._pipeline.on_init()
+            logger.debug('Pipe is initialized')
+
             logger.info('Starting benchmark...')
             await self._start()
             logger.info(f'The benchmark has started. pid : {self.pid}')
 
+            logger.debug('Pausing benchmark...')
             self.pause()
 
-        except asyncio.CancelledError as e:
-            logger.debug(f'The task cancelled : {e}')
+        except asyncio.CancelledError:
+            logger.debug(f'The task cancelled')
             if self.is_running:
                 await self.kill()
 
-                # destroy constraints
-                if len(self._constraints) is not 0:
-                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
-
-                # destroy pipeline
-                await self._pipeline.on_end()
-                await self._pipeline.on_destroy()
+            await self._destroy()
 
         except Exception as e:
             logger.critical(f'The following errors occurred during startup : {e}')
             if self.is_running:
                 await self.kill()
 
-                # destroy constraints
-                if len(self._constraints) is not 0:
-                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
-
-                # destroy pipeline
-                await self._pipeline.on_end()
-                await self._pipeline.on_destroy()
+            await self._destroy()
 
     async def monitor(self) -> None:
         logger = logging.getLogger(self._identifier)
@@ -135,8 +126,8 @@ class BaseBenchmark(metaclass=ABCMeta):
                 await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
                 await monitoring_tasks
 
-        except asyncio.CancelledError as e:
-            logger.debug(f'The task cancelled : {e}')
+        except asyncio.CancelledError:
+            logger.debug(f'The task cancelled')
             if self.is_running:
                 await self.kill()
             if monitoring_tasks is not None and not monitoring_tasks.done():
@@ -158,15 +149,18 @@ class BaseBenchmark(metaclass=ABCMeta):
             await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
             await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
 
-            # destroy constraints
-            if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+            await self._destroy()
 
-            # destroy pipeline
-            await self._pipeline.on_end()
-            await self._pipeline.on_destroy()
+    async def _destroy(self) -> None:
+        # destroy constraints
+        if len(self._constraints) is not 0:
+            await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
 
-            self._remove_logger_handlers()
+        # destroy pipeline
+        await self._pipeline.on_end()
+        await self._pipeline.on_destroy()
+
+        self._remove_logger_handlers()
 
     @abstractmethod
     def pause(self) -> None:

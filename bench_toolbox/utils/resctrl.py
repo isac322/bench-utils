@@ -146,5 +146,8 @@ class ResCtrl:
         if self._prepare_read:
             await self.end_read()
 
+        if self._group_name is str():
+            raise PermissionError('Can not remove root directory of resctrl')
+
         proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._group_path))
         await proc.communicate()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Type, Iterable
+from typing import Iterable, TYPE_CHECKING, Tuple, Type
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
@@ -39,7 +39,10 @@ class ResCtrlConstraint(BaseConstraint):
         await self._group.add_tasks(children)
 
     async def on_destroy(self) -> None:
-        await self._group.delete()
+        try:
+            await self._group.delete()
+        except PermissionError:
+            pass
 
     class Builder(BaseBuilder['ResCtrlConstraint']):
         _masks: Tuple[str, ...] = tuple()
