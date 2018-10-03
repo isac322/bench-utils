@@ -20,6 +20,7 @@ class BenchConfig(BaseConfig):
     constraint_builders: Tuple[BaseBuilder, ...]
     identifier: str
     workspace: Path
+    width_in_log: int
 
 
 @dataclass(frozen=True)

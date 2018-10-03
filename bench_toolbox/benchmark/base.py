@@ -23,8 +23,6 @@ if TYPE_CHECKING:
 class BaseBenchmark(metaclass=ABCMeta):
     _file_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
-    _stream_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
-            '%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
 
     _bench_config: BenchConfig
     _identifier: str
@@ -67,7 +65,10 @@ class BaseBenchmark(metaclass=ABCMeta):
 
         if not silent:
             stream_handler = logging.StreamHandler()
-            stream_handler.setFormatter(BaseBenchmark._stream_formatter)
+            formatter: ColoredFormatter = ColoredFormatter(
+                    f'%(asctime)s.%(msecs)03d [%(levelname)-8s] %(name)-{self._bench_config.width_in_log}s '
+                    f'$ %(message)s')
+            stream_handler.setFormatter(formatter)
             logger.addHandler(stream_handler)
 
         # initialize constraints & pipeline

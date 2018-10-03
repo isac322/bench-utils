@@ -99,9 +99,11 @@ class BenchParser(LocalReadParser):
             if same_count != 0:
                 sorted_cfg[-1]['identifier'] += f'_{same_count + 1}'
 
+        max_id_len = max(map(lambda x: len(x['identifier']), configs))
+
         return tuple(
                 LaunchableConfig(config['num_of_threads'], config['type'], BenchParser._gen_constraints(config),
-                                 config['identifier'], self._workspace, config['name'])
+                                 config['identifier'], self._workspace, max_id_len, config['name'])
                 for config in configs
         )
 
