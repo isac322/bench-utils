@@ -37,5 +37,5 @@ class BasePipeline(metaclass=ABCMeta):
         await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))
 
     @property
-    def handlers(self) -> Tuple[BaseHandler]:
+    def handlers(self) -> Tuple[BaseHandler, ...]:
         return tuple(self._handlers)

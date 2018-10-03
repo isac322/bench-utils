@@ -87,7 +87,7 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
                 mb.set_benchmark(self._cur_bench) \
                     .set_emitter(self._cur_emitter)
 
-            monitors: Tuple[OneShotMonitor] = tuple(mb.finalize() for mb in self._monitor_builders)
+            monitors: Tuple[OneShotMonitor, ...] = tuple(mb.finalize() for mb in self._monitor_builders)
 
             return CombinedOneShotMonitor.__new__(CombinedOneShotMonitor,
                                                   self._cur_emitter,

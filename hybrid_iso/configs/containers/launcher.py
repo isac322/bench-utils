@@ -9,6 +9,6 @@ from bench_toolbox.configs.containers import BaseConfig
 
 @dataclass(frozen=True)
 class LauncherConfig(BaseConfig):
-    post_scripts: Tuple[Path]
+    post_scripts: Tuple[Path, ...]
     hyper_threading: bool
     stops_with_the_first: bool

@@ -24,5 +24,5 @@ async def read_max_freq(core_id) -> int:
         return int(line)
 
 
-async def read_max_freqs(core_ids: Iterable[int]) -> Tuple[int]:
+async def read_max_freqs(core_ids: Iterable[int]) -> Tuple[int, ...]:
     return await asyncio.gather(*map(read_max_freq, core_ids))

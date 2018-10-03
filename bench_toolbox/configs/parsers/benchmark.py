@@ -31,7 +31,7 @@ entry_prefix_map: OrderedDict[str, str] = OrderedDict(
 )
 
 
-def _gen_identifier(configs: Tuple[WorkloadJson], entries: OrderedSet[str]) -> None:
+def _gen_identifier(configs: Tuple[WorkloadJson, ...], entries: OrderedSet[str]) -> None:
     counting_dict: Dict[str, DefaultDict[str, List[WorkloadJson]]] = {e: defaultdict(list) for e in entries}
 
     for entry, count_map in counting_dict.items():
@@ -118,7 +118,7 @@ def _gen_bench_config(config: WorkloadJson) -> BenchConfig:
 
 class BenchParser(LocalReadParser):
     _name = 'bench'
-    TARGET = Tuple[BenchConfig]
+    TARGET = Tuple[BenchConfig, ...]
 
     def _parse(self) -> BenchParser.TARGET:
         wl_configs = self._local_config['workloads']

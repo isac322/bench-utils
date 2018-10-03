@@ -17,13 +17,13 @@ if TYPE_CHECKING:
 _ENERGY_FILE_NAME = 'energy_uj'
 _MAX_ENERGY_VALUE_FILE_NAME = 'max_energy_range_uj'
 
-T = Tuple[Dict[str, Union[str, int, Dict[str, int]]]]
+T = Tuple[Dict[str, Union[str, int, Dict[str, int]]], ...]
 
 
 class PowerMonitor(BaseMonitor[T]):
     _base_dir: ClassVar[Path] = Path('/sys/class/powercap/intel-rapl')
 
-    _monitors: Dict[Path, Tuple[int, Dict[Path, int]]]
+    _monitors: Dict[Path, Tuple[int, Dict[Path, int], ...]]
 
     def __new__(cls: Type[BaseMonitor],
                 emitter: Callable[[BaseMessage[T]], Coroutine[None, None, None]]) -> PowerMonitor:
