@@ -15,6 +15,6 @@ class CGroupEngine(BaseEngine):
                 self._benchmark._constraints
         )
 
-        cgroups = tuple(chain(*(('-g', group.identifier) for group in cgroup_cons)))
+        cgroups = chain(*(('-g', group.identifier) for group in cgroup_cons))
 
         return await asyncio.create_subprocess_exec('cgexec', *cgroups, *cmd, **kwargs)

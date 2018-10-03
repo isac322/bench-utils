@@ -9,7 +9,6 @@ import psutil
 
 from .base import BaseBenchmark
 from .base_builder import BaseBuilder
-from .decorators.benchmark import ensure_invoked, ensure_running
 from .drivers import gen_driver
 from .drivers.engines import CGroupEngine
 
@@ -34,13 +33,11 @@ class LaunchableBenchmark(BaseBenchmark):
     def __init__(self, **kwargs) -> None:
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
-    @ensure_running
     def pause(self) -> None:
         logging.getLogger(self._identifier).info('pausing...')
 
         self._bench_driver.pause()
 
-    @ensure_running
     def resume(self) -> None:
         logging.getLogger(self._identifier).info('resuming...')
 
@@ -49,7 +46,6 @@ class LaunchableBenchmark(BaseBenchmark):
     async def _start(self) -> None:
         await self._bench_driver.run()
 
-    @ensure_running
     async def kill(self) -> None:
         logger = logging.getLogger(self._identifier)
         logger.info('stopping...')
@@ -60,12 +56,10 @@ class LaunchableBenchmark(BaseBenchmark):
             logger.debug(f'Process already killed : {e}')
 
     @property
-    @ensure_invoked
     def launched_time(self) -> float:
         return self._bench_driver.created_time
 
     @property
-    @ensure_running
     def pid(self) -> int:
         return self._bench_driver.pid
 
@@ -80,11 +74,9 @@ class LaunchableBenchmark(BaseBenchmark):
         else:
             return self._identifier
 
-    @ensure_running
     def all_child_tid(self) -> Tuple[int, ...]:
         return self._bench_driver.all_child_tid()
 
-    @ensure_running
     async def join(self) -> None:
         await self._bench_driver.join()
 

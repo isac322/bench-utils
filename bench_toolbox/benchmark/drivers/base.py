@@ -10,8 +10,6 @@ from typing import ClassVar, Optional, Set, TYPE_CHECKING, Tuple
 
 import psutil
 
-from ..decorators.driver import ensure_invoked, ensure_not_running, ensure_running
-
 if TYPE_CHECKING:
     from .engines.base import BaseEngine
 
@@ -73,7 +71,6 @@ class BenchDriver(metaclass=ABCMeta):
         return self._name
 
     @property
-    @ensure_invoked
     def created_time(self) -> float:
         return self._bench_proc_info.create_time()
 
@@ -125,7 +122,6 @@ class BenchDriver(metaclass=ABCMeta):
         """
         pass
 
-    @ensure_not_running
     async def run(self) -> None:
         self._bench_proc_info = None
         self._wrapper_proc = await self._launch_bench()
@@ -137,7 +133,6 @@ class BenchDriver(metaclass=ABCMeta):
                 return
             await asyncio.sleep(0.1)
 
-    @ensure_running
     async def join(self) -> None:
         await self._wrapper_proc.wait()
 
@@ -146,17 +141,14 @@ class BenchDriver(metaclass=ABCMeta):
         self._bench_proc_info.kill()
         self._wrapper_proc_info.kill()
 
-    @ensure_running
     def pause(self) -> None:
         self._wrapper_proc.send_signal(SIGSTOP)
         self._bench_proc_info.suspend()
 
-    @ensure_running
     def resume(self) -> None:
         self._wrapper_proc.send_signal(SIGCONT)
         self._bench_proc_info.resume()
 
-    @ensure_running
     def all_child_tid(self) -> Tuple[int, ...]:
         if self._bench_proc_info is None:
             return tuple()

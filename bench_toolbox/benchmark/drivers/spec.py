@@ -9,7 +9,6 @@ from typing import ClassVar, Optional, Set
 import psutil
 
 from .base import BenchDriver
-from ..decorators.driver import ensure_running
 
 
 class SpecDriver(BenchDriver):
@@ -57,12 +56,10 @@ class SpecDriver(BenchDriver):
 
         super().stop()
 
-    @ensure_running
     def pause(self) -> None:
         self._wrapper_proc.send_signal(SIGSTOP)
         self._find_bench_proc().suspend()
 
-    @ensure_running
     def resume(self) -> None:
         self._wrapper_proc.send_signal(SIGCONT)
         self._find_bench_proc().resume()
