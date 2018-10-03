@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from concurrent.futures import CancelledError
-from typing import Optional, TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Tuple, Type
 
 import psutil
 
 from .base import BaseBenchmark
 from .base_builder import BaseBuilder
-from .decorators.benchmark import ensure_invoked, ensure_not_running, ensure_running
+from .decorators.benchmark import ensure_invoked, ensure_running
 from .drivers import gen_driver
 from .drivers.engines import CGroupEngine
 from ..monitors.idle import IdleMonitor
@@ -39,103 +37,6 @@ class LaunchableBenchmark(BaseBenchmark):
     def __init__(self, **kwargs) -> None:
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
-    @ensure_not_running
-    async def start_and_pause(self, silent: bool = False) -> None:
-        await super().start_and_pause(silent)
-
-        logger = logging.getLogger(self._identifier)
-
-        # noinspection PyBroadException
-        try:
-            logger.info('Starting benchmark...')
-            await self._bench_driver.run()
-            logger.info(f'The benchmark has started. pid : {self._bench_driver.pid}')
-
-            self.pause()
-
-        except CancelledError as e:
-            logger.debug(f'The task cancelled : {e}')
-            if self._bench_driver.is_running:
-                self._stop()
-
-                # destroy constraints
-                if len(self._constraints) is not 0:
-                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
-
-                # destroy pipeline
-                await self._pipeline.on_end()
-                await self._pipeline.on_destroy()
-
-        except Exception as e:
-            logger.critical(f'The following errors occurred during startup : {e}')
-            if self.is_running:
-                self._stop()
-
-                # destroy constraints
-                if len(self._constraints) is not 0:
-                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
-
-                # destroy pipeline
-                await self._pipeline.on_end()
-                await self._pipeline.on_destroy()
-
-    @ensure_running
-    async def monitor(self) -> None:
-        logger = logging.getLogger(self._identifier)
-        logger.info('start monitoring...')
-
-        monitoring_tasks: Optional[asyncio.Task] = None
-
-        # noinspection PyBroadException
-        try:
-            if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_start() for con in self._constraints))
-
-            await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
-            monitoring_tasks = asyncio.create_task(asyncio.wait(tuple(mon.monitor() for mon in self._monitors)))
-
-            await asyncio.wait((self._bench_driver.join(), monitoring_tasks),
-                               return_when=asyncio.FIRST_COMPLETED)
-
-            if self.is_running:
-                await self._bench_driver.join()
-            else:
-                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
-                await monitoring_tasks
-
-        except CancelledError as e:
-            logger.debug(f'The task cancelled : {e}')
-            if self.is_running:
-                self._stop()
-            if monitoring_tasks is not None and not monitoring_tasks.done():
-                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
-                await monitoring_tasks
-
-        except Exception as e:
-            logger.critical(f'The following errors occurred during monitoring : {e}')
-            if self.is_running:
-                self._stop()
-            if monitoring_tasks is not None and not monitoring_tasks.done():
-                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
-                await monitoring_tasks
-
-        finally:
-            logger.info('The benchmark is ended.')
-
-            # destroy monitors
-            await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
-            await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
-
-            # destroy constraints
-            if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
-
-            # destroy pipeline
-            await self._pipeline.on_end()
-            await self._pipeline.on_destroy()
-
-            self._remove_logger_handlers()
-
     @ensure_running
     def pause(self) -> None:
         logging.getLogger(self._identifier).info('pausing...')
@@ -148,8 +49,11 @@ class LaunchableBenchmark(BaseBenchmark):
 
         self._bench_driver.resume()
 
+    async def _start(self) -> None:
+        await self._bench_driver.run()
+
     @ensure_running
-    def _stop(self) -> None:
+    async def kill(self) -> None:
         logger = logging.getLogger(self._identifier)
         logger.info('stopping...')
 

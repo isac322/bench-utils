@@ -6,7 +6,7 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import ClassVar, TYPE_CHECKING, Tuple, Type
+from typing import ClassVar, Optional, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
@@ -78,9 +78,95 @@ class BaseBenchmark(metaclass=ABCMeta):
 
         await self._pipeline.on_init()
 
-    @abstractmethod
+        # noinspection PyBroadException
+        try:
+            logger.info('Starting benchmark...')
+            await self._start()
+            logger.info(f'The benchmark has started. pid : {self.pid}')
+
+            self.pause()
+
+        except asyncio.CancelledError as e:
+            logger.debug(f'The task cancelled : {e}')
+            if self.is_running:
+                await self.kill()
+
+                # destroy constraints
+                if len(self._constraints) is not 0:
+                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+
+                # destroy pipeline
+                await self._pipeline.on_end()
+                await self._pipeline.on_destroy()
+
+        except Exception as e:
+            logger.critical(f'The following errors occurred during startup : {e}')
+            if self.is_running:
+                await self.kill()
+
+                # destroy constraints
+                if len(self._constraints) is not 0:
+                    await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+
+                # destroy pipeline
+                await self._pipeline.on_end()
+                await self._pipeline.on_destroy()
+
     async def monitor(self) -> None:
-        pass
+        logger = logging.getLogger(self._identifier)
+        logger.info('start monitoring...')
+
+        monitoring_tasks: Optional[asyncio.Task] = None
+
+        # noinspection PyBroadException
+        try:
+            if len(self._constraints) is not 0:
+                await asyncio.wait(tuple(con.on_start() for con in self._constraints))
+
+            await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
+            monitoring_tasks = asyncio.create_task(asyncio.wait(tuple(mon.monitor() for mon in self._monitors)))
+
+            await asyncio.wait((self.join(), monitoring_tasks),
+                               return_when=asyncio.FIRST_COMPLETED)
+
+            if self.is_running:
+                await self.join()
+            else:
+                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await monitoring_tasks
+
+        except asyncio.CancelledError as e:
+            logger.debug(f'The task cancelled : {e}')
+            if self.is_running:
+                await self.kill()
+            if monitoring_tasks is not None and not monitoring_tasks.done():
+                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await monitoring_tasks
+
+        except Exception as e:
+            logger.critical(f'The following errors occurred during monitoring : {e}')
+            if self.is_running:
+                await self.kill()
+            if monitoring_tasks is not None and not monitoring_tasks.done():
+                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await monitoring_tasks
+
+        finally:
+            logger.info('The benchmark is ended.')
+
+            # destroy monitors
+            await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
+            await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
+
+            # destroy constraints
+            if len(self._constraints) is not 0:
+                await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+
+            # destroy pipeline
+            await self._pipeline.on_end()
+            await self._pipeline.on_destroy()
+
+            self._remove_logger_handlers()
 
     @abstractmethod
     def pause(self) -> None:
@@ -92,6 +178,14 @@ class BaseBenchmark(metaclass=ABCMeta):
 
     @abstractmethod
     async def join(self) -> None:
+        pass
+
+    @abstractmethod
+    async def _start(self) -> None:
+        pass
+
+    @abstractmethod
+    async def kill(self) -> None:
         pass
 
     def _remove_logger_handlers(self) -> None:
@@ -109,6 +203,11 @@ class BaseBenchmark(metaclass=ABCMeta):
     @property
     @abstractmethod
     def group_name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def is_running(self) -> bool:
         pass
 
     @property
