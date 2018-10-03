@@ -34,12 +34,13 @@ class Parser:
         self._parsers[parser.name()] = parser
         return self
 
-    def set_local_cfg(self, config_path: Path) -> Parser:
-        local_config = validate_and_load(config_path)
+    def set_workspace(self, workspace_path: Path) -> Parser:
+        local_config = validate_and_load(workspace_path / 'config.json')
 
         for parser in self._parsers.values():
             if isinstance(parser, LocalReadParser):
                 parser.set_local_cfg(local_config)
+                parser.workspace = workspace_path
 
         return self
 

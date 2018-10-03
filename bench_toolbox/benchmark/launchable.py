@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from concurrent.futures import CancelledError
-from pathlib import Path
 from typing import Optional, TYPE_CHECKING, Tuple, Type
 
 import psutil
@@ -19,22 +18,21 @@ from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
     from .drivers import BenchDriver
-    from ..configs.containers import BenchConfig
+    from ..configs.containers import LaunchableConfig
     from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
 
 
 class LaunchableBenchmark(BaseBenchmark):
     _bench_driver: BenchDriver
+    _bench_config: LaunchableConfig
 
     def __new__(cls: Type[LaunchableBenchmark],
-                bench_config: BenchConfig,
-                workspace: Path,
+                launchable_config: LaunchableConfig,
                 logger_level: int = logging.INFO) -> LaunchableBenchmark:
-        obj: LaunchableBenchmark = super().__new__(cls, bench_config.identifier,
-                                                   bench_config.wl_type, workspace, logger_level)
+        obj: LaunchableBenchmark = super().__new__(cls, launchable_config, logger_level)
 
-        obj._bench_driver = gen_driver(bench_config.name, bench_config.num_of_threads, CGroupEngine(obj))
+        obj._bench_driver = gen_driver(launchable_config.name, launchable_config.num_of_threads, CGroupEngine(obj))
 
         return obj
 
@@ -192,10 +190,10 @@ class LaunchableBenchmark(BaseBenchmark):
     class Builder(BaseBuilder['LaunchableBenchmark']):
         _cur_obj: LaunchableBenchmark
 
-        def __init__(self, bench_config: BenchConfig, workspace: Path, logger_level: int = logging.INFO) -> None:
+        def __init__(self, bench_config: LaunchableConfig, logger_level: int = logging.INFO) -> None:
             super().__init__()
 
-            self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, bench_config, workspace, logger_level)
+            self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, bench_config, logger_level)
 
             for builder in bench_config.constraint_builders:
                 self.build_constraint(builder)

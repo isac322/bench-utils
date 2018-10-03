@@ -28,13 +28,13 @@ async def launch(workspace: Path,
                  print_metric_log: bool,
                  verbose: bool) -> bool:
     parser = Parser(PerfParser(), RabbitMQParser(), BenchParser()) \
-        .set_local_cfg(workspace / 'config.json')
+        .set_workspace(workspace)
     perf_config: PerfConfig = parser.parse('perf')
     rabbit_mq_config: RabbitMQConfig = parser.parse('rabbit_mq')
 
     benches: Tuple[LaunchableBenchmark, ...] = tuple(
             LaunchableBenchmark
-                .Builder(bench_cfg, workspace, logging.DEBUG if verbose else logging.INFO)
+                .Builder(bench_cfg, logging.DEBUG if verbose else logging.INFO)
                 .build_constraint(RabbitMQConstraint.Builder(rabbit_mq_config))
                 .build_monitor(RDTSCMonitor.Builder(perf_config.interval))
                 .build_monitor(ResCtrlMonitor.Builder(perf_config.interval))

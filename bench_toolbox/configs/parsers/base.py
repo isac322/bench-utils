@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, ABCMeta, abstractmethod
+from pathlib import Path
 from typing import Any, ClassVar, Mapping, Optional, Type
 
 
@@ -34,8 +35,17 @@ class BaseParser(metaclass=ABCMeta):
 
 class LocalReadParser(BaseParser, ABC):
     _local_config: Mapping[str, Any]
+    _workspace: Path
 
     def set_local_cfg(self, local_config: Mapping[str, Any]) -> LocalReadParser:
         self._local_config = local_config
         self._cached = None
         return self
+
+    @property
+    def workspace(self) -> Path:
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, new_path: Path) -> None:
+        self._workspace = new_path

@@ -13,6 +13,7 @@ from coloredlogs import ColoredFormatter
 from ..monitors.pipelines import DefaultPipeline
 
 if TYPE_CHECKING:
+    from ..configs.containers import BenchConfig
     from ..monitors import BaseMonitor, MonitorData
     from ..monitors.pipelines import BasePipeline
     # because of circular import
@@ -25,33 +26,31 @@ class BaseBenchmark(metaclass=ABCMeta):
     _stream_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)8s] %(name)14s $ %(message)s')
 
+    _bench_config: BenchConfig
     _identifier: str
-    _type: str
     _monitors: Tuple[BaseMonitor[MonitorData], ...]
     _constraints: Tuple[BaseConstraint, ...]
     _pipeline: BasePipeline
     _log_path: Path
 
     def __new__(cls: Type[BaseBenchmark],
-                identifier: str,
-                wl_type: str,
-                workspace: Path,
+                bench_config: BenchConfig,
                 logger_level: int = logging.INFO) -> BaseBenchmark:
         obj: BaseBenchmark = super().__new__(cls)
 
-        obj._identifier = identifier
-        obj._wl_type = wl_type
+        obj._bench_config = bench_config
+        obj._identifier = bench_config.identifier
 
         obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
         obj._pipeline: BasePipeline = DefaultPipeline()
 
         # setup for logger
-        log_dir = workspace / 'logs'
+        log_dir = bench_config.workspace / 'logs'
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        obj._log_path: Path = log_dir / f'{identifier}.log'
+        obj._log_path: Path = log_dir / f'{bench_config.identifier}.log'
 
-        logger = logging.getLogger(identifier)
+        logger = logging.getLogger(bench_config.identifier)
         logger.setLevel(logger_level)
 
         return obj
@@ -118,7 +117,7 @@ class BaseBenchmark(metaclass=ABCMeta):
 
     @property
     def type(self) -> str:
-        return self._wl_type
+        return self._bench_config.type
 
     @abstractmethod
     def all_child_tid(self) -> Tuple[int, ...]:
