@@ -38,8 +38,12 @@ async def hyper_threading_guard(ht_flag: bool):
 
     yield
 
-    files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_cores if core_id is not 0)
-    proc = await asyncio.create_subprocess_exec('sudo', 'tee', *files_to_write,
-                                                stdin=asyncio.subprocess.PIPE,
-                                                stdout=asyncio.subprocess.DEVNULL)
-    await proc.communicate('1'.encode())
+    if not ht_flag:
+        print('restoring Hyper-Threading...')
+
+        files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_cores if
+                          core_id is not 0)
+        proc = await asyncio.create_subprocess_exec('sudo', 'tee', *files_to_write,
+                                                    stdin=asyncio.subprocess.PIPE,
+                                                    stdout=asyncio.subprocess.DEVNULL)
+        await proc.communicate('1'.encode())
