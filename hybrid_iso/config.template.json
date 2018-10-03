@@ -4,7 +4,27 @@
 			"name": "swaptions",
 			"num_of_threads": 8,
 			"bound_cores": "24-31",
-			"bound_sockets": "1",
+			"mem_bound_sockets": "1",
+			"cpu_freq": 2.1
+		},
+		{
+			"name": "streamcluster",
+			"bound_cores": "16-23",
+			"cpu_freq": 2.1
+		},
+		{
+			"name": "SP",
+			"cbm_ranges": "0-10",
+			"mem_bound_sockets": "0",
+			"cpu_freq": 2.1
+		},
+		{
+			"name": "SP",
+			"cbm_ranges": [
+				"11-20",
+				"0-20"
+			],
+			"mem_bound_sockets": "0-1",
 			"cpu_freq": 2.1
 		}
 	],

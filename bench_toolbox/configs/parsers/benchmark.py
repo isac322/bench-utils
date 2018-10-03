@@ -72,13 +72,12 @@ class BenchParser(LocalReadParser):
     def _parse(self) -> BenchParser.TARGET:
         configs = self._local_config['workloads']
 
-        entries: OrderedSet[str] = OrderedSet(entry_prefix_map.keys())
         cfg_dict: Dict[str, List[BenchJson]] = defaultdict(list)
-
         for cfg in map(BenchParser._deduct_config, configs):
             cfg_dict[cfg['name']].append(cfg)
             cfg['identifier'] = cfg['name']
 
+        entries: OrderedSet[str] = OrderedSet(entry_prefix_map.keys())
         for name, benches in cfg_dict.items():
             _gen_identifier(tuple(benches), entries)
 
@@ -133,10 +132,17 @@ class BenchParser(LocalReadParser):
                     ResCtrl.MAX_MASK if socket_id in sockets else ResCtrl.MIN_MASK for socket_id in possible_sockets()
             )
         elif type(config['cbm_ranges']) is str:
-            mask = config['cbm_ranges']
+            start, end = map(int, config['cbm_ranges'].split('-'))
+            mask = ResCtrl.gen_mask(start, end)
             config['cbm_ranges'] = tuple(
                     mask if socket_id in sockets else ResCtrl.MIN_MASK for socket_id in possible_sockets()
             )
+        else:
+            ranges = tuple(
+                    ResCtrl.gen_mask(*map(int, _range.split('-')))
+                    for _range in config['cbm_ranges']
+            )
+            config['cbm_ranges'] = ranges
 
         if 'type' not in config:
             config['type'] = 'fg'
