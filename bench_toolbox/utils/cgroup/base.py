@@ -58,6 +58,9 @@ class BaseCGroup(metaclass=ABCMeta):
         return self._name
 
     async def rename(self, new_name: str) -> None:
+        if self._name == new_name:
+            raise ValueError(f'trying to rename with same cgroup name ({new_name})')
+
         proc = await asyncio.create_subprocess_exec(
                 'sudo', 'mv', str(self.absolute_path() / self._name), str(self.absolute_path() / new_name)
         )
