@@ -10,7 +10,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Tuple
 
-from bench_toolbox.benchmark import LaunchableBenchmark
+from bench_toolbox.benchmark import BaseBenchmark
 from bench_toolbox.configs.containers import PerfConfig, RabbitMQConfig
 from bench_toolbox.configs.parser import Parser
 from bench_toolbox.configs.parsers import BenchParser, PerfParser, RabbitMQParser
@@ -32,9 +32,8 @@ async def launch(workspace: Path,
     perf_config: PerfConfig = parser.parse('perf')
     rabbit_mq_config: RabbitMQConfig = parser.parse('rabbit_mq')
 
-    benches: Tuple[LaunchableBenchmark, ...] = tuple(
-            LaunchableBenchmark
-                .Builder(bench_cfg, logging.DEBUG if verbose else logging.INFO)
+    benches: Tuple[BaseBenchmark, ...] = tuple(
+            bench_cfg.generate_builder(logging.DEBUG if verbose else logging.INFO)
                 .build_constraint(RabbitMQConstraint.Builder(rabbit_mq_config))
                 .build_monitor(RDTSCMonitor.Builder(perf_config.interval))
                 .build_monitor(ResCtrlMonitor.Builder(perf_config.interval))
