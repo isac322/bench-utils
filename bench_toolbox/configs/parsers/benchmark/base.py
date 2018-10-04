@@ -1,32 +1,24 @@
 # coding: UTF-8
 
-from __future__ import annotations
-
+from abc import ABCMeta, abstractmethod
 from collections import OrderedDict, defaultdict
 from itertools import chain
 from pathlib import Path
-from typing import ClassVar, DefaultDict, Dict, List, Set, TYPE_CHECKING, Tuple, Union
+from typing import ClassVar, DefaultDict, Dict, Generic, Iterable, List, MutableMapping, MutableSet, Set, Tuple, TypeVar
 
-from ordered_set import OrderedSet
+from ..bench_merger import BenchJson
+from ...containers import BenchConfig
+from ....benchmark.constraints import BaseBuilder, DVFSConstraint, ResCtrlConstraint
+from ....benchmark.constraints.cgroup import CpusetConstraint
+from ....utils import ResCtrl
+from ....utils.hyphen import convert_to_hyphen, convert_to_set
+from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
 
-from .base import LocalReadParser
-from ..containers import LaunchableConfig
-from ...benchmark.constraints import DVFSConstraint, ResCtrlConstraint
-from ...benchmark.constraints.cgroup import CpusetConstraint
-from ...utils import ResCtrl
-from ...utils.hyphen import convert_to_hyphen, convert_to_set
-from ...utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
-
-if TYPE_CHECKING:
-    from ...benchmark.constraints import BaseBuilder
-
-BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...]]]
+_CT = TypeVar('_CT', bound=BenchConfig)
 
 
-class BenchParser(LocalReadParser):
-    _name = 'bench'
-    TARGET = Tuple[LaunchableConfig, ...]
-    _entry_prefix_map: ClassVar[OrderedDict[str, str]] = OrderedDict(
+class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
+    _entry_prefix_map: ClassVar[MutableMapping[str, str]] = OrderedDict(
             num_of_threads='threads',
             bound_cores='cpus',
             mem_bound_sockets='mems',
@@ -34,45 +26,18 @@ class BenchParser(LocalReadParser):
             type=''
     )
 
-    def _parse(self) -> BenchParser.TARGET:
-        configs = self._local_config['workloads']
-
-        cfg_dict: Dict[str, List[BenchJson]] = defaultdict(list)
-        for cfg in map(self._deduct_config, configs):
-            cfg_dict[cfg['name']].append(cfg)
-            cfg['identifier'] = cfg['name']
-
-        entries: OrderedSet[str] = OrderedSet(self._entry_prefix_map.keys())
-        for name, benches in cfg_dict.items():
-            self._gen_identifier(tuple(benches), entries)
-
-            same_count: int = 0
-            sorted_cfg = sorted(benches, key=lambda x: x['identifier'])
-            for idx, curr in enumerate(sorted_cfg[1:]):
-                prev = sorted_cfg[idx]
-
-                if prev['identifier'] == curr['identifier']:
-                    same_count += 1
-                    prev['identifier'] += f'_{same_count}'
-                elif same_count != 0:
-                    prev['identifier'] += f'_{same_count + 1}'
-                    same_count = 0
-                else:
-                    same_count = 0
-
-            if same_count != 0:
-                sorted_cfg[-1]['identifier'] += f'_{same_count + 1}'
-
-        max_id_len = max(map(lambda x: len(x['identifier']), configs))
-
-        return tuple(
-                LaunchableConfig(config['num_of_threads'], config['type'], self._gen_constraints(config),
-                                 config['identifier'], self._workspace, max_id_len, config['name'])
-                for config in configs
-        )
+    @classmethod
+    @abstractmethod
+    def can_handle(cls, config: BenchJson) -> bool:
+        pass
 
     @classmethod
-    def _gen_identifier(cls, configs: Tuple[BenchJson, ...], entries: OrderedSet[str]) -> None:
+    @abstractmethod
+    def parse(cls, configs: Iterable[BenchJson], workspace: Path) -> Iterable[_CT]:
+        pass
+
+    @classmethod
+    def _gen_identifier(cls, configs: Tuple[BenchJson, ...], entries: MutableSet[str]) -> None:
         counting_dict: Dict[str, DefaultDict[str, List[BenchJson]]] = {e: defaultdict(list) for e in entries}
 
         for entry, count_map in counting_dict.items():
@@ -129,7 +94,7 @@ class BenchParser(LocalReadParser):
             config['cbm_ranges'] = tuple(
                     ResCtrl.MAX_MASK if socket_id in sockets else ResCtrl.MIN_MASK for socket_id in possible_sockets()
             )
-        elif type(config['cbm_ranges']) is str:
+        elif isinstance(config['cbm_ranges'], str):
             start, end = map(int, config['cbm_ranges'].split('-'))
             mask = ResCtrl.gen_mask(start, end)
             config['cbm_ranges'] = tuple(
