@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import OrderedDict, defaultdict
 from itertools import chain
 from pathlib import Path
-from typing import DefaultDict, Dict, List, Set, TYPE_CHECKING, Tuple, Union
+from typing import ClassVar, DefaultDict, Dict, List, Set, TYPE_CHECKING, Tuple, Union
 
 from ordered_set import OrderedSet
 
@@ -18,68 +18,33 @@ from ...utils.hyphen import convert_to_hyphen, convert_to_set
 from ...utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
 
 if TYPE_CHECKING:
-    from ...benchmark.constraints import BaseBuilder as ConstraintBuilder
-    from bench_toolbox.benchmark.constraints import BaseBuilder
+    from ...benchmark.constraints import BaseBuilder
 
 BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...]]]
-
-entry_prefix_map: OrderedDict[str, str] = OrderedDict(
-        num_of_threads='threads',
-        bound_cores='cpus',
-        mem_bound_sockets='mems',
-        cpu_freq='freq',
-        type=''
-)
-
-
-def _gen_identifier(configs: Tuple[BenchJson, ...], entries: OrderedSet[str]) -> None:
-    counting_dict: Dict[str, DefaultDict[str, List[BenchJson]]] = {e: defaultdict(list) for e in entries}
-
-    for entry, count_map in counting_dict.items():
-        for config in configs:
-            count_map[config[entry]].append(config)
-
-    selected_key = max(counting_dict.keys(), key=lambda x: len(counting_dict[x]))
-
-    if len(counting_dict[selected_key]) is 1:
-        return
-
-    elif len(counting_dict[selected_key]) == len(configs):
-        for config in configs:
-            config['identifier'] += f'_{entry_prefix_map[selected_key]}={config[selected_key]}'
-        return
-
-    else:
-        overlapped: List[BenchJson] = list()
-
-        for value, benches in counting_dict[selected_key].items():
-            if len(benches) is not 1:
-                overlapped += benches
-                for bench in benches:
-                    bench['identifier'] += f'_{entry_prefix_map[selected_key]}={value}'
-                continue
-
-            benches[0]['identifier'] += f'_{entry_prefix_map[selected_key]}={value}'
-
-        entries.remove(selected_key)
-        _gen_identifier(tuple(overlapped), entries)
 
 
 class BenchParser(LocalReadParser):
     _name = 'bench'
     TARGET = Tuple[LaunchableConfig, ...]
+    _entry_prefix_map: ClassVar[OrderedDict[str, str]] = OrderedDict(
+            num_of_threads='threads',
+            bound_cores='cpus',
+            mem_bound_sockets='mems',
+            cpu_freq='freq',
+            type=''
+    )
 
     def _parse(self) -> BenchParser.TARGET:
         configs = self._local_config['workloads']
 
         cfg_dict: Dict[str, List[BenchJson]] = defaultdict(list)
-        for cfg in map(BenchParser._deduct_config, configs):
+        for cfg in map(self._deduct_config, configs):
             cfg_dict[cfg['name']].append(cfg)
             cfg['identifier'] = cfg['name']
 
-        entries: OrderedSet[str] = OrderedSet(entry_prefix_map.keys())
+        entries: OrderedSet[str] = OrderedSet(self._entry_prefix_map.keys())
         for name, benches in cfg_dict.items():
-            _gen_identifier(tuple(benches), entries)
+            self._gen_identifier(tuple(benches), entries)
 
             same_count: int = 0
             sorted_cfg = sorted(benches, key=lambda x: x['identifier'])
@@ -101,10 +66,43 @@ class BenchParser(LocalReadParser):
         max_id_len = max(map(lambda x: len(x['identifier']), configs))
 
         return tuple(
-                LaunchableConfig(config['num_of_threads'], config['type'], BenchParser._gen_constraints(config),
+                LaunchableConfig(config['num_of_threads'], config['type'], self._gen_constraints(config),
                                  config['identifier'], self._workspace, max_id_len, config['name'])
                 for config in configs
         )
+
+    @classmethod
+    def _gen_identifier(cls, configs: Tuple[BenchJson, ...], entries: OrderedSet[str]) -> None:
+        counting_dict: Dict[str, DefaultDict[str, List[BenchJson]]] = {e: defaultdict(list) for e in entries}
+
+        for entry, count_map in counting_dict.items():
+            for config in configs:
+                count_map[config[entry]].append(config)
+
+        selected_key = max(counting_dict.keys(), key=lambda x: len(counting_dict[x]))
+
+        if len(counting_dict[selected_key]) is 1:
+            return
+
+        elif len(counting_dict[selected_key]) == len(configs):
+            for config in configs:
+                config['identifier'] += f'_{cls._entry_prefix_map[selected_key]}={config[selected_key]}'
+            return
+
+        else:
+            overlapped: List[BenchJson] = list()
+
+            for value, benches in counting_dict[selected_key].items():
+                if len(benches) is not 1:
+                    overlapped += benches
+                    for bench in benches:
+                        bench['identifier'] += f'_{cls._entry_prefix_map[selected_key]}={value}'
+                    continue
+
+                benches[0]['identifier'] += f'_{cls._entry_prefix_map[selected_key]}={value}'
+
+            entries.remove(selected_key)
+            cls._gen_identifier(tuple(overlapped), entries)
 
     @classmethod
     def _deduct_config(cls, config: BenchJson) -> BenchJson:
@@ -150,7 +148,7 @@ class BenchParser(LocalReadParser):
         return config
 
     @classmethod
-    def _gen_constraints(cls, config: BenchJson) -> Tuple[ConstraintBuilder, ...]:
+    def _gen_constraints(cls, config: BenchJson) -> Tuple[BaseBuilder, ...]:
         constrains: List[BaseBuilder] = list()
 
         constrains.append(CpusetConstraint.Builder(config['bound_cores'], config['mem_bound_sockets']))
