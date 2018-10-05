@@ -6,6 +6,7 @@ from typing import Set
 
 import aiofiles
 
+from .asyncio_subprocess import check_run
 from .hyphen import convert_to_set
 
 
@@ -29,10 +30,7 @@ async def hyper_threading_guard(ht_flag: bool):
         await asyncio.wait(tuple(_read_siblings(core_id) for core_id in online_cores))
 
         files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in logical_cores)
-        proc = await asyncio.create_subprocess_exec('sudo', 'tee', *files_to_write,
-                                                    stdin=asyncio.subprocess.PIPE,
-                                                    stdout=asyncio.subprocess.DEVNULL)
-        await proc.communicate('0'.encode())
+        await check_run('sudo', 'tee', *files_to_write, input=b'0', stdout=asyncio.subprocess.DEVNULL)
 
         print('Hyper-Threading is disabled.')
 
@@ -43,7 +41,4 @@ async def hyper_threading_guard(ht_flag: bool):
 
         files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_cores if
                           core_id is not 0)
-        proc = await asyncio.create_subprocess_exec('sudo', 'tee', *files_to_write,
-                                                    stdin=asyncio.subprocess.PIPE,
-                                                    stdout=asyncio.subprocess.DEVNULL)
-        await proc.communicate('1'.encode())
+        await check_run('sudo', 'tee', *files_to_write, input=b'1', stdout=asyncio.subprocess.DEVNULL)

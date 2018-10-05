@@ -5,13 +5,12 @@ from typing import Iterable, Tuple
 
 import aiofiles
 
+from .asyncio_subprocess import check_run
+
 
 async def set_max_freq(core_id: int, freq: int) -> None:
-    proc = await asyncio.create_subprocess_exec(
-            'sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq',
-            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
-
-    await proc.communicate(f'{freq}\n'.encode())
+    await check_run('sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq',
+                    input=f'{freq}\n'.encode(), stdout=asyncio.subprocess.DEVNULL)
 
 
 async def set_max_freqs(core_ids: Iterable[int], freq: int) -> None:

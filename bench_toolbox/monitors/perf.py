@@ -8,6 +8,7 @@ from typing import Callable, Coroutine, Mapping, TYPE_CHECKING, Type, Union
 from .base import BaseMonitor
 from .base_builder import BaseBuilder
 from .messages import PerBenchMessage
+from ..utils.asyncio_subprocess import check_run
 
 if TYPE_CHECKING:
     from .messages import BaseMessage
@@ -39,7 +40,7 @@ class PerfMonitor(BaseMonitor[T]):
 
     async def _monitor(self) -> None:
         perf_proc = await asyncio.create_subprocess_exec(
-                'perf', 'stat', '-e', self._perf_config.event_str,
+                'sudo', 'perf', 'stat', '-e', self._perf_config.event_str,
                 '-p', str(self._benchmark.pid), '-x', ',', '-I', str(self._perf_config.interval),
                 stderr=asyncio.subprocess.PIPE)
 
@@ -72,7 +73,8 @@ class PerfMonitor(BaseMonitor[T]):
 
         if perf_proc.returncode is None:
             try:
-                perf_proc.kill()
+                await check_run('sudo', 'kill', '-9', str(perf_proc.pid))
+                # perf_proc.kill()
             except ProcessLookupError:
                 pass
 
