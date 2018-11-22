@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class PrintHandler(BaseHandler):
     """
-    전달되는 모든 메시지를 ``stdout``으로 출력하고, 메시지를 그대로 다음 핸들러에게 전달하는 핸들러.
+    전달되는 모든 메시지를 ``stdout`` 으로 출력하고, 메시지를 그대로 다음 핸들러에게 전달하는 핸들러.
 
     .. note::
 

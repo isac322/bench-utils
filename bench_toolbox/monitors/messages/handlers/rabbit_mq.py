@@ -17,12 +17,12 @@ if TYPE_CHECKING:
 
 class RabbitMQHandler(BaseHandler):
     """
-    파이프라인으로 전달되는 메시지 중 :class:`~bench_toolbox.monitors.messages.rabbit_mq.RabbitMQMessage`객체 혹은 자식 객체
+    파이프라인으로 전달되는 메시지 중 :class:`~bench_toolbox.monitors.messages.rabbit_mq.RabbitMQMessage` 객체 혹은 자식 객체
     메시지만 설정된 RabbitMQ 주소로 전송하는 핸들러.
 
     .. note::
 
-        * `aio_pika <https://pypi.python.org/pypi/aio-pika>`_를 사용했기 때문에 asynchronous하다.
+        * `aio_pika <https://pypi.python.org/pypi/aio-pika>`_ 를 사용했기 때문에 asynchronous하다.
 
         * 아직 완벽하게 테스트 되지 못했기 때문에 주의가 필요하다.
     """
@@ -43,7 +43,7 @@ class RabbitMQHandler(BaseHandler):
 
     async def on_message(self, message: RabbitMQMessage) -> Optional[RabbitMQMessage]:
         """
-        :class:`~bench_toolbox.monitors.messages.rabbit_mq.RabbitMQMessage`객체 혹은 자식 객체 메시지만 설정된 큐로 전송한다.
+        :class:`~bench_toolbox.monitors.messages.rabbit_mq.RabbitMQMessage` 객체 혹은 자식 객체 메시지만 설정된 큐로 전송한다.
         """
 
         # ignore non-RabbitMQ messages
