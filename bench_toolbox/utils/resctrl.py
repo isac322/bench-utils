@@ -35,25 +35,28 @@ async def _read_file(path: Path, monitor: AiofilesContextManager) -> Tuple[str, 
 
 class ResCtrl:
     MOUNT_POINT: ClassVar[Path] = Path('/sys/fs/resctrl')
-    FEATURES: ClassVar[Tuple[str, ...]] = tuple(
-            (MOUNT_POINT / 'info' / 'L3_MON' / 'mon_features').read_text('ASCII').strip().split()
-    )
 
-    # filter L3 related monitors and sort by name (currently same as socket number)
-    _MON_NAMES: ClassVar[Tuple[str, ...]] = tuple(sorted(
-            map(
-                    lambda x: x.name,
-                    filter(
-                            lambda m: re.match('mon_L3_(\d+)', m.name),
-                            MOUNT_POINT.joinpath('mon_data').glob('mon_L3_*')
-                    )
-            )
-    ))
+    # FIXME: H/W support check before adjust config to benchmark
+    if MOUNT_POINT.exists():
+        FEATURES: ClassVar[Tuple[str, ...]] = tuple(
+                (MOUNT_POINT / 'info' / 'L3_MON' / 'mon_features').read_text('ASCII').strip().split()
+        )
 
-    MAX_MASK: ClassVar[str] = MOUNT_POINT.joinpath('info/L3/cbm_mask').read_text(encoding='ASCII').strip()
-    MAX_BITS: ClassVar[int] = mask_to_bits(MAX_MASK)
-    MIN_BITS: ClassVar[int] = int((MOUNT_POINT / 'info' / 'L3' / 'min_cbm_bits').read_text())
-    MIN_MASK: ClassVar[str] = bits_to_mask(MIN_BITS)
+        # filter L3 related monitors and sort by name (currently same as socket number)
+        _MON_NAMES: ClassVar[Tuple[str, ...]] = tuple(sorted(
+                map(
+                        lambda x: x.name,
+                        filter(
+                                lambda m: re.match('mon_L3_(\d+)', m.name),
+                                MOUNT_POINT.joinpath('mon_data').glob('mon_L3_*')
+                        )
+                )
+        ))
+
+        MAX_MASK: ClassVar[str] = MOUNT_POINT.joinpath('info/L3/cbm_mask').read_text(encoding='ASCII').strip()
+        MAX_BITS: ClassVar[int] = mask_to_bits(MAX_MASK)
+        MIN_BITS: ClassVar[int] = int((MOUNT_POINT / 'info' / 'L3' / 'min_cbm_bits').read_text())
+        MIN_MASK: ClassVar[str] = bits_to_mask(MIN_BITS)
 
     _group_name: str
     _group_path: Path
