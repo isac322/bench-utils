@@ -22,7 +22,7 @@ class RabbitMQHandler(BaseHandler):
 
     .. note::
 
-        * `aio_pika <https://pypi.python.org/pypi/aio-pika>`_ 를 사용했기 때문에 asynchronous하다.
+        * :mod:`aio_pika` 를 사용했기 때문에 asynchronous하다.
 
         * 아직 완벽하게 테스트 되지 못했기 때문에 주의가 필요하다.
     """
