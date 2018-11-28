@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import List, TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
@@ -20,24 +19,21 @@ class BasePipeline(metaclass=ABCMeta):
 
         return self
 
+    @abstractmethod
     async def on_init(self) -> None:
-        if len(self._handlers) is not 0:
-            await asyncio.wait(tuple(handler.on_init() for handler in self._handlers))
+        pass
 
+    @abstractmethod
     async def on_message(self, message: BaseMessage) -> None:
-        for handler in self._handlers:
-            message = await handler.on_message(message)
+        pass
 
-            if message is None:
-                break
-
+    @abstractmethod
     async def on_end(self) -> None:
-        if len(self._handlers) is not 0:
-            await asyncio.wait(tuple(handler.on_end() for handler in self._handlers))
+        pass
 
+    @abstractmethod
     async def on_destroy(self) -> None:
-        if len(self._handlers) is not 0:
-            await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))
+        pass
 
     @property
     def handlers(self) -> Tuple[BaseHandler, ...]:
