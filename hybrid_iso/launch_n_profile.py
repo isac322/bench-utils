@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Tuple
 
 from bench_toolbox.benchmark import BaseBenchmark
-from bench_toolbox.configs.containers import PerfConfig, RabbitMQConfig
+from bench_toolbox.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
 from bench_toolbox.configs.parser import Parser
 from bench_toolbox.configs.parsers import BenchMerger, PerfParser, RabbitMQParser
 from bench_toolbox.configs.parsers.benchmark import LaunchableParser
@@ -45,7 +45,7 @@ async def launch(workspace: Path,
                 # .add_handler(PrintHandler())
                 .add_handler(RabbitMQHandler(rabbit_mq_config))
                 .finalize()
-            for bench_cfg in parser.parse('bench')  # type: BenchMerger
+            for bench_cfg in parser.parse('bench')  # type: BenchConfig
     )
 
     current_tasks: Tuple[asyncio.Task, ...] = tuple()
