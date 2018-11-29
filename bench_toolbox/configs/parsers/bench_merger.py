@@ -15,9 +15,8 @@ if TYPE_CHECKING:
 BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...]]]
 
 
-class BenchMerger(LocalReadParser):
+class BenchMerger(LocalReadParser[Tuple[BenchConfig, ...]]):
     _name = 'bench'
-    TARGET = Tuple[BenchConfig, ...]
     _parsers: Tuple[Type[BaseBenchParser], ...]
 
     def __init__(self, *parser: Type[BaseBenchParser]) -> None:
@@ -25,7 +24,7 @@ class BenchMerger(LocalReadParser):
 
         self._parsers = tuple(parser)
 
-    def _parse(self) -> BenchMerger.TARGET:
+    def _parse(self) -> Tuple[BenchConfig, ...]:
         configs = self._local_config['workloads']
 
         cfg_dict: DefaultDict[Type[BaseBenchParser], List[BenchJson]] = defaultdict(list)

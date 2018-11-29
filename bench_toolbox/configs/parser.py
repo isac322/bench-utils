@@ -47,5 +47,5 @@ class Parser:
     def __getitem__(self, parser_name: str) -> BaseParser:
         return self._parsers[parser_name]
 
-    def parse(self, parser_name: str) -> BaseParser.TARGET:
+    def parse(self, parser_name: str):
         return self[parser_name].parse()

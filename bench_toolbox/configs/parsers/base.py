@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from abc import ABC, ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Any, ClassVar, Mapping, Optional, Type
+from typing import Any, ClassVar, Generic, Mapping, Optional, TypeVar
+
+T = TypeVar('T')
 
 
-class BaseParser(metaclass=ABCMeta):
+class BaseParser(Generic[T], metaclass=ABCMeta):
     _name: ClassVar[str]
-    TARGET: ClassVar[Type]
-    _cached: Optional[TARGET]
+    _cached: Optional[T]
 
     def __init__(self) -> None:
         self._cached = None
@@ -20,10 +21,10 @@ class BaseParser(metaclass=ABCMeta):
         return cls._name
 
     @abstractmethod
-    def _parse(self) -> BaseParser.TARGET:
+    def _parse(self) -> T:
         pass
 
-    def parse(self) -> BaseParser.TARGET:
+    def parse(self) -> T:
         if self._cached is None:
             self._cached = self._parse()
 
