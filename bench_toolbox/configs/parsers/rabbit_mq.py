@@ -10,8 +10,6 @@ from ..containers import RabbitMQConfig
 
 
 class RabbitMQParser(BaseParser[RabbitMQConfig]):
-    _name = 'rabbit_mq'
-
     def _parse(self) -> RabbitMQConfig:
         config: Mapping[str, Union[str, Mapping[str, str]]] = validate_and_load(get_full_path('rabbit_mq.json'))
 

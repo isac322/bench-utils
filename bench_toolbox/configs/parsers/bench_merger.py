@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from itertools import chain
+from pathlib import Path
 from typing import DefaultDict, Dict, List, TYPE_CHECKING, Tuple, Type, Union
 
 from .base import LocalReadParser
@@ -16,11 +17,10 @@ BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...]]]
 
 
 class BenchMerger(LocalReadParser[Tuple[BenchConfig, ...]]):
-    _name = 'bench'
     _parsers: Tuple[Type[BaseBenchParser], ...]
 
-    def __init__(self, *parser: Type[BaseBenchParser]) -> None:
-        super().__init__()
+    def __init__(self, workspace: Path, *parser: Type[BaseBenchParser]) -> None:
+        super().__init__(workspace)
 
         self._parsers = tuple(parser)
 

@@ -12,7 +12,6 @@ from typing import Tuple
 
 from bench_toolbox.benchmark import BaseBenchmark
 from bench_toolbox.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
-from bench_toolbox.configs.parser import Parser
 from bench_toolbox.configs.parsers import BenchMerger, PerfParser, RabbitMQParser
 from bench_toolbox.configs.parsers.benchmark import LaunchableParser
 from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
@@ -28,10 +27,8 @@ async def launch(workspace: Path,
                  silent: bool,
                  print_metric_log: bool,
                  verbose: bool) -> bool:
-    parser = Parser(PerfParser(), RabbitMQParser(), BenchMerger(LaunchableParser)) \
-        .set_workspace(workspace)
-    perf_config: PerfConfig = parser.parse('perf')
-    rabbit_mq_config: RabbitMQConfig = parser.parse('rabbit_mq')
+    perf_config: PerfConfig = PerfParser(workspace).parse()
+    rabbit_mq_config: RabbitMQConfig = RabbitMQParser().parse()
 
     benches: Tuple[BaseBenchmark, ...] = tuple(
             bench_cfg.generate_builder(logging.DEBUG if verbose else logging.INFO)
@@ -45,7 +42,7 @@ async def launch(workspace: Path,
                 # .add_handler(PrintHandler())
                 .add_handler(RabbitMQHandler(rabbit_mq_config))
                 .finalize()
-            for bench_cfg in parser.parse('bench')  # type: BenchConfig
+            for bench_cfg in BenchMerger(workspace, LaunchableParser).parse()  # type: BenchConfig
     )
 
     current_tasks: Tuple[asyncio.Task, ...] = tuple()

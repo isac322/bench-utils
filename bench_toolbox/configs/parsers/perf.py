@@ -13,8 +13,6 @@ PerfConfigJson = Dict[str, Union[int, List[Dict[str, Union[str, Dict[str, str]]]
 
 
 class PerfParser(LocalReadParser[PerfConfig]):
-    _name = 'perf'
-
     def _parse(self) -> PerfConfig:
         config: PerfConfigJson = validate_and_load(get_full_path('perf.json'))
         local_config: PerfConfigJson = self._local_config.get('perf', dict(events=tuple()))
