@@ -10,7 +10,7 @@ from .benchmark.base import BaseBenchParser, BenchJson
 from ..containers import BenchConfig
 
 
-class BenchMerger(LocalReadParser[Iterable[BenchConfig]]):
+class BenchParser(LocalReadParser[Iterable[BenchConfig]]):
     def _parse(self) -> Iterable[BenchConfig]:
         configs: List[BenchJson] = self._local_config['workloads']
         default_type: Optional[str] = self._local_config.get('default_wl_parser', None)
