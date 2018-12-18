@@ -1,12 +1,14 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict, defaultdict
 from itertools import chain
 from pathlib import Path
-from typing import ClassVar, DefaultDict, Dict, Generic, Iterable, List, MutableMapping, MutableSet, Set, Tuple, TypeVar
+from typing import ClassVar, DefaultDict, Dict, Generic, Iterable, List, MutableMapping, MutableSet, Optional, Set, \
+    Tuple, Type, TypeVar, Union
 
-from ..bench_merger import BenchJson
 from ...containers import BenchConfig
 from ....benchmark.constraints import BaseBuilder, DVFSConstraint, ResCtrlConstraint
 from ....benchmark.constraints.cgroup import CpusetConstraint
@@ -15,6 +17,8 @@ from ....utils.hyphen import convert_to_hyphen, convert_to_set
 from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
 
 _CT = TypeVar('_CT', bound=BenchConfig)
+
+BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...]]]
 
 
 class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
@@ -25,15 +29,30 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
             cpu_freq='freq',
             type=''
     )
+    _registered_parser: ClassVar[MutableMapping[str, Type[BaseBenchParser]]] = dict()
+    _PARSABLE_TYPES: ClassVar[Tuple[str, ...]]
+
+    @staticmethod
+    def register_parser(parser: Type[BaseBenchParser]) -> None:
+        if not issubclass(parser, BaseBenchParser):
+            raise ValueError(f'{parser} is not registrable parser')
+        elif not BaseBenchParser._registered_parser.keys().isdisjoint(parser._PARSABLE_TYPES):
+            raise ValueError(f'{parser} has types that overlap with existing registered types: '
+                             f'{BaseBenchParser._registered_parser.keys() & parser._PARSABLE_TYPES}')
+
+        for parsable_type in parser._PARSABLE_TYPES:
+            BaseBenchParser._registered_parser[parsable_type] = parser
+
+    @staticmethod
+    def get_parser(bench_type: str) -> Optional[Type[BaseBenchParser]]:
+        if bench_type not in BaseBenchParser._registered_parser:
+            raise ValueError(f'{bench_type} is not a registered benchmark type')
+
+        return BaseBenchParser._registered_parser[bench_type]
 
     @classmethod
     @abstractmethod
-    def can_handle(cls, config: BenchJson) -> bool:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def parse(cls, configs: Iterable[BenchJson], workspace: Path) -> Iterable[_CT]:
+    def parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[_CT]:
         pass
 
     @classmethod

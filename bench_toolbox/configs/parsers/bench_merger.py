@@ -2,42 +2,30 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from itertools import chain
-from pathlib import Path
-from typing import DefaultDict, Dict, List, TYPE_CHECKING, Tuple, Type, Union
+from itertools import chain, groupby
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from .base import LocalReadParser
+from .benchmark.base import BaseBenchParser, BenchJson
 from ..containers import BenchConfig
 
-if TYPE_CHECKING:
-    from .benchmark.base import BaseBenchParser
 
-BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...]]]
+class BenchMerger(LocalReadParser[Iterable[BenchConfig]]):
+    def _parse(self) -> Iterable[BenchConfig]:
+        configs: List[BenchJson] = self._local_config['workloads']
+        default_type: Optional[str] = self._local_config.get('default_wl_parser', None)
 
+        configs.sort(key=(lambda x: x.get('parser', default_type)))
+        cfg_dict: Dict[str, Tuple[BenchJson, ...]] = {
+            bench_type: tuple(cfg_list)
+            for bench_type, cfg_list in groupby(configs, lambda x: x.get('parser', default_type))
+        }
 
-class BenchMerger(LocalReadParser[Tuple[BenchConfig, ...]]):
-    _parsers: Tuple[Type[BaseBenchParser], ...]
-
-    def __init__(self, workspace: Path, *parser: Type[BaseBenchParser]) -> None:
-        super().__init__(workspace)
-
-        self._parsers = tuple(parser)
-
-    def _parse(self) -> Tuple[BenchConfig, ...]:
-        configs = self._local_config['workloads']
-
-        cfg_dict: DefaultDict[Type[BaseBenchParser], List[BenchJson]] = defaultdict(list)
-        for cfg in configs:
-            selected = False
-
-            for parser in self._parsers:
-                if parser.can_handle(cfg):
-                    cfg_dict[parser].append(cfg)
-                    selected = True
-                    break
-
-            if not selected:
-                raise ValueError(f'Unknown type of config. content : {cfg}')
-
-        return tuple(chain(*(parser.parse(cfg_list, self._workspace) for parser, cfg_list in cfg_dict.items())))
+        return chain(
+                *(
+                    BaseBenchParser
+                        .get_parser(bench_type)
+                        .parse(cfg_list, self._workspace)
+                    for bench_type, cfg_list in cfg_dict.items()
+                )
+        )

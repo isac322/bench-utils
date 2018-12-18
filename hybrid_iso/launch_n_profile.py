@@ -13,7 +13,6 @@ from typing import Tuple
 from bench_toolbox.benchmark import BaseBenchmark
 from bench_toolbox.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
 from bench_toolbox.configs.parsers import BenchMerger, PerfParser, RabbitMQParser
-from bench_toolbox.configs.parsers.benchmark import LaunchableParser
 from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
 from bench_toolbox.monitors.messages.handlers import RabbitMQHandler
 from bench_toolbox.utils.hyperthreading import hyper_threading_guard
@@ -42,7 +41,7 @@ async def launch(workspace: Path,
                 # .add_handler(PrintHandler())
                 .add_handler(RabbitMQHandler(rabbit_mq_config))
                 .finalize()
-            for bench_cfg in BenchMerger(workspace, LaunchableParser).parse()  # type: BenchConfig
+            for bench_cfg in BenchMerger(workspace).parse()  # type: BenchConfig
     )
 
     current_tasks: Tuple[asyncio.Task, ...] = tuple()

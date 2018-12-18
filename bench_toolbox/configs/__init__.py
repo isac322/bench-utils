@@ -17,6 +17,7 @@ def get_full_path(config_file_name: str) -> Path:
 _cached_config_map: Dict[Path, Tuple[Dict[str, Any], int]] = dict()
 
 
+# FIXME: additional validation of config.json ('default_wl_parser')
 def validate_and_load(config_path: Path) -> Dict[str, Any]:
     if not config_path.is_file():
         raise FileNotFoundError(
