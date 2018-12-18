@@ -8,16 +8,18 @@ import signal
 import sys
 from itertools import chain
 from pathlib import Path
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
-from bench_toolbox.benchmark import BaseBenchmark
-from bench_toolbox.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
 from bench_toolbox.configs.parsers import BenchParser, PerfParser, RabbitMQParser
 from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
 from bench_toolbox.monitors.messages.handlers import RabbitMQHandler
 from bench_toolbox.utils.hyperthreading import hyper_threading_guard
 from .benchmark.constraints.rabbit_mq import RabbitMQConstraint
-from .monitors.messages.handlers.hybrid_iso_merger import HybridIsoMerger
+from .monitors.messages.handlers import HybridIsoMerger
+
+if TYPE_CHECKING:
+    from bench_toolbox.benchmark import BaseBenchmark
+    from bench_toolbox.configs.containers import PerfConfig, RabbitMQConfig
 
 MIN_PYTHON = (3, 7)
 
@@ -41,7 +43,7 @@ async def launch(workspace: Path,
                 # .add_handler(PrintHandler())
                 .add_handler(RabbitMQHandler(rabbit_mq_config))
                 .finalize()
-            for bench_cfg in BenchParser(workspace).parse()  # type: BenchConfig
+            for bench_cfg in BenchParser(workspace).parse()
     )
 
     current_tasks: Tuple[asyncio.Task, ...] = tuple()
