@@ -1,4 +1,5 @@
 {
+	"default_wl_parser": "launchable",
 	"workloads": [
 		{
 			"name": "swaptions",
@@ -10,7 +11,8 @@
 		{
 			"name": "streamcluster",
 			"bound_cores": "16-23",
-			"cpu_freq": 2.1
+			"cpu_freq": 2.1,
+			"parser": "launchable"
 		},
 		{
 			"name": "SP",

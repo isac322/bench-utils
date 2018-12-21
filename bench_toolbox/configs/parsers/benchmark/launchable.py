@@ -2,22 +2,19 @@
 
 from collections import defaultdict
 from pathlib import Path
-from typing import DefaultDict, Iterable, List
+from typing import ClassVar, DefaultDict, Iterable, List, Tuple
 
 from ordered_set import OrderedSet
 
-from .base import BaseBenchParser
-from ..bench_merger import BenchJson
+from .base import BaseBenchParser, BenchJson
 from ...containers import LaunchableConfig
 
 
 class LaunchableParser(BaseBenchParser[LaunchableConfig]):
-    @classmethod
-    def can_handle(cls, config: BenchJson) -> bool:
-        return 'name' in config
+    _PARSABLE_TYPES: ClassVar[Tuple[str, ...]] = ('launchable',)
 
     @classmethod
-    def parse(cls, configs: Iterable[BenchJson], workspace: Path) -> Iterable[LaunchableConfig]:
+    def parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[LaunchableConfig]:
         cfg_dict: DefaultDict[str, List[BenchJson]] = defaultdict(list)
         for cfg in map(cls._deduct_config, configs):
             cfg_dict[cfg['name']].append(cfg)

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import List, TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
@@ -57,14 +56,16 @@ class BasePipeline(metaclass=ABCMeta):
 
         return self
 
+    @abstractmethod
     async def on_init(self) -> None:
         """
         파이프라이닝을 처음 시작하거나, destroy된 파이프라인을 재시작할 때 호출되는 메소드.
         :meth:`on_destroy` 가 호출되기 전까지는 다시 호출될 일이 없다.
         """
-        if len(self._handlers) is not 0:
-            await asyncio.wait(tuple(handler.on_init() for handler in self._handlers))
+        pass
+        pass
 
+    @abstractmethod
     async def on_message(self, message: BaseMessage) -> None:
         """
         :class:`모니터 <bench_toolbox.monitors.base.BaseMonitor>` 로부터 전달 받은 메시지를 처리하는 메소드.
@@ -73,29 +74,25 @@ class BasePipeline(metaclass=ABCMeta):
         :param message: 모니터로부터 이 파이프라인에 전달되는 메시지
         :type message: bench_toolbox.monitors.messages.base.BaseMessage
         """
-        for handler in self._handlers:
-            message = await handler.on_message(message)
+        pass
 
-            if message is None:
-                break
-
+    @abstractmethod
     async def on_end(self) -> None:
         """
         파이프라인이 사용 중지될 때를 처리하는 메소드.
 
         :meth:`on_destroy` 는 파이프라인이 사용하는 자원에 포커스하지만, 이 메소드는 파이프라인 기능의 중지에 포커스한다.
         """
-        if len(self._handlers) is not 0:
-            await asyncio.wait(tuple(handler.on_end() for handler in self._handlers))
+        pass
 
+    @abstractmethod
     async def on_destroy(self) -> None:
         """
         파이프라인 종료 이후 정리할 때를 처리하는 메소드.
 
         :meth:`on_destroy` 는 파이프라인 기능의 중지에 포커스하지만, 이 메소드는 파이프라인이 사용하는 자원에 포커스한다.
         """
-        if len(self._handlers) is not 0:
-            await asyncio.wait(tuple(handler.on_destroy() for handler in self._handlers))
+        pass
 
     @property
     def handlers(self) -> Tuple[BaseHandler, ...]:
