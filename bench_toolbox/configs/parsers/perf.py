@@ -21,7 +21,7 @@ class PerfParser(LocalReadParser[PerfConfig]):
                 PerfEvent(elem, elem)
                 if isinstance(elem, str) else
                 PerfEvent(elem['event'], elem['alias'])
-                for elem in chain(config['events'], local_config['events'])
+                for elem in chain(config['events'], local_config.get('events', tuple()))
         )
 
         return PerfConfig(local_config.get('interval', config['interval']), events)
