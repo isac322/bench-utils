@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
-from bench_toolbox.configs.containers import BaseConfig
+from benchmon.configs.containers import BaseConfig
 
 
 @dataclass(frozen=True)

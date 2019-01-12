@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import List, Tuple
 
-from bench_toolbox.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
+from benchmon.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
 from .tools import WorkloadResult, read_config, read_result
 from ..configs.containers.launcher import LauncherConfig
 

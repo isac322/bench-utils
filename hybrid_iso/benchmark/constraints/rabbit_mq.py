@@ -6,12 +6,12 @@ from typing import Optional, TYPE_CHECKING, Type
 
 import aio_pika
 
-from bench_toolbox.benchmark.constraints.base import BaseConstraint
-from bench_toolbox.benchmark.constraints.base_builder import BaseBuilder
-from bench_toolbox.configs.containers import RabbitMQConfig
+from benchmon.benchmark.constraints.base import BaseConstraint
+from benchmon.benchmark.constraints.base_builder import BaseBuilder
+from benchmon.configs.containers import RabbitMQConfig
 
 if TYPE_CHECKING:
-    from bench_toolbox.benchmark.base import BaseBenchmark
+    from benchmon.benchmark.base import BaseBenchmark
 
 
 class RabbitMQConstraint(BaseConstraint):

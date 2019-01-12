@@ -10,16 +10,16 @@ from itertools import chain
 from pathlib import Path
 from typing import Iterable, TYPE_CHECKING, Tuple
 
-from bench_toolbox.configs.parsers import BenchParser, PerfParser, RabbitMQParser
-from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
-from bench_toolbox.monitors.messages.handlers import RabbitMQHandler
-from bench_toolbox.utils.hyperthreading import hyper_threading_guard
+from benchmon.configs.parsers import BenchParser, PerfParser, RabbitMQParser
+from benchmon.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
+from benchmon.monitors.messages.handlers import RabbitMQHandler
+from benchmon.utils.hyperthreading import hyper_threading_guard
 from .benchmark.constraints.rabbit_mq import RabbitMQConstraint
 from .monitors.messages.handlers import HybridIsoMerger
 
 if TYPE_CHECKING:
-    from bench_toolbox.benchmark import BaseBenchmark
-    from bench_toolbox.configs.containers import PerfConfig, RabbitMQConfig
+    from benchmon.benchmark import BaseBenchmark
+    from benchmon.configs.containers import PerfConfig, RabbitMQConfig
 
 MIN_PYTHON = (3, 7)
 
