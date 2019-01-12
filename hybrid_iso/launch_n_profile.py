@@ -8,7 +8,7 @@ import signal
 import sys
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, Tuple
+from typing import Iterable, TYPE_CHECKING, Tuple
 
 from bench_toolbox.configs.parsers import BenchParser, PerfParser, RabbitMQParser
 from bench_toolbox.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
@@ -26,7 +26,6 @@ MIN_PYTHON = (3, 7)
 
 async def launch(workspace: Path,
                  silent: bool,
-                 print_metric_log: bool,
                  verbose: bool) -> bool:
     perf_config: PerfConfig = PerfParser(workspace).parse()
     rabbit_mq_config: RabbitMQConfig = RabbitMQParser().parse()
@@ -84,17 +83,14 @@ async def main() -> None:
     parser.add_argument('config_dir', metavar='PARENT_DIR_OF_CONFIG_FILE', type=str, nargs='+',
                         help='Directory path where the config file (config.json) exist. (support wildcard *)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print more detail log')
-    parser.add_argument('-S', '--silent', action='store_true', help='Do not print any log to stdin. (override -M)')
-    parser.add_argument('-M', '--print-metric-log', action='store_true',
-                        help='Print all metric related logs to stdout.')
+    parser.add_argument('-s', '--silent', action='store_true', help='Do not print any log to stdin. (override -v)')
     parser.add_argument('--expt-interval', type=int, default=10, help='interval (sec) to sleep between each experiment')
 
     args = parser.parse_args()
 
-    dirs: chain[str] = chain(*(glob.glob(path) for path in args.config_dir))
+    dirs: Iterable[str] = chain(*(glob.glob(path) for path in args.config_dir))
 
     silent: bool = args.silent
-    print_metric_log: bool = args.print_metric_log
     verbose: bool = args.verbose
     interval: int = args.expt_interval
 
@@ -102,5 +98,5 @@ async def main() -> None:
         if i is not 0:
             await asyncio.sleep(interval)
 
-        if not await launch(Path(workspace), silent, print_metric_log and silent, verbose and not silent):
+        if not await launch(Path(workspace), silent, verbose and not silent):
             break
