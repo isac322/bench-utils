@@ -17,4 +17,4 @@ class CGroupEngine(BaseEngine):
 
         cgroups = chain(*(('-g', group.identifier) for group in cgroup_cons))
 
-        return await asyncio.create_subprocess_exec('cgexec', *cgroups, *cmd, **kwargs)
+        return await asyncio.create_subprocess_exec('cgexec', '--sticky', *cgroups, *cmd, **kwargs)
