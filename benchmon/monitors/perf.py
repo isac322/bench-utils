@@ -44,8 +44,15 @@ class PerfMonitor(BaseMonitor[T]):
                 stderr=asyncio.subprocess.PIPE)
 
         if self._perf_config.interval < 100:
-            # remove warning message of perf from buffer
-            await perf_proc.stderr.readline()
+            proc = await asyncio.create_subprocess_exec('perf', '--version',
+                                                        stdout=asyncio.subprocess.PIPE,
+                                                        stderr=asyncio.subprocess.DEVNULL)
+            version_line, _ = await proc.communicate()
+            version_str: str = version_line.decode().split()[2]
+            major, minor = map(int, version_str.split('.')[:2])  # type: int, int
+            if (major, minor) < (4, 17):
+                # remove warning message of perf from buffer
+                await perf_proc.stderr.readline()
 
         record = dict.fromkeys(event.alias for event in self._perf_config.events)
 
