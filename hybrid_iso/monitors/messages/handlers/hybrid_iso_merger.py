@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Dict, Optional, TYPE_CHECKING, Type, Union
 
-from bench_toolbox.monitors.messages.handlers.base import BaseHandler
 from bench_toolbox.monitors.messages.base import MonitoredMessage
+from bench_toolbox.monitors.messages.handlers.base import BaseHandler
 from bench_toolbox.monitors.messages.rabbit_mq import RabbitMQMessage
 from bench_toolbox.monitors.perf import PerfMonitor
 from bench_toolbox.monitors.rdtsc import RDTSCMonitor
