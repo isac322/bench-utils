@@ -15,7 +15,7 @@ from benchmon.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMo
 from benchmon.monitors.messages.handlers import RabbitMQHandler
 from benchmon.utils.hyperthreading import hyper_threading_guard
 from .benchmark.constraints.rabbit_mq import RabbitMQConstraint
-from .monitors.messages.handlers import HybridIsoMerger
+from .monitors.messages.handlers import HybridIsoMerger, StorePerf, StoreResCtrl, StoreRuntime
 
 if TYPE_CHECKING:
     from benchmon.benchmark import BaseBenchmark
@@ -38,8 +38,11 @@ async def launch(workspace: Path,
                 .build_monitor(PerfMonitor.Builder(perf_config))
                 .build_monitor(RuntimeMonitor.Builder())
                 .build_monitor(PowerMonitor.Builder())
-                .add_handler(HybridIsoMerger())
+                .add_handler(StorePerf())
+                .add_handler(StoreRuntime())
+                .add_handler(StoreResCtrl())
                 # .add_handler(PrintHandler())
+                .add_handler(HybridIsoMerger())
                 .add_handler(RabbitMQHandler(rabbit_mq_config))
                 .finalize()
             for bench_cfg in BenchParser(workspace).parse()
