@@ -13,7 +13,7 @@ from ..containers import BenchConfig
 class BenchParser(LocalReadParser[Iterable[BenchConfig]]):
     def _parse(self) -> Iterable[BenchConfig]:
         configs: List[BenchJson] = self._local_config['workloads']
-        default_type: Optional[str] = self._local_config.get('default_wl_parser', None)
+        default_type: Optional[str] = self._local_config.get('default_wl_parser')
 
         configs.sort(key=(lambda x: x.get('parser', default_type)))
         cfg_dict: Dict[str, Tuple[BenchJson, ...]] = {
