@@ -13,12 +13,25 @@ if TYPE_CHECKING:
 
 
 class CpuConstraint(BaseCgroupConstraint):
+    """
+    :mod:`~bench_toolbox.benchmark.constraints.cgroup` 중에서 `cpu` subsystem을 사용하는 constraint.
+
+    현재 `cpu.cfs_period_us` 와 `cpu.cfs_quota_us` 를 조절 가능하다.
+    """
     _group: CPU
     _period: Optional[int]
     _quota: Optional[int]
 
     def __new__(cls: Type[CpuConstraint], bench: BaseBenchmark,
                 period: Optional[int], quota: Optional[int]) -> CpuConstraint:
+        """
+        :param bench: 이 constraint가 붙여질 :class:`벤치마크 <bench_toolbox.benchmark.base.BaseBenchmark>`
+        :type bench: bench_toolbox.benchmark.base.BaseBenchmark
+        :param period: `cpu.cfs_period_us` 값. ``None`` 일경우 기본값 사용
+        :type period: typing.Optional[int]
+        :param quota: `cpu.cfs_quota_us` 값. ``None`` 일경우 기본값 사용
+        :type quota: typing.Optional[int]
+        """
         obj: CpuConstraint = super().__new__(cls, bench)
 
         obj._group = CPU(bench.group_name)
@@ -29,10 +42,18 @@ class CpuConstraint(BaseCgroupConstraint):
 
     @property
     def period(self) -> Optional[int]:
+        """
+        :return: `cpu.cfs_period_us` 값. ``None`` 일경우 기본값 사용
+        :rtype: typing.Optional[int]
+        """
         return self._period
 
     @property
     def quota(self) -> Optional[int]:
+        """
+        :return: `cpu.cfs_quota_us` 값. ``None`` 일경우 기본값 사용
+        :rtype: typing.Optional[int]
+        """
         return self._quota
 
     async def on_init(self) -> None:
@@ -44,10 +65,17 @@ class CpuConstraint(BaseCgroupConstraint):
             await self._group.assign_quota(self._quota)
 
     class Builder(BaseBuilder['CpuConstraint']):
+        """ :class:`~bench_toolbox.benchmark.constraints.cgroup.cpu.CpuConstraint` 를 객체화하는 빌더 """
         _period: Optional[int]
         _quota: Optional[int]
 
         def __init__(self, period: int = None, quota: int = None) -> None:
+            """
+            :param period: `cpu.cfs_period_us` 값. ``None`` 일경우 기본값 사용
+            :type period: typing.Optional[int]
+            :param quota: `cpu.cfs_quota_us` 값. ``None`` 일경우 기본값 사용
+            :type quota: typing.Optional[int]
+            """
             super().__init__()
 
             self._period = period
