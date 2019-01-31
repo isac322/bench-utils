@@ -1,9 +1,6 @@
 # coding: UTF-8
 
-from typing import Iterable, Optional, Tuple, Union
-
-import aiofiles
-from aiofiles.base import AiofilesContextManager
+from typing import Iterable, Optional, TextIO, Tuple, Union
 
 from benchmon.monitors import PerfMonitor
 from benchmon.monitors.messages import PerBenchMessage
@@ -12,7 +9,7 @@ from benchmon.monitors.perf import T as PERF_MSG_TYPE
 
 
 class StorePerf(BaseHandler):
-    _dest_file: Optional[AiofilesContextManager] = None
+    _dest_file: Optional[TextIO] = None
     _event_order: Tuple[str, ...]
 
     def _generate_value_stream(self, message: PERF_MSG_TYPE) -> Iterable[Union[float, int]]:
@@ -30,11 +27,13 @@ class StorePerf(BaseHandler):
             workspace = benchmark._bench_config.workspace / 'monitored'
             workspace.mkdir(parents=True, exist_ok=True)
 
-            self._dest_file = await aiofiles.open(str(workspace / f'perf_{benchmark.identifier}.csv'), mode='w')
+            # TODO: compare between open and aiofile_linux.
+            #  (maybe open() is better when writing small amount of contents to a file at a time)
+            self._dest_file = (workspace / f'perf_{benchmark.identifier}.csv').open(mode='w')
             self._event_order = tuple(perf_monitor._perf_config.event_names)
-            await self._dest_file.write(','.join(self._event_order) + '\n')
+            self._dest_file.write(','.join(self._event_order) + '\n')
 
-        await self._dest_file.write(','.join(map(str, self._generate_value_stream(message.data))) + '\n')
+        self._dest_file.write(','.join(map(str, self._generate_value_stream(message.data))) + '\n')
 
         return message
 

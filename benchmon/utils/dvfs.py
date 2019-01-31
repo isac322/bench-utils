@@ -17,8 +17,6 @@
 import asyncio
 from typing import Iterable, Tuple
 
-import aiofiles
-
 
 async def set_max_freq(core_id: int, freq: int) -> None:
     """
@@ -72,8 +70,8 @@ async def read_max_freq(core_id: int) -> int:
     :return: 코어의 최대 주파수
     :rtype: int
     """
-    async with aiofiles.open(f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq') as afp:
-        line: str = await afp.readline()
+    with open(f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq') as fp:
+        line: str = fp.readline()
         return int(line)
 
 

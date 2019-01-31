@@ -18,8 +18,6 @@ import asyncio
 import contextlib
 from typing import Set
 
-import aiofiles
-
 from .hyphen import convert_to_set
 
 
@@ -34,8 +32,11 @@ async def hyper_threading_guard(ht_flag: bool) -> None:
     :param ht_flag: Hyper-Threading을 끌것인가 말것인가
     :type ht_flag: bool
     """
-    async with aiofiles.open('/sys/devices/system/cpu/online') as afp:
-        raw_input: str = await afp.readline()
+
+    # TODO: compare between open and aiofile_linux.
+    #  (maybe open() is better when writing small amount of contents to a file at a time)
+    with open('/sys/devices/system/cpu/online') as fp:
+        raw_input: str = fp.readline()
 
     online_cores: Set[int] = convert_to_set(raw_input)
 
@@ -44,12 +45,10 @@ async def hyper_threading_guard(ht_flag: bool) -> None:
 
         logical_cores: Set[int] = set()
 
-        async def _read_siblings(core: int) -> None:
-            async with aiofiles.open(f'/sys/devices/system/cpu/cpu{core}/topology/thread_siblings_list') as fp:
-                line: str = await fp.readline()
+        for core_id in online_cores:
+            with open(f'/sys/devices/system/cpu/cpu{core_id}/topology/thread_siblings_list') as fp:
+                line: str = fp.readline()
                 logical_cores.update(map(int, line.strip().split(',')[1:]))
-
-        await asyncio.wait(tuple(_read_siblings(core_id) for core_id in online_cores))
 
         files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in logical_cores)
         proc = await asyncio.create_subprocess_exec('sudo', 'tee', *files_to_write,

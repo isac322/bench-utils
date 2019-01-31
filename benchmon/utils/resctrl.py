@@ -2,12 +2,8 @@
 
 import asyncio
 import re
-from itertools import chain
 from pathlib import Path
-from typing import ClassVar, Dict, Iterable, Mapping, MutableMapping, Optional, Tuple
-
-import aiofiles
-from aiofiles.base import AiofilesContextManager
+from typing import ClassVar, Dict, Iterable, Mapping, Optional, TextIO, Tuple
 
 
 def mask_to_bits(mask: str) -> int:
@@ -39,14 +35,9 @@ def bits_to_mask(bits: int) -> str:
     return f'{bits:x}'
 
 
-async def _open_file_async(monitor_dict: MutableMapping[Path, AiofilesContextManager]) -> None:
-    for file_path in monitor_dict:
-        monitor_dict[file_path] = await aiofiles.open(file_path)
-
-
-async def _read_file(path: Path, monitor: AiofilesContextManager) -> Tuple[str, int]:
-    await monitor.seek(0)
-    return path.name, int(await monitor.readline())
+def _read_file(path: Path, monitor: TextIO) -> Tuple[str, int]:
+    monitor.seek(0)
+    return path.name, int(monitor.readline())
 
 
 class ResCtrl:
@@ -107,7 +98,7 @@ class ResCtrl:
     _group_path: Path
     _prepare_read: bool = False
     # tuple of each feature monitors for each socket
-    _monitors: Tuple[Dict[Path, Optional[AiofilesContextManager]], ...]
+    _monitors: Tuple[Dict[Path, Optional[TextIO]], ...]
 
     def __init__(self) -> None:
         self.group_name = str()
@@ -139,7 +130,7 @@ class ResCtrl:
         """
         self._group_name = new_name
         self._group_path = ResCtrl.MOUNT_POINT / new_name
-        self._monitors: Tuple[Dict[Path, Optional[AiofilesContextManager]], ...] = tuple(
+        self._monitors: Tuple[Dict[Path, Optional[TextIO]], ...] = tuple(
                 dict.fromkeys(
                         self._group_path / 'mon_data' / mon_name / feature for feature in ResCtrl.FEATURES
                 )
@@ -163,7 +154,10 @@ class ResCtrl:
             raise AssertionError('The ResCtrl object is already prepared to read.')
 
         self._prepare_read = True
-        await asyncio.wait(tuple(map(_open_file_async, self._monitors)))
+        for monitor_dict in self._monitors:
+            for file_path in monitor_dict.keys():
+                # TODO: compare between open and aiofile.
+                monitor_dict[file_path] = file_path.open()
 
     async def add_task(self, pid: int) -> None:
         """
@@ -244,12 +238,8 @@ class ResCtrl:
             raise AssertionError('The ResCtrl object is not ready to read.')
 
         return tuple(
-                map(dict,
-                    await asyncio.gather(*(
-                        # TODO: check map(_read_file, mons.items())
-                        asyncio.gather(*(_read_file(k, v) for k, v in mons.items()))
-                        for mons in self._monitors))
-                    )
+                dict(_read_file(k, v) for k, v in mons.items())
+                for mons in self._monitors
         )
 
     async def end_read(self) -> None:
@@ -257,12 +247,9 @@ class ResCtrl:
         if not self._prepare_read:
             raise AssertionError('The ResCtrl object is not ready to read.')
 
-        await asyncio.wait(tuple(
-                chain(*(
-                    (mon.close() for mon in mons.values())
-                    for mons in self._monitors
-                ))
-        ))
+        for mon_dict in self._monitors:
+            for mon in mon_dict.values():
+                mon.close()
 
     async def delete(self) -> None:
         """

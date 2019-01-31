@@ -1,5 +1,5 @@
 aio-pika==4.9.3
-aiofiles==0.4.0
+aiofile_linux
 coloredlogs==10.0
 ordered-set==3.1
 psutil==5.5.0

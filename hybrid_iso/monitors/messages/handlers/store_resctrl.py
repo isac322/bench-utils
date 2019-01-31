@@ -1,11 +1,9 @@
 # coding: UTF-8
 
-import asyncio
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
-import aiofiles
-from aiofiles.base import AiofilesContextManager
+from aiofile_linux import AIOContext, WriteCmd
 
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
@@ -14,13 +12,19 @@ from benchmon.monitors.resctrl import T as RESCTRL_MSG_TYPE
 
 
 class StoreResCtrl(BaseHandler):
-    _dest_file: Tuple[AiofilesContextManager, ...] = tuple()
     _event_order: Tuple[str, ...]
+    _aio_context: AIOContext
+    _aio_blocks: Tuple[WriteCmd, ...] = tuple()
+
+    async def on_init(self) -> None:
+        # FIXME: hard coded
+        self._aio_context = AIOContext(4)
 
     @staticmethod
-    def _create_afp(bench_name: str, workspace: Path, message: RESCTRL_MSG_TYPE) -> Iterable[int]:
-        for core_id in range(len(message)):
-            yield aiofiles.open(str(workspace / f'{core_id}_{bench_name}.csv'), mode='w')
+    def _create_aio_blocks(bench_name: str, workspace: Path, message: RESCTRL_MSG_TYPE) -> Iterable[WriteCmd]:
+        for socket_id in range(len(message)):
+            file = open(str(workspace / f'{socket_id}_{bench_name}.csv'), mode='w')
+            yield WriteCmd(file, '')
 
     def _generate_value_stream(self, message: RESCTRL_MSG_TYPE, idx: int) -> Iterable[int]:
         for event_name in self._event_order:
@@ -35,20 +39,25 @@ class StoreResCtrl(BaseHandler):
         workspace: Path = benchmark._bench_config.workspace / 'monitored' / 'resctrl'
         workspace.mkdir(parents=True, exist_ok=True)
 
-        if self._dest_file is tuple():
-            self._dest_file = await asyncio.gather(
-                    *StoreResCtrl._create_afp(benchmark.identifier, workspace, message.data)
-            )
+        if self._aio_blocks is tuple():
+            self._aio_blocks = tuple(self._create_aio_blocks(benchmark.identifier, workspace, message.data))
             self._event_order = tuple(message.data[0].keys())
 
-            for dest in self._dest_file:
-                await dest.write(','.join(self._event_order) + '\n')
+            for block in self._aio_blocks:
+                block.buffer = (','.join(self._event_order) + '\n').encode()
+            await self._aio_context.submit(*self._aio_blocks)
+            for block in self._aio_blocks:
+                block.offset += len(block.buffer)
 
-        for idx, dest in enumerate(self._dest_file):
-            await dest.write(','.join(map(str, self._generate_value_stream(message.data, idx))) + '\n')
+        for idx, block in enumerate(self._aio_blocks):
+            block.buffer = (','.join(map(str, self._generate_value_stream(message.data, idx))) + '\n').encode()
+        await self._aio_context.submit(*self._aio_blocks)
+        for block in self._aio_blocks:
+            block.offset += len(block.buffer)
 
         return message
 
     async def on_end(self) -> None:
-        for afp in self._dest_file:
-            afp.close()
+        for block in self._aio_blocks:
+            block.file.close()
+        self._aio_context.close()

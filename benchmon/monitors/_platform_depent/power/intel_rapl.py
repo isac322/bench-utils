@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable, ClassVar, Coroutine, Dict, List, TYPE_CHECKING, Tuple, Type, Union
 
-import aiofiles
-
 from ...base import BaseMonitor
 from ...base_builder import BaseBuilder
 from ...messages import SystemMessage
@@ -39,8 +37,8 @@ class PowerMonitor(BaseMonitor[T]):
             socket_monitor: Path = PowerMonitor._base_dir / f'intel-rapl:{socket_id}'
 
             if socket_monitor.exists():
-                async with aiofiles.open(str(socket_monitor / _ENERGY_FILE_NAME)) as afp:
-                    socket_power = int(await afp.readline())
+                with (socket_monitor / _ENERGY_FILE_NAME).open() as afp:
+                    socket_power = int(afp.readline())
 
                 socket_dict: Dict[Path, int] = dict()
                 self._monitors[socket_monitor] = (socket_power, socket_dict)
@@ -50,8 +48,8 @@ class PowerMonitor(BaseMonitor[T]):
                     sub_monitor: Path = socket_monitor / f'intel-rapl:{socket_id}:{sub_id}'
 
                     if sub_monitor.exists():
-                        async with aiofiles.open(str(sub_monitor / _ENERGY_FILE_NAME)) as afp:
-                            before = int(await afp.readline())
+                        with (sub_monitor / _ENERGY_FILE_NAME).open() as afp:
+                            before = int(afp.readline())
                             socket_dict[sub_monitor] = before
                     else:
                         break
@@ -71,16 +69,16 @@ class PowerMonitor(BaseMonitor[T]):
         ret: List[Dict[str, Union[str, int, Dict[str, int]]]] = list()
 
         for socket_path, (prev_socket_power, socket) in self._monitors.items():
-            async with aiofiles.open(str(socket_path / 'name')) as name_fp, \
-                    aiofiles.open(str(socket_path / _ENERGY_FILE_NAME)) as power_fp:
-                sub_name = (await name_fp.readline()).strip()
-                after = int(await power_fp.readline())
+            with (socket_path / 'name').open() as name_fp, \
+                    (socket_path / _ENERGY_FILE_NAME).open() as power_fp:
+                sub_name = (name_fp.readline()).strip()
+                after = int(power_fp.readline())
 
             if after > prev_socket_power:
                 diff = after - prev_socket_power
             else:
-                async with aiofiles.open(str(socket_path / _MAX_ENERGY_VALUE_FILE_NAME)) as afp:
-                    max_value = int(await afp.readline())
+                with (socket_path / _MAX_ENERGY_VALUE_FILE_NAME).open() as fp:
+                    max_value = int(fp.readline())
                     diff = max_value - prev_socket_power + after
 
             ret_dict: Dict[str, Union[str, int, Dict[str, int]]] = {
@@ -90,16 +88,16 @@ class PowerMonitor(BaseMonitor[T]):
             }
 
             for path, before in socket.items():
-                async with aiofiles.open(str(path / _ENERGY_FILE_NAME)) as energy_fp, \
-                        aiofiles.open(str(path / 'name')) as name_fp:
-                    after = int(await energy_fp.readline())
-                    name = (await name_fp.readline()).strip()
+                with (path / _ENERGY_FILE_NAME).open() as energy_fp, \
+                        (path / 'name').open() as name_fp:
+                    after = int(energy_fp.readline())
+                    name = name_fp.readline().strip()
 
                     if after > prev_socket_power:
                         diff = after - before
                     else:
-                        async with aiofiles.open(str(path / _MAX_ENERGY_VALUE_FILE_NAME)) as afp:
-                            max_value = int(await afp.readline())
+                        with (path / _MAX_ENERGY_VALUE_FILE_NAME).open() as fp:
+                            max_value = int(fp.readline())
                             diff = max_value - before + after
 
                     ret_dict['domains'][name] = diff
