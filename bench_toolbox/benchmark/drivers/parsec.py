@@ -10,6 +10,8 @@ from .base import BenchDriver
 
 
 class ParsecDriver(BenchDriver):
+    """ PARSEC 벤치마크의 실행을 담당하는 드라이버 """
+
     _benches: ClassVar[Set[str]] = {
         'streamcluster', 'canneal', 'swaptions', 'x264', 'ferret', 'bodytrack', 'blackscholes',
         'dedup', 'facesim', 'fluidanimate', 'freqmine', 'raytrace', 'vips'

@@ -9,6 +9,8 @@ from .base import BenchDriver
 
 
 class NPBDriver(BenchDriver):
+    """ NPB 벤치마크의 실행을 담당하는 드라이버 """
+
     _benches: ClassVar[Set[str]] = {'CG', 'IS', 'DC', 'EP', 'MG', 'FT', 'SP', 'BT', 'LU', 'UA'}
     bench_name: ClassVar[str] = 'npb'
 
@@ -28,6 +30,12 @@ class NPBDriver(BenchDriver):
 
     @property
     def _exec_name(self) -> str:
+        """
+        미리 정의 된 Data Set에 따라서 실제 executable binary의 이름을 결정한다.
+
+        :return: executable binary name
+        :rtype: str
+        """
         return f'{self._name.lower()}.{NPBDriver.DATA_SET_MAP[self._name]}.x'
 
     @staticmethod
