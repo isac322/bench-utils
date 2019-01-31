@@ -8,7 +8,6 @@
 
 .. todo::
     * per-core DVFS지원 check
-    * set_max_freqs 최적화
 
 .. module:: benchmon.utils.dvfs
     :synopsis: Linux의 DVFS API wrapper
@@ -52,7 +51,16 @@ async def set_max_freqs(core_ids: Iterable[int], freq: int) -> None:
     :param freq: 바꿀 주파수 값
     :type freq: int
     """
-    await asyncio.wait(tuple(set_max_freq(core_id, freq) for core_id in core_ids))
+    target_files = (
+        f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq'
+        for core_id in core_ids
+    )
+
+    proc = await asyncio.create_subprocess_exec(
+            'sudo', 'tee', *target_files,
+            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
+
+    await proc.communicate(f'{freq}\n'.encode())
 
 
 async def read_max_freq(core_id: int) -> int:
