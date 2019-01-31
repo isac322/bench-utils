@@ -9,6 +9,8 @@ from .base import BenchDriver
 
 
 class RodiniaDriver(BenchDriver):
+    """ Rodinia 벤치마크의 실행을 담당하는 드라이버 """
+
     _benches: ClassVar[Set[str]] = {'nn', 'kmeans', 'cfd', 'particlefilter', 'bfs'}
     bench_name: ClassVar[str] = 'rodinia'
 

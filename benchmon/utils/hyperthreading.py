@@ -1,5 +1,19 @@
 # coding: UTF-8
 
+"""
+:mod:`hyperthreading` -- Linux의 Hyper-Threading API wrapper
+============================================================
+
+`/sys/devices/system/cpu/online` 을 사용하여 Hyper-Threading을 조정한다.
+
+.. note::
+    Hyper-Threading만을 위한 API를 사용한것이 아니기 때문에 사용시 주의가 필요하다
+
+.. module:: bench_toolbox.utils.hyperthreading
+    :synopsis: Linux의 Hyper-Threading API wrapper
+.. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
+"""
+
 import asyncio
 import contextlib
 from typing import Set
@@ -10,7 +24,16 @@ from .hyphen import convert_to_set
 
 
 @contextlib.asynccontextmanager
-async def hyper_threading_guard(ht_flag: bool):
+async def hyper_threading_guard(ht_flag: bool) -> None:
+    """
+    :keyword:`async with` 과 사용되며, 그 블럭 안에서 `ht_flag` 에 따라서 Hyper-Threading을 끄는것을 보장한다.
+
+    .. todo::
+        코드에서 :keyword:`print` 를 :class:`logging.Logger` 로 교체
+
+    :param ht_flag: Hyper-Threading을 끌것인가 말것인가
+    :type ht_flag: bool
+    """
     async with aiofiles.open('/sys/devices/system/cpu/online') as afp:
         raw_input: str = await afp.readline()
 

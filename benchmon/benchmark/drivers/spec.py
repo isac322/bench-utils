@@ -12,6 +12,8 @@ from .base import BenchDriver
 
 
 class SpecDriver(BenchDriver):
+    """ SPEC CPU 벤치마크의 실행을 담당하는 드라이버 """
+
     _benches: ClassVar[Set[str]] = {'lbm', 'libquantum', 'GemsFDTD', 'sphinx', 'gcc', 'zeusmp', 'sjeng'}
     bench_name: ClassVar[str] = 'spec'
 

@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 
 
 class BaseCgroupConstraint(BaseConstraint, metaclass=ABCMeta):
+    """
+    :mod:`~bench_toolbox.benchmark.constraints.cgroup` 에 속한 constraint들이 모두 공유하는 공통 부분을 묶어놓은 추상 클래스
+    """
     _group: BaseCGroup
 
     async def on_init(self) -> None:
@@ -25,4 +28,10 @@ class BaseCgroupConstraint(BaseConstraint, metaclass=ABCMeta):
 
     @property
     def identifier(self) -> str:
+        """
+        이 constraint가 사용하는 cgroup의 group이름을 반환한다
+
+        :return: 그룹이름
+        :rtype: str
+        """
         return self._group.identifier

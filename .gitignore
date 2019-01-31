@@ -204,3 +204,6 @@ tags
 /benchmon/configs/benchmark_home.json
 /benchmon/configs/perf.json
 /benchmon/configs/rabbit_mq.json
+
+/docs/source/*.rst
+!/docs/source/index.rst

@@ -1,5 +1,19 @@
 # coding: UTF-8
 
+"""
+:mod:`numa_topology` -- Linux의 Node API wrapper
+============================================================
+
+`/sys/devices/system/node` 에서 제공하는 정보들을 가공한다
+
+.. note::
+    완벽하게 정리된 구현이 아니므로 사용에 주의가 필요하다
+
+.. module:: bench_toolbox.utils.numa_topology
+    :synopsis: Linux의 Node API wrapper
+.. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>, Yoonsung Nam <ysnam@dcslab.snu.ac.kr>
+"""
+
 from pathlib import Path
 from typing import Dict, Mapping, Set
 
