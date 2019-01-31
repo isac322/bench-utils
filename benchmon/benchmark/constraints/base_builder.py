@@ -23,6 +23,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
 
     하나의 빌더는 여러개의 constraint를 만들어낼 수 있어야한다.
     """
+
     @abstractmethod
     def finalize(self, benchmark: BaseBenchmark) -> T:
         """
