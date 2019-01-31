@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from asyncio import iscoroutine
 from typing import Optional, TYPE_CHECKING
 
 import aio_pika
@@ -67,11 +66,7 @@ class RabbitMQHandler(BaseHandler):
 
     async def on_destroy(self) -> None:
         if self._channel is not None and not self._channel.is_closed:
-            # TODO: this method returns None instead of coroutine
-            ret = self._channel.close()
-
-            if iscoroutine(ret):
-                await ret
+            await self._channel.close()
 
         if self._connection is not None and not self._connection.is_closed:
             await self._connection.close()
