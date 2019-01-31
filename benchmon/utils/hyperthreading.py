@@ -29,7 +29,7 @@ async def hyper_threading_guard(ht_flag: bool) -> None:
     :keyword:`async with` 과 사용되며, 그 블럭 안에서 `ht_flag` 에 따라서 Hyper-Threading을 끄는것을 보장한다.
 
     .. todo::
-        코드에서 :keyword:`print` 를 :class:`logging.Logger` 로 교체
+        코드에서 :func:`print` 를 :class:`logging.Logger` 로 교체
 
     :param ht_flag: Hyper-Threading을 끌것인가 말것인가
     :type ht_flag: bool

@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 
 # -- Project information -----------------------------------------------------
 
-project = 'benchbox'
+project = 'benchmon'
 copyright = '2018, Byeonghoon Yoo'
 author = 'Byeonghoon Yoo'
 
@@ -109,7 +109,7 @@ html_static_path = ['../static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'benchboxdoc'
+htmlhelp_basename = 'benchmondoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -136,7 +136,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'benchbox.tex', 'benchbox Documentation',
+    (master_doc, 'benchmon.tex', 'benchmon Documentation',
      'Byeonghoon Yoo', 'manual'),
 ]
 
@@ -146,7 +146,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'benchbox', 'benchbox Documentation',
+    (master_doc, 'benchmon', 'benchmon Documentation',
      [author], 1)
 ]
 
@@ -157,8 +157,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'benchbox', 'benchbox Documentation',
-     author, 'benchbox', 'One line description of project.',
+    (master_doc, 'benchmon', 'benchmon Documentation',
+     author, 'benchmon', 'One line description of project.',
      'Miscellaneous'),
 ]
 
