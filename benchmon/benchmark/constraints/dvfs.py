@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Dict, TYPE_CHECKING, Tuple, Type
+from typing import Dict, Iterable, TYPE_CHECKING, Tuple, Type
 
 from .base import BaseConstraint
 from .base_builder import BaseBuilder
@@ -23,19 +23,18 @@ class DVFSConstraint(BaseConstraint):
     _orig_freq: Dict[int, int]
 
     def __new__(cls: Type[DVFSConstraint], bench: BaseBenchmark,
-                core_ids: Tuple[int, ...], freq: int) -> DVFSConstraint:
+                core_ids: Iterable[int], freq: int) -> DVFSConstraint:
         """
-        .. TODO: `core_ids` 의 타입을 Iterable로 변경
         :param bench: 이 constraint가 붙여질 :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>`
         :type bench: benchmon.benchmark.base.BaseBenchmark
         :param core_ids: frequency를 조절 할 CPU 코어 ID들
-        :type core_ids: typing.Tuple[int, ...]
+        :type core_ids: typing.Iterable[int]
         :param freq: 변경할 frequency 값
         :type freq: int
         """
         obj: DVFSConstraint = super().__new__(cls, bench)
 
-        obj._core_ids = core_ids
+        obj._core_ids = tuple(core_ids)
         obj._target_freq = freq
         obj._orig_freq = dict()
 
@@ -56,14 +55,13 @@ class DVFSConstraint(BaseConstraint):
 
     class Builder(BaseBuilder['DVFSConstraint']):
         """ :class:`~benchmon.benchmark.constraints.dvfs.DVFSConstraint` 를 객체화하는 빌더 """
-        _core_ids: Tuple[int, ...]
+        _core_ids: Iterable[int]
         _target_freq: int
 
-        def __init__(self, core_ids: Tuple[int, ...], freq: int) -> None:
+        def __init__(self, core_ids: Iterable[int], freq: int) -> None:
             """
-            .. TODO: `core_ids` 의 타입을 Iterable로 변경
             :param core_ids: frequency를 조절 할 CPU 코어 ID들
-            :type core_ids: typing.Tuple[int, ...]
+            :type core_ids: typing.Iterable[int]
             :param freq: 변경할 frequency 값
             :type freq: int
             """
