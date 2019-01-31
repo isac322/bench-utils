@@ -1,14 +1,14 @@
 # coding: UTF-8
 
 """
-:mod:`engines` -- :class:`드라이버 <bench_toolbox.benchmark.drivers.base.BenchDriver>` 가 벤치마크를 실행할 방법을 서술
+:mod:`engines` -- :class:`드라이버 <benchmon.benchmark.drivers.base.BenchDriver>` 가 벤치마크를 실행할 방법을 서술
 ========================================================================================================================
 
-:class:`~bench_toolbox.benchmark.drivers.base.BenchDriver` 가 벤치마크를 실행할 때,
+:class:`~benchmon.benchmark.drivers.base.BenchDriver` 가 벤치마크를 실행할 때,
 자원 제한을 위해 `numactl` 이나 `cgroup` 을 사용하는데, 이러한 프로그램들은 벤치마크 명령줄을 argument로 받는다.
 (e.g. `numactl --localalloc ls -al /`, `cgexec -g cpuset:test ls -al /`)
-그 부분을 모듈화 하기위하여 :mod:`engines` 이 있으며, :class:`드라이버 <bench_toolbox.benchmark.drivers.base.BenchDriver>` 는
-무조건 한 :class:`엔진 <bench_toolbox.benchmark.drivers.engines.base.BaseEngine>` 을 attribute로 가져서 벤치마크 실행 시 사용해야한다.
+그 부분을 모듈화 하기위하여 :mod:`engines` 이 있으며, :class:`드라이버 <benchmon.benchmark.drivers.base.BenchDriver>` 는
+무조건 한 :class:`엔진 <benchmon.benchmark.drivers.engines.base.BaseEngine>` 을 attribute로 가져서 벤치마크 실행 시 사용해야한다.
 
 .. note::
 
@@ -21,10 +21,10 @@
 
 .. seealso::
 
-    :mod:`bench_toolbox.benchmark.drivers` 모듈
+    :mod:`benchmon.benchmark.drivers` 모듈
         모든 엔진은 드라이버에서 사용된다.
 
-.. module:: bench_toolbox.benchmark.drivers.engines
+.. module:: benchmon.benchmark.drivers.engines
     :synopsis: 벤치마크 드라이버의 실행 커맨드가 실행될 방법을 서술
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """

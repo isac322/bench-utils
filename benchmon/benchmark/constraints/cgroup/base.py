@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class BaseCgroupConstraint(BaseConstraint, metaclass=ABCMeta):
     """
-    :mod:`~bench_toolbox.benchmark.constraints.cgroup` 에 속한 constraint들이 모두 공유하는 공통 부분을 묶어놓은 추상 클래스
+    :mod:`~benchmon.benchmark.constraints.cgroup` 에 속한 constraint들이 모두 공유하는 공통 부분을 묶어놓은 추상 클래스
     """
     _group: BaseCGroup
 

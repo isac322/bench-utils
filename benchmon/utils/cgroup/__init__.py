@@ -8,7 +8,7 @@
 
 각 파일이 하나의 subsystem을 담당하며, 이 프로젝트에서 필요한 부분만 구현한 상태이다.
 
-.. module:: bench_toolbox.utils.cgroup
+.. module:: benchmon.utils.cgroup
     :synopsis: Linux의 cgroup API wrapper
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """

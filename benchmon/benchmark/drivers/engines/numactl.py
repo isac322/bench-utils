@@ -13,7 +13,7 @@ class NumaCtlEngine(BaseEngine):
     .. seealso::
 
         엔진의 목적과 사용
-            :mod:`bench_toolbox.benchmark.drivers.engines` 모듈
+            :mod:`benchmon.benchmark.drivers.engines` 모듈
     """
 
     async def launch(self, *cmd: str, **kwargs) -> asyncio.subprocess.Process:

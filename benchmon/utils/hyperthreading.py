@@ -9,7 +9,7 @@
 .. note::
     Hyper-Threading만을 위한 API를 사용한것이 아니기 때문에 사용시 주의가 필요하다
 
-.. module:: bench_toolbox.utils.hyperthreading
+.. module:: benchmon.utils.hyperthreading
     :synopsis: Linux의 Hyper-Threading API wrapper
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """

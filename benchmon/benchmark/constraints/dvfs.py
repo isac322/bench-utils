@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class DVFSConstraint(BaseConstraint):
     """
-    :class:`벤치마크 <bench_toolbox.benchmark.base.BaseBenchmark>` 의 실행전에 특정 코어들의 CPU frequency를
+    :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 의 실행전에 특정 코어들의 CPU frequency를
     입력받은 값으로 설정하며, 벤치마크의 실행이 종료될 경우 그 코어들의 CPU frequency를 원래대로 복구시킨다.
     """
     _target_freq: int
@@ -26,8 +26,8 @@ class DVFSConstraint(BaseConstraint):
                 core_ids: Tuple[int, ...], freq: int) -> DVFSConstraint:
         """
         .. TODO: `core_ids` 의 타입을 Iterable로 변경
-        :param bench: 이 constraint가 붙여질 :class:`벤치마크 <bench_toolbox.benchmark.base.BaseBenchmark>`
-        :type bench: bench_toolbox.benchmark.base.BaseBenchmark
+        :param bench: 이 constraint가 붙여질 :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>`
+        :type bench: benchmon.benchmark.base.BaseBenchmark
         :param core_ids: frequency를 조절 할 CPU 코어 ID들
         :type core_ids: typing.Tuple[int, ...]
         :param freq: 변경할 frequency 값
@@ -55,7 +55,7 @@ class DVFSConstraint(BaseConstraint):
         ))
 
     class Builder(BaseBuilder['DVFSConstraint']):
-        """ :class:`~bench_toolbox.benchmark.constraints.dvfs.DVFSConstraint` 를 객체화하는 빌더 """
+        """ :class:`~benchmon.benchmark.constraints.dvfs.DVFSConstraint` 를 객체화하는 빌더 """
         _core_ids: Tuple[int, ...]
         _target_freq: int
 

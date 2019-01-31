@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 class BenchDriver(metaclass=ABCMeta):
     """
-    :class:`벤치마크 <bench_toolbox.benchmark.base.BaseBenchmark>` 가 무조건 이 클래스의 객체를 하나 변수로 가지며,
-    그 :class:`벤치마크 <bench_toolbox.benchmark.base.BaseBenchmark>` 가 벤치마크 실행을 명령받을 때, 어떻게 실행할 지를 담고있다.
+    :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 가 무조건 이 클래스의 객체를 하나 변수로 가지며,
+    그 :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 가 벤치마크 실행을 명령받을 때, 어떻게 실행할 지를 담고있다.
     (:meth:`_launch_bench` 메소드)
 
     또한 벤치마크에 따라서 하나의 벤치마크를 실행하여도 여러 프로세스가 Process Tree를 이루며 실행되기도 하는데,
@@ -61,9 +61,9 @@ class BenchDriver(metaclass=ABCMeta):
         :param num_threads: 워크로드가 사용할 thread 수
         :type num_threads: int
         :param engine: 만들어질 드라이버가 사용할 실행 엔진
-        :type engine: bench_toolbox.benchmark.drivers.engines.base.BaseEngine
+        :type engine: benchmon.benchmark.drivers.engines.base.BaseEngine
         :return: 드라이버 객체
-        :rtype: bench_toolbox.benchmark.drivers.base.BenchDriver
+        :rtype: benchmon.benchmark.drivers.base.BenchDriver
         """
         self._name = name
         self._num_threads = num_threads

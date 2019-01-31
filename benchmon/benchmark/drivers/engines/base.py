@@ -12,12 +12,12 @@ if TYPE_CHECKING:
 
 class BaseEngine(metaclass=ABCMeta):
     """
-    :class:`~bench_toolbox.benchmark.drivers.base.BenchDriver` 가 벤치마크를 실행할 때 어떻게 실행할 지 서술하는 클래스.
+    :class:`~benchmon.benchmark.drivers.base.BenchDriver` 가 벤치마크를 실행할 때 어떻게 실행할 지 서술하는 클래스.
 
     .. seealso::
 
         목적과 사용
-            :mod:`bench_toolbox.benchmark.drivers.engines` 모듈
+            :mod:`benchmon.benchmark.drivers.engines` 모듈
     """
 
     _benchmark: BaseBenchmark

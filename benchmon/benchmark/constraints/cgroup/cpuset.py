@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class CpusetConstraint(BaseCgroupConstraint):
     """
-    :mod:`~bench_toolbox.benchmark.constraints.cgroup` 중에서 `cpuset` subsystem을 사용하는 constraint.
+    :mod:`~benchmon.benchmark.constraints.cgroup` 중에서 `cpuset` subsystem을 사용하는 constraint.
 
     현재 `cpuset.cpus` 와 `cpuset.mems` 를 조절 가능하다.
     """
@@ -25,8 +25,8 @@ class CpusetConstraint(BaseCgroupConstraint):
     def __new__(cls: Type[CpusetConstraint], bench: BaseBenchmark,
                 cpus: Optional[str], mems: Optional[str]) -> CpusetConstraint:
         """
-        :param bench: 이 constraint가 붙여질 :class:`벤치마크 <bench_toolbox.benchmark.base.BaseBenchmark>`
-        :type bench: bench_toolbox.benchmark.base.BaseBenchmark
+        :param bench: 이 constraint가 붙여질 :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>`
+        :type bench: benchmon.benchmark.base.BaseBenchmark
         :param cpus: `cpuset.cpus` 값. ``None`` 일경우 기본값 사용
         :type cpus: typing.Optional[str]
         :param mems: `cpuset.mems` 값. ``None`` 일경우 기본값 사용

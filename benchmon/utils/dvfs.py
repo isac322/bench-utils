@@ -10,7 +10,7 @@
     * per-core DVFS지원 check
     * set_max_freqs 최적화
 
-.. module:: bench_toolbox.utils.dvfs
+.. module:: benchmon.utils.dvfs
     :synopsis: Linux의 DVFS API wrapper
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """

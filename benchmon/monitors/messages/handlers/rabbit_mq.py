@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class RabbitMQHandler(BaseHandler):
     """
-    파이프라인으로 전달되는 메시지 중 :class:`~bench_toolbox.monitors.messages.rabbit_mq.RabbitMQMessage` 객체 혹은 자식 객체
+    파이프라인으로 전달되는 메시지 중 :class:`~benchmon.monitors.messages.rabbit_mq.RabbitMQMessage` 객체 혹은 자식 객체
     메시지만 설정된 RabbitMQ 주소로 전송하는 핸들러.
 
     .. note::
@@ -43,7 +43,7 @@ class RabbitMQHandler(BaseHandler):
 
     async def on_message(self, message: RabbitMQMessage) -> Optional[RabbitMQMessage]:
         """
-        :class:`~bench_toolbox.monitors.messages.rabbit_mq.RabbitMQMessage` 객체 혹은 자식 객체 메시지만 설정된 큐로 전송한다.
+        :class:`~benchmon.monitors.messages.rabbit_mq.RabbitMQMessage` 객체 혹은 자식 객체 메시지만 설정된 큐로 전송한다.
         """
 
         # ignore non-RabbitMQ messages

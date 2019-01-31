@@ -11,8 +11,8 @@ if TYPE_CHECKING:
 
 class BaseHandler(metaclass=ABCMeta):
     """
-    :class:`~bench_toolbox.monitors.pipelines.base.BasePipeline` 에 등록되어서, 그 파이프라인객체에 전달되어지는
-    :class:`~bench_toolbox.monitors.messages.base.BaseMessage` 들을 처리하는 핸들러.
+    :class:`~benchmon.monitors.pipelines.base.BasePipeline` 에 등록되어서, 그 파이프라인객체에 전달되어지는
+    :class:`~benchmon.monitors.messages.base.BaseMessage` 들을 처리하는 핸들러.
 
     .. note::
 
@@ -23,12 +23,12 @@ class BaseHandler(metaclass=ABCMeta):
         * 어느 핸들러의 생명주기는 그 핸들러가 속한 파이프라인의 생명주기와 같다.
 
         * 두 개의 파이프라인에 하나의 핸들러 객체를 등록할 수 없다.
-          디자인상 :class:`파이프라인 <bench_toolbox.monitors.pipelines.base.BasePipeline>` 과의 종속성은 없지만,
+          디자인상 :class:`파이프라인 <benchmon.monitors.pipelines.base.BasePipeline>` 과의 종속성은 없지만,
           :meth:`on_destroy` 같은 메소드의 중복 호출이 발생하기 때문이다.
 
     .. warning::
 
-        * :class:`~bench_toolbox.monitors.pipelines.base.BasePipeline` 를 상속받아 구현하는 클래스의 내부가 아니라면,
+        * :class:`~benchmon.monitors.pipelines.base.BasePipeline` 를 상속받아 구현하는 클래스의 내부가 아니라면,
           :meth:`on_init`, :meth:`on_end`, :meth:`on_destroy` 를 임의로 호출해선 안된다.
     """
 

@@ -9,7 +9,7 @@
 .. note::
     완벽하게 정리된 구현이 아니므로 사용에 주의가 필요하다
 
-.. module:: bench_toolbox.utils.numa_topology
+.. module:: benchmon.utils.numa_topology
     :synopsis: Linux의 Node API wrapper
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>, Yoonsung Nam <ysnam@dcslab.snu.ac.kr>
 """

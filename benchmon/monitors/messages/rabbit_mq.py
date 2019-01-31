@@ -14,7 +14,7 @@ class RabbitMQMessage(GeneratedMessage[_MT]):
     RabbitMQ를 통해 전송될 목적으로 메시지 핸들러가 생성한 메시지
 
     .. seealso::
-        :class:`bench_toolbox.monitors.messages.handlers.rabbit_mq.RabbitMQHandler` 클래스
+        :class:`benchmon.monitors.messages.handlers.rabbit_mq.RabbitMQHandler` 클래스
             본 메시지가 처리되는 메시지 핸들러
     """
     routing_key: str

@@ -8,7 +8,7 @@
 
 OS API의 wrapper등이 있다.
 
-.. module:: bench_toolbox.utils
+.. module:: benchmon.utils
     :synopsis: 부수적으로 필요한 기능들
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """

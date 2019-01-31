@@ -6,7 +6,7 @@
 
 `0,2-4` 와 같은 문자열을 처리하기 위한 모듈
 
-.. module:: bench_toolbox.utils.hyphen
+.. module:: benchmon.utils.hyphen
     :synopsis: cgroup이나 resctrl에서 사용하는 - 이 포함된 문자열 처리
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
