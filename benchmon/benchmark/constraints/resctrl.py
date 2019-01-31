@@ -20,17 +20,16 @@ class ResCtrlConstraint(BaseConstraint):
     _masks: Tuple[str, ...]
     _group: ResCtrl
 
-    def __new__(cls: Type[ResCtrlConstraint], bench: BaseBenchmark, masks: Tuple[str, ...]) -> ResCtrlConstraint:
+    def __new__(cls: Type[ResCtrlConstraint], bench: BaseBenchmark, masks: Iterable[str]) -> ResCtrlConstraint:
         """
-        .. TODO: `masks` 의 타입을 Iterable로 변경
         :param bench: 이 constraint가 붙여질 :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>`
         :type bench: benchmon.benchmark.base.BaseBenchmark
         :param masks: CPU 소켓별로 할당할 LLC mask
-        :type masks: typing.Tuple[str, ...]
+        :type masks: typing.Iterable[str]
         """
         obj: ResCtrlConstraint = super().__new__(cls, bench)
 
-        obj._masks = masks
+        obj._masks = tuple(masks)
         obj._group = ResCtrl()
 
         return obj
@@ -57,13 +56,12 @@ class ResCtrlConstraint(BaseConstraint):
 
     class Builder(BaseBuilder['ResCtrlConstraint']):
         """ :class:`~benchmon.benchmark.constraints.resctrl.ResCtrlConstraint` 를 객체화하는 빌더 """
-        _masks: Tuple[str, ...] = tuple()
+        _masks: Tuple[str, ...]
 
         def __init__(self, masks: Iterable[str] = tuple()) -> None:
             """
-            .. TODO: `masks` 의 타입을 Iterable로 변경
             :param masks: CPU 소켓별로 할당할 LLC mask
-            :type masks: typing.Tuple[str, ...]
+            :type masks: typing.Iterable[str]
             """
             self._masks = masks
 
