@@ -76,12 +76,10 @@ class BenchDriver(metaclass=ABCMeta):
             except (psutil.NoSuchProcess, ProcessLookupError):
                 pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def has(bench_name: str) -> bool:
+    def has(cls, bench_name: str) -> bool:
         """
-        .. TODO: change to class method
-
         Test that this driver can handle the benchmark `bench_name`.
 
         :param bench_name: benchmark name to test

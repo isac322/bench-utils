@@ -14,8 +14,8 @@ class RodiniaDriver(BenchDriver):
     _benches: ClassVar[Set[str]] = {'nn', 'kmeans', 'cfd', 'particlefilter', 'bfs'}
     bench_name: ClassVar[str] = 'rodinia'
 
-    @staticmethod
-    def has(bench_name: str) -> bool:
+    @classmethod
+    def has(cls, bench_name: str) -> bool:
         return bench_name in RodiniaDriver._benches
 
     def _find_bench_proc(self) -> Optional[psutil.Process]:

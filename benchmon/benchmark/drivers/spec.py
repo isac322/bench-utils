@@ -17,8 +17,8 @@ class SpecDriver(BenchDriver):
     _benches: ClassVar[Set[str]] = {'lbm', 'libquantum', 'GemsFDTD', 'sphinx', 'gcc', 'zeusmp', 'sjeng'}
     bench_name: ClassVar[str] = 'spec'
 
-    @staticmethod
-    def has(bench_name: str) -> bool:
+    @classmethod
+    def has(cls, bench_name: str) -> bool:
         return bench_name in SpecDriver._benches
 
     def _find_bench_proc(self) -> Optional[psutil.Process]:

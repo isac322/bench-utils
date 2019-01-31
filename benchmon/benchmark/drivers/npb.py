@@ -38,8 +38,8 @@ class NPBDriver(BenchDriver):
         """
         return f'{self._name.lower()}.{NPBDriver.DATA_SET_MAP[self._name]}.x'
 
-    @staticmethod
-    def has(bench_name: str) -> bool:
+    @classmethod
+    def has(cls, bench_name: str) -> bool:
         return bench_name in NPBDriver._benches
 
     def _find_bench_proc(self) -> Optional[psutil.Process]:
