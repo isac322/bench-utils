@@ -30,10 +30,12 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         self._constraint_builders = dict()
 
     def add_handler(self, handler: BaseHandler) -> _BT.Builder:
+        # noinspection PyProtectedMember
         self._cur_obj._pipeline.add_handler(handler)
         return self
 
     def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
+        # noinspection PyProtectedMember
         return monitor_builder \
             .set_benchmark(self._cur_obj) \
             .set_emitter(self._cur_obj._pipeline.on_message) \
