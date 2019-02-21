@@ -5,6 +5,8 @@ from typing import Iterable, Optional, Tuple
 
 from aiofile_linux import AIOContext, WriteCmd
 
+from benchmon import Context
+from benchmon.benchmark import BaseBenchmark
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
@@ -16,7 +18,7 @@ class StoreResCtrl(BaseHandler):
     _aio_context: AIOContext
     _aio_blocks: Tuple[WriteCmd, ...] = tuple()
 
-    async def on_init(self) -> None:
+    async def on_init(self, context: Context) -> None:
         # FIXME: hard coded
         self._aio_context = AIOContext(4)
 
@@ -30,12 +32,11 @@ class StoreResCtrl(BaseHandler):
         for event_name in self._event_order:
             yield message[idx][event_name]
 
-    async def on_message(self, message: PerBenchMessage) -> Optional[PerBenchMessage]:
+    async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, ResCtrlMonitor):
             return message
 
-        monitor: ResCtrlMonitor = message.source
-        benchmark = monitor._benchmark
+        benchmark = BaseBenchmark.of(context)
         workspace: Path = benchmark._bench_config.workspace / 'monitored' / 'resctrl'
         workspace.mkdir(parents=True, exist_ok=True)
 
@@ -57,7 +58,7 @@ class StoreResCtrl(BaseHandler):
 
         return message
 
-    async def on_end(self) -> None:
+    async def on_end(self, context: Context) -> None:
         for block in self._aio_blocks:
             block.file.close()
         self._aio_context.close()

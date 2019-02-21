@@ -11,6 +11,7 @@ from .base import BaseHandler
 from ..rabbit_mq import RabbitMQMessage
 
 if TYPE_CHECKING:
+    from .... import Context
     from ....configs.containers import RabbitMQConfig
 
 
@@ -36,11 +37,11 @@ class RabbitMQHandler(BaseHandler):
         self._creation_q_name = rabbit_mq_config.creation_q_name
         self._host = rabbit_mq_config.host_name
 
-    async def on_init(self) -> None:
+    async def on_init(self, context: Context) -> None:
         self._connection = await aio_pika.connect_robust(host=self._host)
         self._channel = await self._connection.channel()
 
-    async def on_message(self, message: RabbitMQMessage) -> Optional[RabbitMQMessage]:
+    async def on_message(self, context: Context, message: RabbitMQMessage) -> Optional[RabbitMQMessage]:
         """
         :class:`~benchmon.monitors.messages.rabbit_mq.RabbitMQMessage` 객체 혹은 자식 객체 메시지만 설정된 큐로 전송한다.
         """
@@ -60,11 +61,11 @@ class RabbitMQHandler(BaseHandler):
                 routing_key=message.routing_key
         )
 
-    async def on_end(self) -> None:
+    async def on_end(self, context: Context) -> None:
         if self._message_queue is not None:
             await self._message_queue.delete(if_empty=False)
 
-    async def on_destroy(self) -> None:
+    async def on_destroy(self, context: Context) -> None:
         if self._channel is not None and not self._channel.is_closed:
             await self._channel.close()
 

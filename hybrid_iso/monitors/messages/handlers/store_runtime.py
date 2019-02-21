@@ -4,18 +4,19 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 
+from benchmon import Context
+from benchmon.benchmark import BaseBenchmark
 from benchmon.monitors import RuntimeMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 
 
 class StoreRuntime(BaseHandler):
-    async def on_message(self, message: PerBenchMessage) -> Optional[PerBenchMessage]:
+    async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, RuntimeMonitor):
             return message
 
-        monitor: RuntimeMonitor = message.source
-        benchmark = monitor._benchmark
+        benchmark = BaseBenchmark.of(context)
         workspace: Path = benchmark._bench_config.workspace / 'monitored'
         result_path: Path = workspace / 'runtime.json'
 
