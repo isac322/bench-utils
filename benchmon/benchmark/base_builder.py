@@ -11,7 +11,7 @@ from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
     from .constraints import BaseBuilder as ConstraintBuilder
-    from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
+    from ..monitors import BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
 
 T = TypeVar('T', bound=BaseBenchmark)
@@ -33,16 +33,10 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         self._cur_obj._pipeline.add_handler(handler)
         return self
 
-    def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
-        return monitor_builder \
-            .set_benchmark(self._cur_obj) \
-            .finalize()
-
-    def build_monitor(self, monitor_builder: MonitorBuilder) -> BaseBuilder[T]:
+    def add_monitor(self, monitor: BaseMonitor) -> BaseBuilder[T]:
         if self._is_finalized:
             raise AssertionError('Can\'t not reuse the finalized builder.')
 
-        monitor = self._build_monitor(monitor_builder)
         self._monitors.append(monitor)
 
         return self
@@ -53,7 +47,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
 
     def _finalize(self) -> None:
         if len(self._monitors) is 0:
-            self.build_monitor(IdleMonitor.Builder())
+            self.add_monitor(IdleMonitor())
 
     def finalize(self) -> T:
         if self._is_finalized:

@@ -1,7 +1,6 @@
 # coding: UTF-8
 
 from .base import BaseMonitor, MonitorData
-from .base_builder import BaseBuilder
 from .combined import CombinedOneShotMonitor
 from .iteration_dependent import IterationDependentMonitor
 from .oneshot import OneShotMonitor

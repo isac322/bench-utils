@@ -2,43 +2,37 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Mapping, Optional, TYPE_CHECKING, Tuple, Type
+from typing import Dict, List, Mapping, TYPE_CHECKING, Tuple
 
-from .base_builder import BaseBuilder
 from .iteration_dependent import IterationDependentMonitor
 from .messages import PerBenchMessage, SystemMessage
+from ..benchmark import BaseBenchmark
 from ..utils import ResCtrl
 
 if TYPE_CHECKING:
     from .messages import MonitoredMessage
     from .. import Context
     # because of circular import
-    from ..benchmark import BaseBenchmark
 
 T = Tuple[Mapping[str, int], ...]
 
 
 class ResCtrlMonitor(IterationDependentMonitor[T]):
-    _benchmark: Optional[BaseBenchmark]
     _is_stopped: bool = False
     _group: ResCtrl
 
-    def __new__(cls: Type[ResCtrlMonitor], interval: int, bench: BaseBenchmark = None) -> ResCtrlMonitor:
-        obj: ResCtrlMonitor = super().__new__(cls, interval)
+    def __init__(self, interval: int) -> None:
+        super().__init__(interval)
 
-        obj._benchmark = bench
-        obj._group = ResCtrl()
-
-        return obj
-
-    def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
+        self._group = ResCtrl()
 
     async def on_init(self, context: Context) -> None:
         await super().on_init(context)
 
-        if self._benchmark is not None:
-            self._group.group_name = self._benchmark.group_name
+        benchmark = BaseBenchmark.of(context)
+
+        if benchmark is not None:
+            self._group.group_name = benchmark.group_name
 
         await self._group.prepare_to_read()
 
@@ -70,24 +64,16 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
 
         return tuple(result)
 
-    async def create_message(self, data: T) -> MonitoredMessage[T]:
-        if self._benchmark is None:
+    async def create_message(self, context: Context, data: T) -> MonitoredMessage[T]:
+        benchmark = BaseBenchmark.of(context)
+
+        if benchmark is None:
             return SystemMessage(data, self)
         else:
-            return PerBenchMessage(data, self, self._benchmark)
+            return PerBenchMessage(data, self, benchmark)
 
     async def on_end(self, context: Context) -> None:
         try:
             await self._group.end_read()
         except AssertionError:
             pass
-
-    class Builder(BaseBuilder['ResCtrlMonitor']):
-        _interval: int
-
-        def __init__(self, interval: int) -> None:
-            super().__init__()
-            self._interval = interval
-
-        def _finalize(self) -> ResCtrlMonitor:
-            return ResCtrlMonitor.__new__(ResCtrlMonitor, self._interval, self._cur_bench)

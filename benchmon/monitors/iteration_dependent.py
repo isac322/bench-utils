@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Optional, TYPE_CHECKING, Type
+from typing import Optional, TYPE_CHECKING
 
 from .base import MonitorData
 from .oneshot import OneShotMonitor
@@ -18,12 +18,10 @@ if TYPE_CHECKING:
 class IterationDependentMonitor(OneShotMonitor[MonitorData], metaclass=ABCMeta):
     _prev_data: Optional[MonitorData]
 
-    def __new__(cls: Type[IterationDependentMonitor], interval: int) -> IterationDependentMonitor:
-        obj: IterationDependentMonitor = super().__new__(cls, interval)
+    def __init__(self, interval: int) -> None:
+        super().__init__(interval)
 
-        obj._prev_data = None
-
-        return obj
+        self._prev_data = None
 
     async def _monitor(self, context: Context) -> None:
         while not self.stopped:
@@ -33,7 +31,7 @@ class IterationDependentMonitor(OneShotMonitor[MonitorData], metaclass=ABCMeta):
 
             transformed = self._transform_data(diff)
 
-            message = await self.create_message(transformed)
+            message = await self.create_message(context, transformed)
             await BasePipeline.of(context).on_message(context, message)
 
             await asyncio.sleep(self._interval)

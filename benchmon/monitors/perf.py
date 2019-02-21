@@ -3,44 +3,35 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Mapping, TYPE_CHECKING, Type, Union
+from typing import Mapping, TYPE_CHECKING, Union
 
 from .base import BaseMonitor
-from .base_builder import BaseBuilder
 from .messages import PerBenchMessage
 from .pipelines.base import BasePipeline
+from ..benchmark import BaseBenchmark
 
 if TYPE_CHECKING:
     from .. import Context
     from ..configs.containers import PerfConfig
-    # because of circular import
-    from ..benchmark import BaseBenchmark
 
 T = Mapping[str, Union[int, float]]
 
 
 class PerfMonitor(BaseMonitor[T]):
     _perf_config: PerfConfig
-    _benchmark: BaseBenchmark
     _is_stopped: bool = False
 
-    def __new__(cls: Type[PerfMonitor],
-                benchmark: BaseBenchmark,
-                perf_config: PerfConfig) -> PerfMonitor:
-        obj: PerfMonitor = super().__new__(cls)
+    def __init__(self, perf_config: PerfConfig) -> None:
+        super().__init__()
 
-        obj._perf_config = perf_config
-        obj._benchmark = benchmark
-
-        return obj
-
-    def __init__(self, *args, **kwargs) -> None:
-        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
+        self._perf_config = perf_config
 
     async def _monitor(self, context: Context) -> None:
+        benchmark = BaseBenchmark.of(context)
+
         perf_proc = await asyncio.create_subprocess_exec(
                 'perf', 'stat', '-e', self._perf_config.event_str,
-                '-p', str(self._benchmark.pid), '-x', ',', '-I', str(self._perf_config.interval),
+                '-p', str(benchmark.pid), '-x', ',', '-I', str(self._perf_config.interval),
                 stderr=asyncio.subprocess.PIPE)
 
         if self._perf_config.interval < 100:
@@ -74,7 +65,7 @@ class PerfMonitor(BaseMonitor[T]):
                     ignored = True
 
             if not self._is_stopped and not ignored:
-                msg = await self.create_message(record.copy())
+                msg = await self.create_message(context, record.copy())
                 await BasePipeline.of(context).on_message(context, msg)
 
         if perf_proc.returncode is None:
@@ -90,15 +81,5 @@ class PerfMonitor(BaseMonitor[T]):
     async def stopped(self) -> bool:
         return self._is_stopped
 
-    async def create_message(self, data: T) -> PerBenchMessage[T]:
-        return PerBenchMessage(data, self, self._benchmark)
-
-    class Builder(BaseBuilder['PerfMonitor']):
-        _perf_config: PerfConfig
-
-        def __init__(self, perf_config: PerfConfig) -> None:
-            super().__init__()
-            self._perf_config = perf_config
-
-        def _finalize(self) -> PerfMonitor:
-            return PerfMonitor.__new__(PerfMonitor, self._cur_bench, self._perf_config)
+    async def create_message(self, context: Context, data: T) -> PerBenchMessage[T]:
+        return PerBenchMessage(data, self, BaseBenchmark.of(context))

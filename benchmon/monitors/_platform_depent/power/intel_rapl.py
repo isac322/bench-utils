@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar, Dict, List, TYPE_CHECKING, Tuple, Type, Union
+from typing import ClassVar, Dict, List, TYPE_CHECKING, Tuple, Union
 
 from ...base import BaseMonitor
-from ...base_builder import BaseBuilder
 from ...messages import SystemMessage
 from ...pipelines.base import BasePipeline
 
@@ -22,12 +21,12 @@ T = Tuple[Dict[str, Union[str, int, Dict[str, int]]], ...]
 class PowerMonitor(BaseMonitor[T]):
     _base_dir: ClassVar[Path] = Path('/sys/class/powercap/intel-rapl')
 
-    _monitors: Dict[Path, Tuple[int, Dict[Path, int], ...]]
+    _monitors: Dict[Path, Tuple[int, Dict[Path, int]]]
 
-    def __new__(cls: Type[BaseMonitor]) -> PowerMonitor:
-        obj: PowerMonitor = super().__new__(cls)
-        obj._monitors = dict()
-        return obj
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._monitors = dict()
 
     async def on_init(self, context: Context) -> None:
         await super().on_init(context)
@@ -62,7 +61,7 @@ class PowerMonitor(BaseMonitor[T]):
     async def stop(self) -> None:
         pass
 
-    async def create_message(self, data: T) -> SystemMessage[T]:
+    async def create_message(self, context: Context, data: T) -> SystemMessage[T]:
         return SystemMessage(data, self)
 
     async def on_end(self, context: Context) -> None:
@@ -104,9 +103,5 @@ class PowerMonitor(BaseMonitor[T]):
 
             ret.append(ret_dict)
 
-        msg = await self.create_message(tuple(ret))
+        msg = await self.create_message(context, tuple(ret))
         await BasePipeline.of(context).on_message(context, msg)
-
-    class Builder(BaseBuilder['PowerMonitor']):
-        def _finalize(self) -> PowerMonitor:
-            return PowerMonitor.__new__(PowerMonitor)
