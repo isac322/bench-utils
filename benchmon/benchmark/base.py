@@ -10,7 +10,7 @@ from typing import ClassVar, Optional, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
-from .. import Context
+from .. import Context, ContextReadable
 from ..monitors.pipelines import DefaultPipeline
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from .constraints.base import BaseConstraint
 
 
-class BaseBenchmark(metaclass=ABCMeta):
+class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
     _file_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
 
@@ -32,6 +32,15 @@ class BaseBenchmark(metaclass=ABCMeta):
     _pipeline: BasePipeline
     _log_path: Path
     _context_variable: Context
+
+    @classmethod
+    def of(cls, context: Context) -> Optional[BaseBenchmark]:
+        # noinspection PyProtectedMember
+        for c, v in context._variable_dict.items():
+            if issubclass(c, cls):
+                return v
+
+        return None
 
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: BenchConfig,
@@ -195,6 +204,8 @@ class BaseBenchmark(metaclass=ABCMeta):
     # noinspection PyProtectedMember
     def _initialize_context(self) -> Context:
         context = Context()
+
+        context._assign(self.__class__, self)
 
         return context
 
