@@ -10,6 +10,7 @@ from typing import ClassVar, Optional, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
+from .. import Context
 from ..monitors.pipelines import DefaultPipeline
 
 if TYPE_CHECKING:
@@ -30,6 +31,7 @@ class BaseBenchmark(metaclass=ABCMeta):
     _constraints: Tuple[BaseConstraint, ...]
     _pipeline: BasePipeline
     _log_path: Path
+    _context_variable: Context
 
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: BenchConfig,
@@ -189,6 +191,12 @@ class BaseBenchmark(metaclass=ABCMeta):
             logger.removeHandler(handler)
             handler.flush()
             handler.close()
+
+    # noinspection PyProtectedMember
+    def _initialize_context(self) -> Context:
+        context = Context()
+
+        return context
 
     @property
     def identifier(self) -> str:

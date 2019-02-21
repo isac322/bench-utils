@@ -65,6 +65,9 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         self._cur_obj._monitors = self._monitors
         self._cur_obj._constraints = tuple(self._constraint_builders.values())
 
+        # noinspection PyProtectedMember
+        self._cur_obj._context_variable = self._cur_obj._initialize_context()
+
         ret, self._cur_obj = self._cur_obj, None
         self._is_finalized = True
 
