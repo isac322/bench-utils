@@ -11,7 +11,6 @@ from typing import ClassVar, Optional, TYPE_CHECKING, Tuple, Type
 from coloredlogs import ColoredFormatter
 
 from .. import Context, ContextReadable
-from ..monitors.pipelines import DefaultPipeline
 
 if TYPE_CHECKING:
     from ..configs.containers import BenchConfig
@@ -51,6 +50,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         obj._identifier = bench_config.identifier
 
         obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
+        from ..monitors.pipelines import DefaultPipeline
         obj._pipeline: BasePipeline = DefaultPipeline()
 
         # setup for logger
