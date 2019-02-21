@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Coroutine, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type
 
 import rdtsc
 
@@ -11,17 +11,15 @@ from .iteration_dependent import IterationDependentMonitor
 from .messages import SystemMessage
 
 if TYPE_CHECKING:
-    from .messages import BaseMessage
+    from .. import Context
 
 
 class RDTSCMonitor(IterationDependentMonitor[int]):
     _prev_data: int
     _is_stopped: bool = False
 
-    def __new__(cls: Type[IterationDependentMonitor],
-                emitter: Callable[[BaseMessage], Coroutine[None, None, None]],
-                interval: int) -> RDTSCMonitor:
-        obj: RDTSCMonitor = super().__new__(cls, emitter, interval)
+    def __new__(cls: Type[IterationDependentMonitor], interval: int) -> RDTSCMonitor:
+        obj: RDTSCMonitor = super().__new__(cls, interval)
 
         obj._prev_data = rdtsc.get_cycles()
 
@@ -30,8 +28,8 @@ class RDTSCMonitor(IterationDependentMonitor[int]):
     def __init__(self, *args, **kwargs) -> None:
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
-    async def on_init(self) -> None:
-        await super().on_init()
+    async def on_init(self, context: Context) -> None:
+        await super().on_init(context)
 
         self._prev_data = rdtsc.get_cycles()
 
@@ -41,7 +39,7 @@ class RDTSCMonitor(IterationDependentMonitor[int]):
     async def create_message(self, data: int) -> SystemMessage[int]:
         return SystemMessage(data, self)
 
-    async def monitor_once(self) -> int:
+    async def monitor_once(self, context: Context) -> int:
         return rdtsc.get_cycles()
 
     @property
@@ -60,4 +58,4 @@ class RDTSCMonitor(IterationDependentMonitor[int]):
             self._interval = interval
 
         def _finalize(self) -> RDTSCMonitor:
-            return RDTSCMonitor.__new__(RDTSCMonitor, self._cur_emitter, self._interval)
+            return RDTSCMonitor.__new__(RDTSCMonitor, self._interval)

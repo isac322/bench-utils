@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Coroutine, Dict, List, Mapping, Optional, TYPE_CHECKING, Tuple, Type
+from typing import Dict, List, Mapping, Optional, TYPE_CHECKING, Tuple, Type
 
 from .base_builder import BaseBuilder
 from .iteration_dependent import IterationDependentMonitor
@@ -10,7 +10,8 @@ from .messages import PerBenchMessage, SystemMessage
 from ..utils import ResCtrl
 
 if TYPE_CHECKING:
-    from .messages import BaseMessage, MonitoredMessage
+    from .messages import MonitoredMessage
+    from .. import Context
     # because of circular import
     from ..benchmark import BaseBenchmark
 
@@ -22,11 +23,8 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
     _is_stopped: bool = False
     _group: ResCtrl
 
-    def __new__(cls: Type[ResCtrlMonitor],
-                emitter: Callable[[BaseMessage[T]], Coroutine[None, None, None]],
-                interval: int,
-                bench: BaseBenchmark = None) -> ResCtrlMonitor:
-        obj: ResCtrlMonitor = super().__new__(cls, emitter, interval)
+    def __new__(cls: Type[ResCtrlMonitor], interval: int, bench: BaseBenchmark = None) -> ResCtrlMonitor:
+        obj: ResCtrlMonitor = super().__new__(cls, interval)
 
         obj._benchmark = bench
         obj._group = ResCtrl()
@@ -36,17 +34,17 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
     def __init__(self, *args, **kwargs) -> None:
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
-    async def on_init(self) -> None:
-        await super().on_init()
+    async def on_init(self, context: Context) -> None:
+        await super().on_init(context)
 
         if self._benchmark is not None:
             self._group.group_name = self._benchmark.group_name
 
         await self._group.prepare_to_read()
 
-        self._prev_data = await self.monitor_once()
+        self._prev_data = await self.monitor_once(context)
 
-    async def monitor_once(self) -> T:
+    async def monitor_once(self, context: Context) -> T:
         return await self._group.read()
 
     @property
@@ -78,7 +76,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
         else:
             return PerBenchMessage(data, self, self._benchmark)
 
-    async def on_end(self) -> None:
+    async def on_end(self, context: Context) -> None:
         try:
             await self._group.end_read()
         except AssertionError:
@@ -92,4 +90,4 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
             self._interval = interval
 
         def _finalize(self) -> ResCtrlMonitor:
-            return ResCtrlMonitor.__new__(ResCtrlMonitor, self._cur_emitter, self._interval, self._cur_bench)
+            return ResCtrlMonitor.__new__(ResCtrlMonitor, self._interval, self._cur_bench)

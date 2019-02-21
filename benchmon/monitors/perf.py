@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Coroutine, Mapping, TYPE_CHECKING, Type, Union
+from typing import Mapping, TYPE_CHECKING, Type, Union
 
 from .base import BaseMonitor
 from .base_builder import BaseBuilder
 from .messages import PerBenchMessage
+from .pipelines.base import BasePipeline
 
 if TYPE_CHECKING:
-    from .messages import BaseMessage
+    from .. import Context
     from ..configs.containers import PerfConfig
     # because of circular import
     from ..benchmark import BaseBenchmark
@@ -24,10 +25,9 @@ class PerfMonitor(BaseMonitor[T]):
     _is_stopped: bool = False
 
     def __new__(cls: Type[PerfMonitor],
-                emitter: Callable[[BaseMessage[T]], Coroutine[None, None, None]],
                 benchmark: BaseBenchmark,
                 perf_config: PerfConfig) -> PerfMonitor:
-        obj: PerfMonitor = super().__new__(cls, emitter)
+        obj: PerfMonitor = super().__new__(cls)
 
         obj._perf_config = perf_config
         obj._benchmark = benchmark
@@ -37,7 +37,7 @@ class PerfMonitor(BaseMonitor[T]):
     def __init__(self, *args, **kwargs) -> None:
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
 
-    async def _monitor(self) -> None:
+    async def _monitor(self, context: Context) -> None:
         perf_proc = await asyncio.create_subprocess_exec(
                 'perf', 'stat', '-e', self._perf_config.event_str,
                 '-p', str(self._benchmark.pid), '-x', ',', '-I', str(self._perf_config.interval),
@@ -75,7 +75,7 @@ class PerfMonitor(BaseMonitor[T]):
 
             if not self._is_stopped and not ignored:
                 msg = await self.create_message(record.copy())
-                await self._emitter(msg)
+                await BasePipeline.of(context).on_message(context, msg)
 
         if perf_proc.returncode is None:
             try:
@@ -101,4 +101,4 @@ class PerfMonitor(BaseMonitor[T]):
             self._perf_config = perf_config
 
         def _finalize(self) -> PerfMonitor:
-            return PerfMonitor.__new__(PerfMonitor, self._cur_emitter, self._cur_bench, self._perf_config)
+            return PerfMonitor.__new__(PerfMonitor, self._cur_bench, self._perf_config)

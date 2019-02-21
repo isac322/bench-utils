@@ -36,7 +36,6 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
     def _build_monitor(self, monitor_builder: MonitorBuilder) -> BaseMonitor[MonitorData]:
         return monitor_builder \
             .set_benchmark(self._cur_obj) \
-            .set_emitter(self._cur_obj._pipeline.on_message) \
             .finalize()
 
     def build_monitor(self, monitor_builder: MonitorBuilder) -> BaseBuilder[T]:

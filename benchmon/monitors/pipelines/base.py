@@ -69,40 +69,50 @@ class BasePipeline(ContextReadable, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    async def on_init(self) -> None:
+    async def on_init(self, context: Context) -> None:
         """
         파이프라이닝을 처음 시작하거나, destroy된 파이프라인을 재시작할 때 호출되는 메소드.
         :meth:`on_destroy` 가 호출되기 전까지는 다시 호출될 일이 없다.
+
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         """
-        pass
         pass
 
     @abstractmethod
-    async def on_message(self, message: BaseMessage) -> None:
+    async def on_message(self, context: Context, message: BaseMessage) -> None:
         """
         :class:`모니터 <benchmon.monitors.base.BaseMonitor>` 로부터 전달 받은 메시지를 처리하는 메소드.
         파이프라인의 구현마다 메시지를 버퍼링한다던가, 여러개의 메시지를 동시에 파이프라이닝 한다던가 하는 식으로 구현할 수 있다.
 
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         :param message: 모니터로부터 이 파이프라인에 전달되는 메시지
         :type message: benchmon.monitors.messages.base.BaseMessage
         """
         pass
 
     @abstractmethod
-    async def on_end(self) -> None:
+    async def on_end(self, context: Context) -> None:
         """
         파이프라인이 사용 중지될 때를 처리하는 메소드.
 
         :meth:`on_destroy` 는 파이프라인이 사용하는 자원에 포커스하지만, 이 메소드는 파이프라인 기능의 중지에 포커스한다.
+
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         """
         pass
 
     @abstractmethod
-    async def on_destroy(self) -> None:
+    async def on_destroy(self, context: Context) -> None:
         """
         파이프라인 종료 이후 정리할 때를 처리하는 메소드.
 
         :meth:`on_destroy` 는 파이프라인 기능의 중지에 포커스하지만, 이 메소드는 파이프라인이 사용하는 자원에 포커스한다.
+
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         """
         pass
 

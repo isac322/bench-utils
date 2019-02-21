@@ -90,7 +90,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
                 await asyncio.wait(tuple(con.on_init() for con in self._constraints))
                 logger.debug('Constraints are initialized')
 
-            await self._pipeline.on_init()
+            await self._pipeline.on_init(self._context_variable)
             logger.debug('Pipe is initialized')
 
             logger.info('Starting benchmark...')
@@ -125,8 +125,10 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             if len(self._constraints) is not 0:
                 await asyncio.wait(tuple(con.on_start() for con in self._constraints))
 
-            await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
-            monitoring_tasks = asyncio.create_task(asyncio.wait(tuple(mon.monitor() for mon in self._monitors)))
+            await asyncio.wait(tuple(mon.on_init(self._context_variable) for mon in self._monitors))
+            monitoring_tasks = asyncio.create_task(asyncio.wait(
+                    tuple(mon.monitor(self._context_variable) for mon in self._monitors))
+            )
 
             await asyncio.wait((self.join(), monitoring_tasks),
                                return_when=asyncio.FIRST_COMPLETED)
@@ -157,8 +159,8 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             logger.info('The benchmark is ended.')
 
             # destroy monitors
-            await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
-            await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
+            await asyncio.wait(tuple(mon.on_end(self._context_variable) for mon in self._monitors))
+            await asyncio.wait(tuple(mon.on_destroy(self._context_variable) for mon in self._monitors))
 
             await self._destroy()
 
@@ -168,8 +170,8 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
 
         # destroy pipeline
-        await self._pipeline.on_end()
-        await self._pipeline.on_destroy()
+        await self._pipeline.on_end(self._context_variable)
+        await self._pipeline.on_destroy(self._context_variable)
 
         self._remove_logger_handlers()
 
