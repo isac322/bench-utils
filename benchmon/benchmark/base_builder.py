@@ -62,7 +62,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
 
         self._finalize()
 
-        self._cur_obj._monitors = self._monitors
+        self._cur_obj._monitors = tuple(self._monitors)
         self._cur_obj._constraints = tuple(self._constraint_builders.values())
 
         ret, self._cur_obj = self._cur_obj, None
