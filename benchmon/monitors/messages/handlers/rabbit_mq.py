@@ -65,8 +65,10 @@ class RabbitMQHandler(BaseHandler):
             await self._message_queue.delete(if_empty=False)
 
     async def on_destroy(self) -> None:
+        # FIXME: error while closing
         if self._channel is not None and not self._channel.is_closed:
             await self._channel.close()
 
+        # FIXME: error while closing
         if self._connection is not None and not self._connection.is_closed:
             await self._connection.close()
