@@ -206,6 +206,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         context = Context()
 
         context._assign(self.__class__, self)
+        context._assign(self._pipeline.__class__, self._pipeline)
 
         return context
 

@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import List, TYPE_CHECKING, Tuple
+from typing import List, Optional, TYPE_CHECKING, Tuple
+
+from ... import ContextReadable
 
 if TYPE_CHECKING:
     from ..messages import BaseMessage
     from ..messages.handlers import BaseHandler
+    from ... import Context
 
 
-class BasePipeline(metaclass=ABCMeta):
+class BasePipeline(ContextReadable, metaclass=ABCMeta):
     """
     :class:`핸들러 <benchmon.monitors.messages.handlers.base.BaseHandler>` 들이 순차적으로 등록 되어지고,
     이 객체에 전달되는 :class:`메시지 <benchmon.monitors.messages.base.BaseMessage>` 들을 처리하는 파이프라인.
@@ -26,6 +29,15 @@ class BasePipeline(metaclass=ABCMeta):
         구현 상황과 해결점
             :mod:`benchmon.monitors.pipelines` 모듈의 note 참조
     """
+
+    @classmethod
+    def of(cls, context: Context) -> Optional[BasePipeline]:
+        # noinspection PyProtectedMember
+        for c, v in context._variable_dict.items():
+            if issubclass(c, cls):
+                return v
+
+        return None
 
     def __init__(self) -> None:
         self._handlers: List[BaseHandler] = list()
