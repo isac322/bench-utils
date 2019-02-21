@@ -61,8 +61,8 @@ class RabbitMQHandler(BaseHandler):
         )
 
     async def on_end(self) -> None:
-        if self._message_queue is not None and self._message_queue.is_closed:
-            await self._message_queue.delete()
+        if self._message_queue is not None:
+            await self._message_queue.delete(if_empty=False)
 
     async def on_destroy(self) -> None:
         if self._channel is not None and not self._channel.is_closed:
