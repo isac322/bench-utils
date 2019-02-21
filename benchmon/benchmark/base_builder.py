@@ -14,13 +14,13 @@ if TYPE_CHECKING:
     from ..monitors import BaseBuilder as MonitorBuilder, BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
 
-T = TypeVar('T', bound=BaseBenchmark)
+_BT = TypeVar('_BT', bound=BaseBenchmark)
 _CT = TypeVar('_CT', bound=BaseConstraint)
 
 
-class BaseBuilder(Generic[T], metaclass=ABCMeta):
+class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     _is_finalized: bool = False
-    _cur_obj: T
+    _cur_obj: _BT
     _monitors: List[BaseMonitor[MonitorData]]
     # TODO: change key type to _CT not ConstraintBuilder[_CT]
     _constraint_builders: Dict[Type[ConstraintBuilder[_CT]], _CT]
@@ -29,7 +29,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         self._monitors = list()
         self._constraint_builders = dict()
 
-    def add_handler(self, handler: BaseHandler) -> T.Builder:
+    def add_handler(self, handler: BaseHandler) -> _BT.Builder:
         self._cur_obj._pipeline.add_handler(handler)
         return self
 
@@ -39,7 +39,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
             .set_emitter(self._cur_obj._pipeline.on_message) \
             .finalize()
 
-    def build_monitor(self, monitor_builder: MonitorBuilder) -> BaseBuilder[T]:
+    def build_monitor(self, monitor_builder: MonitorBuilder) -> BaseBuilder[_BT]:
         if self._is_finalized:
             raise AssertionError('Can\'t not reuse the finalized builder.')
 
@@ -48,7 +48,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
 
         return self
 
-    def build_constraint(self, constraint_builder: ConstraintBuilder) -> BaseBuilder[T]:
+    def build_constraint(self, constraint_builder: ConstraintBuilder) -> BaseBuilder[_BT]:
         self._constraint_builders[type(constraint_builder)] = constraint_builder.finalize(self._cur_obj)
         return self
 
@@ -56,7 +56,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         if len(self._monitors) is 0:
             self.build_monitor(IdleMonitor.Builder())
 
-    def finalize(self) -> T:
+    def finalize(self) -> _BT:
         if self._is_finalized:
             raise AssertionError('Can\'t not reuse the finalized builder.')
 
