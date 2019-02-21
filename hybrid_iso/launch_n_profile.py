@@ -24,9 +24,7 @@ if TYPE_CHECKING:
 MIN_PYTHON = (3, 7)
 
 
-async def launch(workspace: Path,
-                 silent: bool,
-                 verbose: bool) -> bool:
+async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
     perf_config: PerfConfig = PerfParser(workspace).parse()
     rabbit_mq_config: RabbitMQConfig = RabbitMQParser().parse()
 

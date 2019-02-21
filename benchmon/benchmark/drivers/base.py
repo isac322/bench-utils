@@ -124,9 +124,10 @@ class BenchDriver(metaclass=ABCMeta):
         :return: 한번이라도 실행된 적 있다면 ``True``
         :rtype: bool
         """
-        return self._bench_proc_info is not None and \
-               self._wrapper_proc is not None and \
-               self._wrapper_proc_info is not None
+        return \
+            self._bench_proc_info is not None and \
+            self._wrapper_proc is not None and \
+            self._wrapper_proc_info is not None
 
     @property
     def is_running(self) -> bool:
