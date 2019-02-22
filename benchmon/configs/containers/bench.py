@@ -48,6 +48,7 @@ class LaunchableConfig(BenchConfig):
 
     @classmethod
     def of(cls, context: Context) -> Optional[LaunchableConfig]:
+        # FIXME: assert benchmark type is LaunchableBenchmark
         return super().of(context)
 
     def generate_builder(self, logger_level: int = logging.INFO) -> LaunchableBenchmark.Builder:
