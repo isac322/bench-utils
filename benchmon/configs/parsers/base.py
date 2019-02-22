@@ -8,20 +8,20 @@ from typing import Any, Generic, Mapping, Optional, TypeVar
 
 from .. import validate_and_load
 
-T = TypeVar('T')
+_DT = TypeVar('_DT')
 
 
-class BaseParser(Generic[T], metaclass=ABCMeta):
-    _cached: Optional[T]
+class BaseParser(Generic[_DT], metaclass=ABCMeta):
+    _cached: Optional[_DT]
 
     def __init__(self) -> None:
         self._cached = None
 
     @abstractmethod
-    def _parse(self) -> T:
+    def _parse(self) -> _DT:
         pass
 
-    def parse(self) -> T:
+    def parse(self) -> _DT:
         if self._cached is None:
             self._cached = self._parse()
 
@@ -31,7 +31,7 @@ class BaseParser(Generic[T], metaclass=ABCMeta):
         return self._cached is not None
 
 
-class LocalReadParser(BaseParser[T], ABC):
+class LocalReadParser(BaseParser[_DT], ABC):
     _local_config: Mapping[str, Any]
     _workspace: Path
 

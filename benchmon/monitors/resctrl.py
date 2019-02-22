@@ -12,7 +12,6 @@ from ..utils import ResCtrl
 if TYPE_CHECKING:
     from .messages import MonitoredMessage
     from .. import Context
-    # because of circular import
 
 T = Tuple[Mapping[str, int], ...]
 
