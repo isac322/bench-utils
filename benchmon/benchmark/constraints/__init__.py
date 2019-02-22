@@ -16,8 +16,6 @@
 
     * DVFS, resctrl, cgroup 등은 :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 생성 시,
       local config.json의 내용을 보고 자동으로 생성한다.
-    * 모든 constraint 클래스들은 직접 객체화하지 않고, 각 클래스에 알맞는
-      :class:`빌더 <benchmon.benchmark.constraints.base_builder.BaseBuilder>` 를 통해 객체화한다.
 
 .. module:: benchmon.benchmark.constraints
     :synopsis: 벤치마크 실행 전후의 환경 설정
@@ -25,6 +23,5 @@
 """
 
 from .base import BaseConstraint
-from .base_builder import BaseBuilder
 from .dvfs import DVFSConstraint
 from .resctrl import ResCtrlConstraint

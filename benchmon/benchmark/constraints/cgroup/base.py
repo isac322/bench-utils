@@ -6,8 +6,10 @@ from abc import ABCMeta
 from typing import TYPE_CHECKING
 
 from ..base import BaseConstraint
+from ... import BaseBenchmark
 
 if TYPE_CHECKING:
+    from .... import Context
     from ....utils.cgroup.base import BaseCGroup
 
 
@@ -17,13 +19,13 @@ class BaseCgroupConstraint(BaseConstraint, metaclass=ABCMeta):
     """
     _group: BaseCGroup
 
-    async def on_init(self) -> None:
+    async def on_init(self, context: Context) -> None:
         await self._group.create_group()
 
-    async def on_start(self) -> None:
-        await self._group.rename(self._benchmark.group_name)
+    async def on_start(self, context: Context) -> None:
+        await self._group.rename(BaseBenchmark.of(context).group_name)
 
-    async def on_destroy(self) -> None:
+    async def on_destroy(self, context: Context) -> None:
         await self._group.delete()
 
     @property

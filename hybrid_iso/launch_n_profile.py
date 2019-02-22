@@ -32,7 +32,7 @@ async def launch(workspace: Path,
 
     benches: Tuple[BaseBenchmark, ...] = tuple(
             bench_cfg.generate_builder(logging.DEBUG if verbose else logging.INFO)
-                .build_constraint(RabbitMQConstraint.Builder(rabbit_mq_config))
+                .add_constraint(RabbitMQConstraint(rabbit_mq_config))
                 .add_monitor(RDTSCMonitor(perf_config.interval))
                 .add_monitor(ResCtrlMonitor(perf_config.interval))
                 .add_monitor(PerfMonitor(perf_config))

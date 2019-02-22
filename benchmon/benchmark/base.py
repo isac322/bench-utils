@@ -87,7 +87,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         try:
             # initialize constraints & pipeline
             if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_init() for con in self._constraints))
+                await asyncio.wait(tuple(con.on_init(self._context_variable) for con in self._constraints))
                 logger.debug('Constraints are initialized')
 
             await self._pipeline.on_init(self._context_variable)
@@ -123,7 +123,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         # noinspection PyBroadException
         try:
             if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_start() for con in self._constraints))
+                await asyncio.wait(tuple(con.on_start(self._context_variable) for con in self._constraints))
 
             await asyncio.wait(tuple(mon.on_init(self._context_variable) for mon in self._monitors))
             monitoring_tasks = asyncio.create_task(asyncio.wait(
@@ -167,7 +167,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
     async def _destroy(self) -> None:
         # destroy constraints
         if len(self._constraints) is not 0:
-            await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+            await asyncio.wait(tuple(con.on_destroy(self._context_variable) for con in self._constraints))
 
         # destroy pipeline
         await self._pipeline.on_end(self._context_variable)

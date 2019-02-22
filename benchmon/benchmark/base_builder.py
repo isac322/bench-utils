@@ -10,24 +10,21 @@ from .constraints.base import BaseConstraint
 from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
-    from .constraints import BaseBuilder as ConstraintBuilder
     from ..monitors import BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
 
 T = TypeVar('T', bound=BaseBenchmark)
-_CT = TypeVar('_CT', bound=BaseConstraint)
 
 
 class BaseBuilder(Generic[T], metaclass=ABCMeta):
     _is_finalized: bool = False
     _cur_obj: T
     _monitors: List[BaseMonitor[MonitorData]]
-    # TODO: change key type to _CT not ConstraintBuilder[_CT]
-    _constraint_builders: Dict[Type[ConstraintBuilder[_CT]], _CT]
+    _constraints: Dict[Type[BaseConstraint], BaseConstraint]
 
     def __init__(self) -> None:
         self._monitors = list()
-        self._constraint_builders = dict()
+        self._constraints = dict()
 
     def add_handler(self, handler: BaseHandler) -> T.Builder:
         self._cur_obj._pipeline.add_handler(handler)
@@ -41,8 +38,9 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
 
         return self
 
-    def build_constraint(self, constraint_builder: ConstraintBuilder) -> BaseBuilder[T]:
-        self._constraint_builders[type(constraint_builder)] = constraint_builder.finalize(self._cur_obj)
+    def add_constraint(self, constraint: BaseConstraint) -> BaseBuilder[T]:
+        # TODO: warning when duplicated type of constraint is added
+        self._constraints[type(constraint)] = constraint
         return self
 
     def _finalize(self) -> None:
@@ -56,7 +54,7 @@ class BaseBuilder(Generic[T], metaclass=ABCMeta):
         self._finalize()
 
         self._cur_obj._monitors = self._monitors
-        self._cur_obj._constraints = tuple(self._constraint_builders.values())
+        self._cur_obj._constraints = tuple(self._constraints.values())
 
         # noinspection PyProtectedMember
         self._cur_obj._context_variable = self._cur_obj._initialize_context()

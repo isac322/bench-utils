@@ -10,7 +10,7 @@ from typing import ClassVar, DefaultDict, Dict, Generic, Iterable, List, Mutable
     Tuple, Type, TypeVar, Union
 
 from ...containers import BenchConfig
-from ....benchmark.constraints import BaseBuilder, DVFSConstraint, ResCtrlConstraint
+from ....benchmark.constraints import BaseConstraint, DVFSConstraint, ResCtrlConstraint
 from ....benchmark.constraints.cgroup import CpusetConstraint
 from ....utils import ResCtrl
 from ....utils.hyphen import convert_to_hyphen, convert_to_set
@@ -132,16 +132,16 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
         return config
 
     @classmethod
-    def _gen_constraints(cls, config: BenchJson) -> Tuple[BaseBuilder, ...]:
-        constrains: List[BaseBuilder] = list()
+    def _gen_constraints(cls, config: BenchJson) -> Tuple[BaseConstraint, ...]:
+        constrains: List[BaseConstraint] = list()
 
-        constrains.append(CpusetConstraint.Builder(config['bound_cores'], config['mem_bound_sockets']))
-        constrains.append(ResCtrlConstraint.Builder(config['cbm_ranges']))
+        constrains.append(CpusetConstraint(config['identifier'], config['bound_cores'], config['mem_bound_sockets']))
+        constrains.append(ResCtrlConstraint(config['cbm_ranges']))
         # TODO: add CPUConstraint
 
         if 'cpu_freq' in config:
             cpu_freq: int = int(config['cpu_freq'] * 1_000_000)
             bound_cores = convert_to_set(config['bound_cores'])
-            constrains.append(DVFSConstraint.Builder(tuple(bound_cores), cpu_freq))
+            constrains.append(DVFSConstraint(tuple(bound_cores), cpu_freq))
 
         return tuple(constrains)

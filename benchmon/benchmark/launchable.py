@@ -94,5 +94,5 @@ class LaunchableBenchmark(BaseBenchmark):
 
             self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, launchable_config, logger_level)
 
-            for builder in launchable_config.constraint_builders:
-                self.build_constraint(builder)
+            for constraint in launchable_config.constraints:
+                self.add_constraint(constraint)

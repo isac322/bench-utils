@@ -13,15 +13,14 @@ from ...benchmark import LaunchableBenchmark
 
 if TYPE_CHECKING:
     from ...benchmark.base_builder import BaseBuilder as BenchmarkBuilder
-    # because of circular import
-    from ...benchmark.constraints import BaseBuilder
+    from ...benchmark.constraints import BaseConstraint
 
 
 @dataclass(frozen=True)
 class BenchConfig(BaseConfig, metaclass=ABCMeta):
     num_of_threads: int
     type: str
-    constraint_builders: Tuple[BaseBuilder, ...]
+    constraints: Tuple[BaseConstraint, ...]
     identifier: str
     workspace: Path
     width_in_log: int
