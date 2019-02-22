@@ -10,7 +10,7 @@ from typing import ClassVar, Optional, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
-from ..monitors.pipelines import DefaultPipeline
+from .. import Context, ContextReadable
 
 if TYPE_CHECKING:
     from ..configs.containers import BenchConfig
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .constraints.base import BaseConstraint
 
 
-class BaseBenchmark(metaclass=ABCMeta):
+class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
     _file_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
 
@@ -30,6 +30,16 @@ class BaseBenchmark(metaclass=ABCMeta):
     _constraints: Tuple[BaseConstraint, ...]
     _pipeline: BasePipeline
     _log_path: Path
+    _context_variable: Context
+
+    @classmethod
+    def of(cls, context: Context) -> Optional[BaseBenchmark]:
+        # noinspection PyProtectedMember
+        for c, v in context._variable_dict.items():
+            if issubclass(c, cls):
+                return v
+
+        return None
 
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: BenchConfig,
@@ -40,6 +50,7 @@ class BaseBenchmark(metaclass=ABCMeta):
         obj._identifier = bench_config.identifier
 
         obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
+        from ..monitors.pipelines import DefaultPipeline
         obj._pipeline: BasePipeline = DefaultPipeline()
 
         # setup for logger
@@ -76,10 +87,10 @@ class BaseBenchmark(metaclass=ABCMeta):
         try:
             # initialize constraints & pipeline
             if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_init() for con in self._constraints))
+                await asyncio.wait(tuple(con.on_init(self._context_variable) for con in self._constraints))
                 logger.debug('Constraints are initialized')
 
-            await self._pipeline.on_init()
+            await self._pipeline.on_init(self._context_variable)
             logger.debug('Pipe is initialized')
 
             logger.info('Starting benchmark...')
@@ -112,10 +123,12 @@ class BaseBenchmark(metaclass=ABCMeta):
         # noinspection PyBroadException
         try:
             if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_start() for con in self._constraints))
+                await asyncio.wait(tuple(con.on_start(self._context_variable) for con in self._constraints))
 
-            await asyncio.wait(tuple(mon.on_init() for mon in self._monitors))
-            monitoring_tasks = asyncio.create_task(asyncio.wait(tuple(mon.monitor() for mon in self._monitors)))
+            await asyncio.wait(tuple(mon.on_init(self._context_variable) for mon in self._monitors))
+            monitoring_tasks = asyncio.create_task(asyncio.wait(
+                    tuple(mon.monitor(self._context_variable) for mon in self._monitors))
+            )
 
             await asyncio.wait((self.join(), monitoring_tasks),
                                return_when=asyncio.FIRST_COMPLETED)
@@ -146,19 +159,19 @@ class BaseBenchmark(metaclass=ABCMeta):
             logger.info('The benchmark is ended.')
 
             # destroy monitors
-            await asyncio.wait(tuple(mon.on_end() for mon in self._monitors))
-            await asyncio.wait(tuple(mon.on_destroy() for mon in self._monitors))
+            await asyncio.wait(tuple(mon.on_end(self._context_variable) for mon in self._monitors))
+            await asyncio.wait(tuple(mon.on_destroy(self._context_variable) for mon in self._monitors))
 
             await self._destroy()
 
     async def _destroy(self) -> None:
         # destroy constraints
         if len(self._constraints) is not 0:
-            await asyncio.wait(tuple(con.on_destroy() for con in self._constraints))
+            await asyncio.wait(tuple(con.on_destroy(self._context_variable) for con in self._constraints))
 
         # destroy pipeline
-        await self._pipeline.on_end()
-        await self._pipeline.on_destroy()
+        await self._pipeline.on_end(self._context_variable)
+        await self._pipeline.on_destroy(self._context_variable)
 
         self._remove_logger_handlers()
 
@@ -189,6 +202,15 @@ class BaseBenchmark(metaclass=ABCMeta):
             logger.removeHandler(handler)
             handler.flush()
             handler.close()
+
+    # noinspection PyProtectedMember
+    def _initialize_context(self) -> Context:
+        context = Context()
+
+        context._assign(self.__class__, self)
+        context._assign(self._pipeline.__class__, self._pipeline)
+
+        return context
 
     @property
     def identifier(self) -> str:

@@ -3,95 +3,63 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, ClassVar, Coroutine, Iterable, List, TYPE_CHECKING, Tuple, Type, TypeVar
+from typing import Callable, Iterable, List, TYPE_CHECKING, Tuple
 
 from .base import BaseMonitor, MonitorData
-from .base_builder import BaseBuilder
 from .messages import BaseMessage, PerBenchMessage
 from .oneshot import OneShotMonitor
+from .pipelines.base import BasePipeline
+from ..benchmark import BaseBenchmark
 
-# because of circular import
 if TYPE_CHECKING:
+    from .. import Context
+    # because of circular import
     from .messages import BaseMessage, MonitoredMessage
 
 
-async def _gen_message(monitor: OneShotMonitor[MonitorData]) -> BaseMessage[MonitorData]:
-    data = await monitor.monitor_once()
+async def _gen_message(context: Context, monitor: OneShotMonitor[MonitorData]) -> BaseMessage[MonitorData]:
+    data = await monitor.monitor_once(context)
     # noinspection PyProtectedMember
     transformed = await monitor._transform_data(data)
-    return await monitor.create_message(transformed)
+    return await monitor.create_message(context, transformed)
 
 
 class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
     _interval: float
-    _monitors: Iterable[OneShotMonitor[MonitorData]]
+    _monitors: Tuple[OneShotMonitor[MonitorData], ...]
     _data_merger: Callable[[Iterable[MonitoredMessage[MonitorData]]], MonitorData]
 
-    def __new__(cls: Type[BaseMonitor],
-                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
-                interval: int,
-                monitors: Iterable[OneShotMonitor[MonitorData]],
-                data_merger: Callable[[Iterable[MonitoredMessage[MonitorData]]], MonitorData] = None) -> \
-            CombinedOneShotMonitor:
-        obj: CombinedOneShotMonitor = super().__new__(cls, emitter)
+    def __init__(self, interval: int, monitors: Iterable[OneShotMonitor[MonitorData]],
+                 data_merger: Callable[[Iterable[MonitoredMessage[MonitorData]]], MonitorData] = None) -> None:
+        super().__init__()
 
-        obj._interval = interval / 1000
-        obj._monitors = monitors
+        self._interval = interval / 1000
+        self._monitors = tuple(monitors)
 
         if data_merger is None:
-            obj._data_merger = CombinedOneShotMonitor._default_merger
+            self._data_merger = CombinedOneShotMonitor._default_merger
         else:
-            obj._data_merger = data_merger
+            self._data_merger = data_merger
 
-        return obj
-
-    async def _monitor(self) -> None:
+    async def _monitor(self, context: Context) -> None:
         while True:
-            data: List[BaseMessage[MonitorData]] = await asyncio.gather(map(_gen_message, self._monitors))
+            data: List[BaseMessage[MonitorData]] = await asyncio.gather(
+                    _gen_message(context, m) for m in self._monitors
+            )
             merged = self._data_merger(data)
 
-            message = await self.create_message(merged)
-            self._emitter(message)
+            message = await self.create_message(context, merged)
+            await BasePipeline.of(context).on_message(context, message)
 
             await asyncio.sleep(self._interval)
 
     async def stop(self) -> None:
         await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
 
-    async def create_message(self, data: MonitorData) -> PerBenchMessage[MonitorData]:
+    async def create_message(self, context: Context, data: MonitorData) -> PerBenchMessage[MonitorData]:
         # FIXME
-        return PerBenchMessage(data, self, None)
+        return PerBenchMessage(data, self, BaseBenchmark.of(context))
 
     @classmethod
     def _default_merger(cls, data: Iterable[MonitoredMessage[MonitorData]]) -> MonitorData:
         return dict((m.source, m.data) for m in data)
-
-    class Builder(BaseBuilder['CombinedOneShotMonitor']):
-        _T: ClassVar[TypeVar] = TypeVar('_T', bound=OneShotMonitor)
-
-        _monitor_builders: List[BaseBuilder[_T]] = list()
-        _interval: int
-        _data_merger: Callable[[Iterable[MonitorData]], MonitorData] = None
-
-        def __init__(self, interval: int, data_merger: Callable[[Iterable[MonitorData]], MonitorData] = None) -> None:
-            super().__init__()
-
-            self._interval = interval
-            self._data_merger = data_merger
-
-        def build_monitor(self, monitor_builder: BaseBuilder[_T]) -> CombinedOneShotMonitor.Builder:
-            self._monitor_builders.append(monitor_builder)
-            return self
-
-        def _finalize(self) -> CombinedOneShotMonitor:
-            for mb in self._monitor_builders:
-                mb.set_benchmark(self._cur_bench) \
-                    .set_emitter(self._cur_emitter)
-
-            monitors: Tuple[OneShotMonitor, ...] = tuple(mb.finalize() for mb in self._monitor_builders)
-
-            return CombinedOneShotMonitor.__new__(CombinedOneShotMonitor,
-                                                  self._cur_emitter,
-                                                  self._interval,
-                                                  monitors,
-                                                  self._data_merger)

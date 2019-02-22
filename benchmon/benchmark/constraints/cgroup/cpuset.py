@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING, Type
+from typing import Optional, TYPE_CHECKING
 
 from .base import BaseCgroupConstraint
-from ..base_builder import BaseBuilder
 from ....utils.cgroup import Cpuset
 
 if TYPE_CHECKING:
-    from ...base import BaseBenchmark
+    from .... import Context
 
 
 class CpusetConstraint(BaseCgroupConstraint):
@@ -22,23 +21,16 @@ class CpusetConstraint(BaseCgroupConstraint):
     _cpus: Optional[str]
     _mems: Optional[str]
 
-    def __new__(cls: Type[CpusetConstraint], bench: BaseBenchmark,
-                cpus: Optional[str], mems: Optional[str]) -> CpusetConstraint:
+    def __init__(self, identifier: str, cpus: Optional[str], mems: Optional[str]) -> None:
         """
-        :param bench: 이 constraint가 붙여질 :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>`
-        :type bench: benchmon.benchmark.base.BaseBenchmark
         :param cpus: `cpuset.cpus` 값. ``None`` 일경우 기본값 사용
         :type cpus: typing.Optional[str]
         :param mems: `cpuset.mems` 값. ``None`` 일경우 기본값 사용
         :type mems: typing.Optional[str]
         """
-        obj: CpusetConstraint = super().__new__(cls, bench)
-
-        obj._group = Cpuset(bench.group_name)
-        obj._cpus = cpus
-        obj._mems = mems
-
-        return obj
+        self._group = Cpuset(identifier)
+        self._cpus = cpus
+        self._mems = mems
 
     @property
     def cpus(self) -> Optional[str]:
@@ -56,29 +48,10 @@ class CpusetConstraint(BaseCgroupConstraint):
         """
         return self._mems
 
-    async def on_init(self) -> None:
-        await super().on_init()
+    async def on_init(self, context: Context) -> None:
+        await super().on_init(context)
 
         if self._cpus is not None:
             await self._group.assign_cpus(self._cpus)
         if self._mems is not None:
             await self._group.assign_mems(self._mems)
-
-    class Builder(BaseBuilder['CpuConstraint']):
-        _cpus: Optional[str]
-        _mems: Optional[str]
-
-        def __init__(self, cpus: Optional[str], mems: Optional[str]) -> None:
-            """
-            :param cpus: `cpuset.cpus` 값. ``None`` 일경우 기본값 사용
-            :type cpus: typing.Optional[str]
-            :param mems: `cpuset.mems` 값. ``None`` 일경우 기본값 사용
-            :type mems: typing.Optional[str]
-            """
-            super().__init__()
-
-            self._cpus = cpus
-            self._mems = mems
-
-        def finalize(self, benchmark: BaseBenchmark) -> CpusetConstraint:
-            return CpusetConstraint.__new__(CpusetConstraint, benchmark, self._cpus, self._mems)

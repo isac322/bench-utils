@@ -8,6 +8,7 @@ from .base import BaseHandler
 
 if TYPE_CHECKING:
     from ..base import MonitoredMessage
+    from .... import Context
 
 
 class PrintHandler(BaseHandler):
@@ -19,6 +20,6 @@ class PrintHandler(BaseHandler):
         디버깅용이기 때문에, 로깅에 사용하지 않는다.
     """
 
-    async def on_message(self, message: MonitoredMessage) -> Optional[MonitoredMessage]:
+    async def on_message(self, context: Context, message: MonitoredMessage) -> Optional[MonitoredMessage]:
         print({'data': message.data, 'src': message.source.__class__.__name__})
         return message

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Tuple, Type
+from typing import Optional, TYPE_CHECKING, Tuple, Type
 
 import psutil
 
@@ -14,12 +14,18 @@ from .drivers.engines import CGroupEngine
 
 if TYPE_CHECKING:
     from .drivers import BenchDriver
+    from .. import Context
     from ..configs.containers import LaunchableConfig
 
 
 class LaunchableBenchmark(BaseBenchmark):
     _bench_driver: BenchDriver
     _bench_config: LaunchableConfig
+
+    @classmethod
+    def of(cls, context: Context) -> Optional[LaunchableBenchmark]:
+        # noinspection PyProtectedMember
+        return context._variable_dict.get(cls)
 
     def __new__(cls: Type[LaunchableBenchmark],
                 launchable_config: LaunchableConfig,
@@ -88,5 +94,5 @@ class LaunchableBenchmark(BaseBenchmark):
 
             self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, launchable_config, logger_level)
 
-            for builder in launchable_config.constraint_builders:
-                self.build_constraint(builder)
+            for constraint in launchable_config.constraints:
+                self.add_constraint(constraint)

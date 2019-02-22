@@ -7,6 +7,7 @@ from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..base import BaseMessage
+    from .... import Context
 
 
 class BaseHandler(metaclass=ABCMeta):
@@ -32,7 +33,7 @@ class BaseHandler(metaclass=ABCMeta):
           :meth:`on_init`, :meth:`on_end`, :meth:`on_destroy` 를 임의로 호출해선 안된다.
     """
 
-    async def on_init(self) -> None:
+    async def on_init(self, context: Context) -> None:
         """
         파이프라인이 시작될 때, 이 핸들러를 초기화 하는 메소드.
         :meth:`on_destroy` 가 호출되기 전까지는 다시 호출될 일이 없다.
@@ -40,16 +41,21 @@ class BaseHandler(metaclass=ABCMeta):
         .. note::
 
             * 보통 이 핸들러객체가 사용할 변수나 설정, 자원등을 초기화하는 코드를 담는다.
+
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         """
         pass
 
     @abstractmethod
-    async def on_message(self, message: BaseMessage) -> Optional[BaseMessage]:
+    async def on_message(self, context: Context, message: BaseMessage) -> Optional[BaseMessage]:
         """
         이전의 핸들러 혹은 파이프라인으로부터 전달받은 메시지를 처리하는 메소드.
 
         이 메소드의 반환값은 파이프라인의 다음 핸들러에게 전단된다.
 
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         :param message: 파이프라인으로부터 전달받은 메시지 객체
         :type message: BaseMessage
         :return: 같은 파이프라인의 다음 핸들러에게 전달할 메시지 객체. 아무것도 반환하지 않거나 ``None`` 을 반환할 경우,
@@ -58,18 +64,24 @@ class BaseHandler(metaclass=ABCMeta):
         """
         pass
 
-    async def on_end(self) -> None:
+    async def on_end(self, context: Context) -> None:
         """
         핸들러의 사용 중지될 때를 처리하는 메소드.
 
         :meth:`on_destroy` 는 핸들러가 사용하는 자원에 포커스하지만, 이 메소드는 핸들러 기능의 중지에 포커스한다.
+
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         """
         pass
 
-    async def on_destroy(self) -> None:
+    async def on_destroy(self, context: Context) -> None:
         """
         핸들러가 종료 이후 정리할 때를 처리하는 메소드.
 
         :meth:`on_destroy` 는 핸들러 기능의 중지에 포커스하지만, 이 메소드는 핸들러가 사용하는 자원에 포커스한다.
+
+        :param context: 파이프라인과 모니터링 등의 정보를 담고있는 객체
+        :type context: benchmon.context.Context
         """
         pass

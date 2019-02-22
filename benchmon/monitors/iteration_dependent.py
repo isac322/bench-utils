@@ -4,38 +4,35 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Coroutine, Optional, TYPE_CHECKING, Type
+from typing import Optional, TYPE_CHECKING
 
 from .base import MonitorData
 from .oneshot import OneShotMonitor
+from .pipelines.base import BasePipeline
 
 if TYPE_CHECKING:
-    from .messages import BaseMessage
+    from .. import Context
 
 
 # FIXME: rename
 class IterationDependentMonitor(OneShotMonitor[MonitorData], metaclass=ABCMeta):
     _prev_data: Optional[MonitorData]
 
-    def __new__(cls: Type[IterationDependentMonitor],
-                emitter: Callable[[BaseMessage[MonitorData]], Coroutine[None, None, None]],
-                interval: int) -> IterationDependentMonitor:
-        obj: IterationDependentMonitor = super().__new__(cls, emitter, interval)
+    def __init__(self, interval: int) -> None:
+        super().__init__(interval)
 
-        obj._prev_data = None
+        self._prev_data = None
 
-        return obj
-
-    async def _monitor(self) -> None:
+    async def _monitor(self, context: Context) -> None:
         while not self.stopped:
-            data = await self.monitor_once()
+            data = await self.monitor_once(context)
             diff = self.calc_diff(self._prev_data, data)
             self._prev_data = data
 
             transformed = self._transform_data(diff)
 
-            message = await self.create_message(transformed)
-            await self._emitter(message)
+            message = await self.create_message(context, transformed)
+            await BasePipeline.of(context).on_message(context, message)
 
             await asyncio.sleep(self._interval)
 

@@ -5,6 +5,9 @@ from typing import Iterable, Optional, Tuple
 
 from aiofile_linux import AIOContext, WriteCmd
 
+from benchmon import Context
+from benchmon.benchmark import BaseBenchmark
+from benchmon.configs.containers import BenchConfig
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
@@ -15,32 +18,31 @@ class StoreResCtrl(BaseHandler):
     _event_order: Tuple[str, ...]
     _aio_context: AIOContext
     _aio_blocks: Tuple[WriteCmd, ...] = tuple()
+    _workspace: Path
 
-    async def on_init(self) -> None:
+    async def on_init(self, context: Context) -> None:
         # FIXME: hard coded
         self._aio_context = AIOContext(4)
 
-    @staticmethod
-    def _create_aio_blocks(bench_name: str, workspace: Path, message: RESCTRL_MSG_TYPE) -> Iterable[WriteCmd]:
+        self._workspace = BenchConfig.of(context).workspace / 'monitored' / 'resctrl'
+        self._workspace.mkdir(parents=True, exist_ok=True)
+
+    def _create_aio_blocks(self, bench_name: str, message: RESCTRL_MSG_TYPE) -> Iterable[WriteCmd]:
         for socket_id in range(len(message)):
-            file = open(str(workspace / f'{socket_id}_{bench_name}.csv'), mode='w')
+            file = open(str(self._workspace / f'{socket_id}_{bench_name}.csv'), mode='w')
             yield WriteCmd(file, '')
 
     def _generate_value_stream(self, message: RESCTRL_MSG_TYPE, idx: int) -> Iterable[int]:
         for event_name in self._event_order:
             yield message[idx][event_name]
 
-    async def on_message(self, message: PerBenchMessage) -> Optional[PerBenchMessage]:
+    async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, ResCtrlMonitor):
             return message
 
-        monitor: ResCtrlMonitor = message.source
-        benchmark = monitor._benchmark
-        workspace: Path = benchmark._bench_config.workspace / 'monitored' / 'resctrl'
-        workspace.mkdir(parents=True, exist_ok=True)
-
         if self._aio_blocks is tuple():
-            self._aio_blocks = tuple(self._create_aio_blocks(benchmark.identifier, workspace, message.data))
+            benchmark = BaseBenchmark.of(context)
+            self._aio_blocks = tuple(self._create_aio_blocks(benchmark.identifier, message.data))
             self._event_order = tuple(message.data[0].keys())
 
             for block in self._aio_blocks:
@@ -57,7 +59,7 @@ class StoreResCtrl(BaseHandler):
 
         return message
 
-    async def on_end(self) -> None:
+    async def on_end(self, context: Context) -> None:
         for block in self._aio_blocks:
             block.file.close()
         self._aio_context.close()

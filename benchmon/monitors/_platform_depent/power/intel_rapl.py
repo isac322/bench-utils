@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, ClassVar, Coroutine, Dict, List, TYPE_CHECKING, Tuple, Type, Union
+from typing import ClassVar, Dict, List, TYPE_CHECKING, Tuple, Union
 
 from ...base import BaseMonitor
-from ...base_builder import BaseBuilder
 from ...messages import SystemMessage
+from ...pipelines.base import BasePipeline
 
 if TYPE_CHECKING:
-    from ...messages import BaseMessage
+    from .... import Context
 
 _ENERGY_FILE_NAME = 'energy_uj'
 _MAX_ENERGY_VALUE_FILE_NAME = 'max_energy_range_uj'
@@ -21,16 +21,15 @@ T = Tuple[Dict[str, Union[str, int, Dict[str, int]]], ...]
 class PowerMonitor(BaseMonitor[T]):
     _base_dir: ClassVar[Path] = Path('/sys/class/powercap/intel-rapl')
 
-    _monitors: Dict[Path, Tuple[int, Dict[Path, int], ...]]
+    _monitors: Dict[Path, Tuple[int, Dict[Path, int]]]
 
-    def __new__(cls: Type[BaseMonitor],
-                emitter: Callable[[BaseMessage[T]], Coroutine[None, None, None]]) -> PowerMonitor:
-        obj: PowerMonitor = super().__new__(cls, emitter)
-        obj._monitors = dict()
-        return obj
+    def __init__(self) -> None:
+        super().__init__()
 
-    async def on_init(self) -> None:
-        await super().on_init()
+        self._monitors = dict()
+
+    async def on_init(self, context: Context) -> None:
+        await super().on_init(context)
 
         while True:
             socket_id: int = len(self._monitors)
@@ -56,16 +55,16 @@ class PowerMonitor(BaseMonitor[T]):
             else:
                 break
 
-    async def _monitor(self) -> None:
+    async def _monitor(self, context: Context) -> None:
         pass
 
     async def stop(self) -> None:
         pass
 
-    async def create_message(self, data: T) -> SystemMessage[T]:
+    async def create_message(self, context: Context, data: T) -> SystemMessage[T]:
         return SystemMessage(data, self)
 
-    async def on_end(self) -> None:
+    async def on_end(self, context: Context) -> None:
         ret: List[Dict[str, Union[str, int, Dict[str, int]]]] = list()
 
         for socket_path, (prev_socket_power, socket) in self._monitors.items():
@@ -104,9 +103,5 @@ class PowerMonitor(BaseMonitor[T]):
 
             ret.append(ret_dict)
 
-        msg = await self.create_message(tuple(ret))
-        await self._emitter(msg)
-
-    class Builder(BaseBuilder['PowerMonitor']):
-        def _finalize(self) -> PowerMonitor:
-            return PowerMonitor.__new__(PowerMonitor, self._cur_emitter)
+        msg = await self.create_message(context, tuple(ret))
+        await BasePipeline.of(context).on_message(context, msg)
