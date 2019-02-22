@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 async def _gen_message(monitor: OneShotMonitor[MonitorData]) -> BaseMessage[MonitorData]:
     data = await monitor.monitor_once()
+    # noinspection PyProtectedMember
     transformed = await monitor._transform_data(data)
     return await monitor.create_message(transformed)
 
