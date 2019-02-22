@@ -7,6 +7,7 @@ from aiofile_linux import AIOContext, WriteCmd
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
+from benchmon.configs.containers import BenchConfig
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
@@ -17,15 +18,18 @@ class StoreResCtrl(BaseHandler):
     _event_order: Tuple[str, ...]
     _aio_context: AIOContext
     _aio_blocks: Tuple[WriteCmd, ...] = tuple()
+    _workspace: Path
 
     async def on_init(self, context: Context) -> None:
         # FIXME: hard coded
         self._aio_context = AIOContext(4)
 
-    @staticmethod
-    def _create_aio_blocks(bench_name: str, workspace: Path, message: RESCTRL_MSG_TYPE) -> Iterable[WriteCmd]:
+        self._workspace = BenchConfig.of(context).workspace / 'monitored' / 'resctrl'
+        self._workspace.mkdir(parents=True, exist_ok=True)
+
+    def _create_aio_blocks(self, bench_name: str, message: RESCTRL_MSG_TYPE) -> Iterable[WriteCmd]:
         for socket_id in range(len(message)):
-            file = open(str(workspace / f'{socket_id}_{bench_name}.csv'), mode='w')
+            file = open(str(self._workspace / f'{socket_id}_{bench_name}.csv'), mode='w')
             yield WriteCmd(file, '')
 
     def _generate_value_stream(self, message: RESCTRL_MSG_TYPE, idx: int) -> Iterable[int]:
@@ -36,12 +40,9 @@ class StoreResCtrl(BaseHandler):
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, ResCtrlMonitor):
             return message
 
-        benchmark = BaseBenchmark.of(context)
-        workspace: Path = benchmark._bench_config.workspace / 'monitored' / 'resctrl'
-        workspace.mkdir(parents=True, exist_ok=True)
-
         if self._aio_blocks is tuple():
-            self._aio_blocks = tuple(self._create_aio_blocks(benchmark.identifier, workspace, message.data))
+            benchmark = BaseBenchmark.of(context)
+            self._aio_blocks = tuple(self._create_aio_blocks(benchmark.identifier, message.data))
             self._event_order = tuple(message.data[0].keys())
 
             for block in self._aio_blocks:
