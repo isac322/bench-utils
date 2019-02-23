@@ -11,6 +11,9 @@ from ...containers import LaunchableConfig
 
 
 class LaunchableParser(BaseBenchParser[LaunchableConfig]):
+    """
+    파서로 `launchable` 가 지정된 벤치마크를 파싱할 수 있는 파서.
+    """
     _PARSABLE_TYPES: ClassVar[Tuple[str, ...]] = ('launchable',)
 
     @classmethod
