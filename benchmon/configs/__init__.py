@@ -26,7 +26,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from ..benchmark.drivers import bench_drivers
+from ..benchmark.drivers import BenchDriver
 
 
 def get_full_path(config_file_name: str) -> Path:
@@ -86,7 +86,7 @@ def _parse_bench_home() -> None:
     """
     config: Mapping[str, str] = validate_and_load(get_full_path('benchmark_home.json'))
 
-    for _bench_driver in bench_drivers:
+    for _bench_driver in BenchDriver._registered_drivers:
         _bench_driver._bench_home = config[_bench_driver.bench_name]
 
 

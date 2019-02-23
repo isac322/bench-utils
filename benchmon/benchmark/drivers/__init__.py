@@ -27,8 +27,6 @@
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
 
-from typing import Tuple, Type
-
 from .base import BenchDriver
 from .engines.base import BaseEngine
 from .npb import NPBDriver
@@ -36,33 +34,10 @@ from .parsec import ParsecDriver
 from .rodinia import RodiniaDriver
 from .spec import SpecDriver
 
-# TODO: adds drivers dynamically
-bench_drivers: Tuple[Type[BenchDriver], ...] = (SpecDriver, ParsecDriver, RodiniaDriver, NPBDriver)
-"""
-사용가능한 모든 드라이버들. 이 목록안에 있는 드라이버들은 :func:`find_driver` 를 통해 워크로드 이름만으로 드라이버를 찾을 수 있다.
-"""
-
-
-def find_driver(workload_name: str) -> Type[BenchDriver]:
-    """
-    `workload_name` 를 다루는 드라이버를 찾아준다.
-
-    .. note::
-
-        * 드라이버가 :data:`bench_drivers` 에 포함 되어있어야 찾을 수 있다.
-        * 여러 드라이버가 `workload_name` 을 다룰 수 있다면, 먼저 추가된 드라이버를 우선한다.
-
-    :param workload_name: 찾고자하는 워크로드의 이름
-    :type workload_name: str
-    :return: `workload_name` 를 다룰 수 있는 드라이버
-    :rtype: typing.Type[benchmon.benchmark.drivers.base.BenchDriver]
-    :raise ValueError: 드라이버를 찾을 수 없을 때
-    """
-    for _bench_driver in bench_drivers:
-        if _bench_driver.has(workload_name):
-            return _bench_driver
-
-    raise ValueError(f'Can not find appropriate driver for workload : {workload_name}')
+BenchDriver.register_driver(NPBDriver)
+BenchDriver.register_driver(ParsecDriver)
+BenchDriver.register_driver(RodiniaDriver)
+BenchDriver.register_driver(SpecDriver)
 
 
 def gen_driver(workload_name: str, num_threads: int, engine: BaseEngine) -> BenchDriver:
@@ -79,6 +54,6 @@ def gen_driver(workload_name: str, num_threads: int, engine: BaseEngine) -> Benc
     :rtype: benchmon.benchmark.drivers.base.BenchDriver
     :raise ValueError: 드라이버를 찾을 수 없을 때
     """
-    _bench_driver = find_driver(workload_name)
+    _bench_driver = BenchDriver.get_driver(workload_name)
 
     return _bench_driver(workload_name, num_threads, engine)

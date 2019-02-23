@@ -6,7 +6,7 @@ import asyncio
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import ClassVar, Optional, Set, TYPE_CHECKING, Tuple
+from typing import ClassVar, FrozenSet, Optional, Set, TYPE_CHECKING, Tuple, Type
 
 import psutil
 
@@ -24,7 +24,9 @@ class BenchDriver(metaclass=ABCMeta):
     이 때 어떤 프로세스가 실제로 연산을 하는 벤치마크이며, 그 프로세스의 PID가 무엇인지 찾아야 한다. (:meth:`_find_bench_proc` 메소드)
     """
 
-    _benches: ClassVar[Set[str]]
+    _registered_drivers: ClassVar[Set[Type[BenchDriver]]] = set()
+
+    _benches: ClassVar[FrozenSet[str]]
     """
     :class:`Set` of benchmark names.
 
@@ -77,8 +79,41 @@ class BenchDriver(metaclass=ABCMeta):
                 pass
 
     @classmethod
-    @abstractmethod
-    def has(cls, bench_name: str) -> bool:
+    def register_driver(cls, new_driver: Type[BenchDriver]) -> None:
+        """
+        벤치마크 드라이버로 `new_driver` 를 등록한다.
+        이 클래스의 모든 자식 클래스는 이 메소드를 통해서 자신을 드라이버로 등록해야 benchmon에서 자동으로 그 드라이버를 찾을 수 있다.
+
+        :param new_driver: 새로 등록할 벤치마크 드라이버
+        :type new_driver: typing.Type[benchmon.benchmark.drivers.base.BenchDriver]
+        """
+        cls._registered_drivers.add(new_driver)
+
+    @classmethod
+    def get_driver(cls, bench_name: str) -> Type[BenchDriver]:
+        """
+        `workload_name` 를 다루는 드라이버를 찾아준다.
+
+        .. note::
+
+            * 드라이버가 :data:`bench_drivers` 에 포함 되어있어야 찾을 수 있다.
+            * 여러 드라이버가 `workload_name` 을 다룰 수 있다면, 먼저 추가된 드라이버를 우선한다.
+
+        :raises ValueError: 드라이버를 찾을 수 없을 때
+
+        :param bench_name: 찾고자하는 워크로드의 이름
+        :type bench_name: str
+        :return: `workload_name` 를 다룰 수 있는 드라이버
+        :rtype: typing.Type[benchmon.benchmark.drivers.base.BenchDriver]
+        """
+        for driver in cls._registered_drivers:  # type: Type[BenchDriver]
+            if driver.can_handle(bench_name):
+                return driver
+
+        raise ValueError(f'No driver could be found to handle {bench_name}.')
+
+    @classmethod
+    def can_handle(cls, bench_name: str) -> bool:
         """
         Test that this driver can handle the benchmark `bench_name`.
 
@@ -87,7 +122,7 @@ class BenchDriver(metaclass=ABCMeta):
         :return: ``True`` if this driver can handle
         :rtype: bool
         """
-        pass
+        return bench_name in cls._benches
 
     @property
     def name(self) -> str:

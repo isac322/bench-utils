@@ -1,7 +1,7 @@
 # coding: UTF-8
 
 import asyncio
-from typing import ClassVar, Optional, Set
+from typing import ClassVar, FrozenSet, Optional
 
 import psutil
 
@@ -11,12 +11,8 @@ from .base import BenchDriver
 class RodiniaDriver(BenchDriver):
     """ Rodinia 벤치마크의 실행을 담당하는 드라이버 """
 
-    _benches: ClassVar[Set[str]] = {'nn', 'kmeans', 'cfd', 'particlefilter', 'bfs'}
+    _benches: ClassVar[FrozenSet[str]] = frozenset(('nn', 'kmeans', 'cfd', 'particlefilter', 'bfs'))
     bench_name: ClassVar[str] = 'rodinia'
-
-    @classmethod
-    def has(cls, bench_name: str) -> bool:
-        return bench_name in RodiniaDriver._benches
 
     def _find_bench_proc(self) -> Optional[psutil.Process]:
         if self._name == 'cfd':
@@ -26,7 +22,7 @@ class RodiniaDriver(BenchDriver):
         else:
             exec_name = self._name
 
-        for process in self._wrapper_proc_info.children(recursive=True):  # type: psutil.Process
+        for process in self._wrapper_proc_info.children(recursive=True):
             if process.name() == exec_name and process.is_running():
                 return process
 
