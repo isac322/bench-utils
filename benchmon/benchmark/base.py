@@ -6,7 +6,7 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import ClassVar, Optional, TYPE_CHECKING, Tuple, Type
+from typing import ClassVar, Iterable, Optional, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
@@ -49,11 +49,9 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
         * :meth:`start_and_pause` 나 :meth:`monitor` 메소드의 용례와 이름이 부정확하며 서로간의 호출 순서가 존재한다.
         * :var:`_pipeline` 와 :var:`_context_variable` 의 생성을 클래스 외부에서 하고 파라미터로 받는 구현
-        * `asyncio.wait(tuple())` 형태의 코드 단순화
     """
 
-    # FIXME: capitalize
-    _file_formatter: ClassVar[ColoredFormatter] = ColoredFormatter(
+    _FILE_FORMATTER: ClassVar[ColoredFormatter] = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
 
     _bench_config: BenchConfig
@@ -72,6 +70,10 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
                 return v
 
         return None
+
+    @classmethod
+    def _waits(cls, iterable: Iterable) -> asyncio.Future:
+        return asyncio.wait(tuple(iterable))
 
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: BenchConfig,
@@ -114,7 +116,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         logger = logging.getLogger(self._identifier)
 
         fh = logging.FileHandler(self._log_path, mode='w')
-        fh.setFormatter(BaseBenchmark._file_formatter)
+        fh.setFormatter(BaseBenchmark._FILE_FORMATTER)
         fh.setLevel(logging.DEBUG)
         logger.addHandler(fh)
 
@@ -130,7 +132,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         try:
             # initialize constraints & pipeline
             if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_init(self._context_variable) for con in self._constraints))
+                await self._waits(con.on_init(self._context_variable) for con in self._constraints)
                 logger.debug('Constraints are initialized')
 
             await self._pipeline.on_init(self._context_variable)
@@ -169,9 +171,9 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         # noinspection PyBroadException
         try:
             if len(self._constraints) is not 0:
-                await asyncio.wait(tuple(con.on_start(self._context_variable) for con in self._constraints))
+                await self._waits(con.on_start(self._context_variable) for con in self._constraints)
 
-            await asyncio.wait(tuple(mon.on_init(self._context_variable) for mon in self._monitors))
+            await self._waits(mon.on_init(self._context_variable) for mon in self._monitors)
             monitoring_tasks = asyncio.create_task(asyncio.wait(
                     tuple(mon.monitor(self._context_variable) for mon in self._monitors))
             )
@@ -182,7 +184,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             if self.is_running:
                 await self.join()
             else:
-                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await self._waits(mon.stop() for mon in self._monitors)
                 await monitoring_tasks
 
         except asyncio.CancelledError:
@@ -190,7 +192,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             if self.is_running:
                 await self.kill()
             if monitoring_tasks is not None and not monitoring_tasks.done():
-                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await self._waits(mon.stop() for mon in self._monitors)
                 await monitoring_tasks
 
         except Exception as e:
@@ -198,22 +200,22 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             if self.is_running:
                 await self.kill()
             if monitoring_tasks is not None and not monitoring_tasks.done():
-                await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
+                await self._waits(mon.stop() for mon in self._monitors)
                 await monitoring_tasks
 
         finally:
             logger.info('The benchmark is ended.')
 
             # destroy monitors
-            await asyncio.wait(tuple(mon.on_end(self._context_variable) for mon in self._monitors))
-            await asyncio.wait(tuple(mon.on_destroy(self._context_variable) for mon in self._monitors))
+            await self._waits(mon.on_end(self._context_variable) for mon in self._monitors)
+            await self._waits(mon.on_destroy(self._context_variable) for mon in self._monitors)
 
             await self._destroy()
 
     async def _destroy(self) -> None:
         # destroy constraints
         if len(self._constraints) is not 0:
-            await asyncio.wait(tuple(con.on_destroy(self._context_variable) for con in self._constraints))
+            await self._waits(con.on_destroy(self._context_variable) for con in self._constraints)
 
         # destroy pipeline
         await self._pipeline.on_end(self._context_variable)
@@ -317,11 +319,6 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         :rtype: int
         """
         pass
-
-    # FIXME: remove me
-    @property
-    def type(self) -> str:
-        return self._bench_config.type
 
     @abstractmethod
     def all_child_tid(self) -> Tuple[int, ...]:

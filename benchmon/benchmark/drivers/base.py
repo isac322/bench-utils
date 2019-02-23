@@ -213,9 +213,6 @@ class BenchDriver(metaclass=ABCMeta):
         """
         벤치마크를 실행한다.
         실행 명령을 내린 후 :meth:`_find_bench_proc` 를 통해 실제 벤치마크 프로세스의 시작이 될 때 까지 기다린다.
-
-        .. todo::
-            `asyncio.sleep` 대신 :keyword:`yield` 사용을 고려
         """
         self._bench_proc_info = None
         self._wrapper_proc = await self._launch_bench()

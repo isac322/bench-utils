@@ -6,10 +6,9 @@ import asyncio
 from typing import Callable, Iterable, List, TYPE_CHECKING, Tuple
 
 from .base import BaseMonitor, MonitorData
-from .messages import BaseMessage, PerBenchMessage
+from .messages import BaseMessage, GeneratedMessage
 from .oneshot import OneShotMonitor
 from .pipelines.base import BasePipeline
-from ..benchmark import BaseBenchmark
 
 if TYPE_CHECKING:
     from .. import Context
@@ -56,9 +55,8 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
     async def stop(self) -> None:
         await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
 
-    async def create_message(self, context: Context, data: MonitorData) -> PerBenchMessage[MonitorData]:
-        # FIXME
-        return PerBenchMessage(data, self, BaseBenchmark.of(context))
+    async def create_message(self, context: Context, data: MonitorData) -> GeneratedMessage[MonitorData]:
+        return GeneratedMessage(data, self)
 
     @classmethod
     def _default_merger(cls, data: Iterable[MonitoredMessage[MonitorData]]) -> MonitorData:

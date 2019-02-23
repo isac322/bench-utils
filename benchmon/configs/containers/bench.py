@@ -48,8 +48,9 @@ class LaunchableConfig(BenchConfig):
 
     @classmethod
     def of(cls, context: Context) -> Optional[LaunchableConfig]:
-        # FIXME: assert benchmark type is LaunchableBenchmark
-        return super().of(context)
+        benchmark = LaunchableBenchmark.of(context)
+        # noinspection PyProtectedMember
+        return benchmark._bench_config
 
     def generate_builder(self, logger_level: int = logging.INFO) -> LaunchableBenchmark.Builder:
         return LaunchableBenchmark.Builder(self, logger_level)

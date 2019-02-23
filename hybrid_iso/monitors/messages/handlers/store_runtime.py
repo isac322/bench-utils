@@ -31,7 +31,6 @@ class StoreRuntime(BaseHandler):
             return message
 
         # TODO: evaluation between open and aiofile_linux
-        # FIXME: does not overwrite previous experiment results
         with self._result_path.open(mode='r+') as fp:
             content_str = fp.read()
             content: Dict[str, float] = json.loads(content_str)

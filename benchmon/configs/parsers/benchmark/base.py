@@ -42,9 +42,8 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
     _registered_parser: ClassVar[MutableMapping[str, Type[BaseBenchParser]]] = dict()
     _PARSABLE_TYPES: ClassVar[Tuple[str, ...]]
 
-    # TODO: change to classmethod
-    @staticmethod
-    def register_parser(parser: Type[BaseBenchParser]) -> None:
+    @classmethod
+    def register_parser(cls, parser: Type[BaseBenchParser]) -> None:
         """
         벤치마크 파서로 `parser` 를 등록한다.
         이 클래스의 모든 자식 클래스는 이 메소드를 통해서 자신을 파서로 등록해야 benchmon에서 자동으로 그 파서를 찾을 수 있다.
@@ -61,9 +60,8 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
         for parsable_type in parser._PARSABLE_TYPES:
             BaseBenchParser._registered_parser[parsable_type] = parser
 
-    # TODO: change to classmethod
-    @staticmethod
-    def get_parser(bench_type: str) -> Type[BaseBenchParser]:
+    @classmethod
+    def get_parser(cls, bench_type: str) -> Type[BaseBenchParser]:
         """
         등록된 파서를 찾아온다.
 

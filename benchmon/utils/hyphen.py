@@ -48,5 +48,4 @@ def convert_to_hyphen(core_ids: Iterable[int]) -> str:
     :return: 변환된 hyphen string
     :rtype: str
     """
-    # TODO
     return ','.join(map(str, set(core_ids)))

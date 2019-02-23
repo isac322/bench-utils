@@ -10,7 +10,6 @@ from .benchmark.base import BaseBenchParser, BenchJson
 from ..containers import BenchConfig
 
 
-# FIXME: rename to ExperimentParser
 class BenchParser(LocalReadParser[Iterable[BenchConfig]]):
     """
     `config.json` 에 있는 workload 정보를 읽어서 각 workload에 맞는 파서를 :mod:`benchmon.configs.parsers.benchmark` 에서 찾아

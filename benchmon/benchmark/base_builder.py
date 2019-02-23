@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from abc import ABCMeta
 from typing import Dict, Generic, List, TYPE_CHECKING, Type, TypeVar
 
@@ -57,8 +58,12 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         :return: Method chaining을 위한 빌더 객체 그대로 반환
         :rtype: benchmon.benchmark.base_builder.BaseBuilder
         """
+        if self._is_finalized:
+            raise AssertionError('Can\'t not reuse the finalized builder.')
+
         # noinspection PyProtectedMember
         self._cur_obj._pipeline.add_handler(handler)
+
         return self
 
     def add_monitor(self, monitor: BaseMonitor) -> BaseBuilder[_BT]:
@@ -86,8 +91,13 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         :return: Method chaining을 위한 빌더 객체 그대로 반환
         :rtype: benchmon.benchmark.base_builder.BaseBuilder
         """
-        # TODO: warning when duplicated type of constraint is added
+        if self._is_finalized:
+            raise AssertionError('Can\'t not reuse the finalized builder.')
+        elif type(constraint) in self._constraints:
+            warnings.warn(f'{type(constraint)} type constraint is already added')
+
         self._constraints[type(constraint)] = constraint
+
         return self
 
     def _finalize(self) -> None:
