@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import warnings
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import Dict, Generic, List, TYPE_CHECKING, Type, TypeVar
 
 from .base import BaseBenchmark
 from .constraints.base import BaseConstraint
+from .. import Context
 from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
+    from ..configs.containers import BenchConfig
     from ..monitors import BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
+    from ..monitors.pipelines import BasePipeline
 
 _BT = TypeVar('_BT', bound=BaseBenchmark)
 
@@ -41,13 +44,50 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
             .finalize()
     """
     _is_finalized: bool = False
+    _bench_config: BenchConfig
+    _pipeline: BasePipeline
     _cur_obj: _BT
+    _context: Context
+    _logger_level: int
     _monitors: List[BaseMonitor[MonitorData]]
     _constraints: Dict[Type[BaseConstraint], BaseConstraint]
 
-    def __init__(self) -> None:
+    def __init__(self, bench_config: BenchConfig, logger_level: int) -> None:
+        self._bench_config = bench_config
+        self._logger_level = logger_level
+
         self._monitors = list()
         self._constraints = dict()
+
+        self._pipeline = self._init_pipeline()
+        self._cur_obj = self._init_bench_obj(self._pipeline)
+        self._context = self._init_context_var()
+
+        for constraint in bench_config.constraints:
+            self.add_constraint(constraint)
+
+    @abstractmethod
+    def _init_pipeline(self) -> BasePipeline:
+        pass
+
+    @abstractmethod
+    def _init_bench_obj(self, pipeline: BasePipeline) -> _BT:
+        pass
+
+    # noinspection PyProtectedMember
+    def _init_context_var(self) -> Context:
+        """
+        모니터와 제약에서 쓰일 Context 객체를 생성하고, 값들을 설정한다.
+
+        :return: 이 객체에서 쓰일 Context 객체
+        :rtype: benchmon.context.Context
+        """
+        context = Context()
+
+        context._assign(self._cur_obj.__class__, self._cur_obj)
+        context._assign(self._pipeline.__class__, self._pipeline)
+
+        return context
 
     def add_handler(self, handler: BaseHandler) -> BaseBuilder[_BT]:
         """
@@ -61,8 +101,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         if self._is_finalized:
             raise AssertionError('Can\'t not reuse the finalized builder.')
 
-        # noinspection PyProtectedMember
-        self._cur_obj._pipeline.add_handler(handler)
+        self._pipeline.add_handler(handler)
 
         return self
 
@@ -125,9 +164,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
 
         self._cur_obj._monitors = tuple(self._monitors)
         self._cur_obj._constraints = tuple(self._constraints.values())
-
-        # noinspection PyProtectedMember
-        self._cur_obj._context_variable = self._cur_obj._initialize_context()
+        self._cur_obj._context_variable = self._context
 
         ret, self._cur_obj = self._cur_obj, None
         self._is_finalized = True

@@ -11,11 +11,13 @@ from .base import BaseBenchmark
 from .base_builder import BaseBuilder
 from .drivers import gen_driver
 from .drivers.engines import CGroupEngine
+from ..monitors.pipelines import DefaultPipeline
 
 if TYPE_CHECKING:
     from .drivers import BenchDriver
     from .. import Context
     from ..configs.containers import LaunchableConfig
+    from ..monitors.pipelines import BasePipeline
 
 
 class LaunchableBenchmark(BaseBenchmark):
@@ -36,8 +38,9 @@ class LaunchableBenchmark(BaseBenchmark):
 
     def __new__(cls: Type[LaunchableBenchmark],
                 launchable_config: LaunchableConfig,
+                pipeline: BasePipeline,
                 logger_level: int = logging.INFO) -> LaunchableBenchmark:
-        obj: LaunchableBenchmark = super().__new__(cls, launchable_config, logger_level)
+        obj: LaunchableBenchmark = super().__new__(cls, launchable_config, pipeline, logger_level)
 
         obj._bench_driver = gen_driver(launchable_config.name, launchable_config.num_of_threads, CGroupEngine(obj))
 
@@ -94,12 +97,14 @@ class LaunchableBenchmark(BaseBenchmark):
         await self._bench_driver.join()
 
     class Builder(BaseBuilder['LaunchableBenchmark']):
+        _bench_config: LaunchableConfig
         _cur_obj: LaunchableBenchmark
 
         def __init__(self, launchable_config: LaunchableConfig, logger_level: int = logging.INFO) -> None:
-            super().__init__()
+            super().__init__(launchable_config, logger_level)
 
-            self._cur_obj = LaunchableBenchmark.__new__(LaunchableBenchmark, launchable_config, logger_level)
+        def _init_pipeline(self) -> DefaultPipeline:
+            return DefaultPipeline()
 
-            for constraint in launchable_config.constraints:
-                self.add_constraint(constraint)
+        def _init_bench_obj(self, pipeline: BasePipeline) -> LaunchableBenchmark:
+            return LaunchableBenchmark.__new__(LaunchableBenchmark, self._bench_config, pipeline, self._logger_level)

@@ -48,7 +48,6 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
     .. todo::
 
         * :meth:`start_and_pause` 나 :meth:`monitor` 메소드의 용례와 이름이 부정확하며 서로간의 호출 순서가 존재한다.
-        * :var:`_pipeline` 와 :var:`_context_variable` 의 생성을 클래스 외부에서 하고 파라미터로 받는 구현
     """
 
     _FILE_FORMATTER: ClassVar[ColoredFormatter] = ColoredFormatter(
@@ -77,15 +76,15 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: BenchConfig,
-                logger_level: int = logging.INFO) -> BaseBenchmark:
+                pipeline: BasePipeline,
+                logger_level=logging.INFO) -> BaseBenchmark:
         obj: BaseBenchmark = super().__new__(cls)
 
         obj._bench_config = bench_config
         obj._identifier = bench_config.identifier
 
         obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
-        from ..monitors.pipelines import DefaultPipeline
-        obj._pipeline: BasePipeline = DefaultPipeline()
+        obj._pipeline = pipeline
 
         # setup for logger
         log_dir = bench_config.workspace / 'logs'
@@ -261,21 +260,6 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             logger.removeHandler(handler)
             handler.flush()
             handler.close()
-
-    # noinspection PyProtectedMember
-    def _initialize_context(self) -> Context:
-        """
-        모니터와 제약에서 쓰일 Context 객체를 생성하고, 값들을 설정한다.
-
-        :return: 이 객체에서 쓰일 Context 객체
-        :rtype: benchmon.context.Context
-        """
-        context = Context()
-
-        context._assign(self.__class__, self)
-        context._assign(self._pipeline.__class__, self._pipeline)
-
-        return context
 
     @property
     def identifier(self) -> str:
