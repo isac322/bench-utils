@@ -77,7 +77,7 @@ class LocalReadParser(BaseParser[_DT], ABC):
         캐싱된 결과를 무시하고 다시 파싱한다.
         `config.json` 의 내용이 바뀔 경우 유용하다.
 
-        :return: Method chaining을 위한 파이프라인 객체 그대로 반환
+        :return: Method chaining을 위한 파서 객체 그대로 반환
         :rtype: benchmon.configs.parsers.base.LocalReadParser
         """
         self._local_config = validate_and_load(self._workspace / 'config.json')
