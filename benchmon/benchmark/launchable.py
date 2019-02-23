@@ -19,6 +19,13 @@ if TYPE_CHECKING:
 
 
 class LaunchableBenchmark(BaseBenchmark):
+    """
+    벤치마크 중에서 :class:`~benchmon.benchmark.drivers.base.BenchDriver` 를 사용해서 프로세스를 생성하는 식으로 실행하는
+    벤치마크들을 (e.g. NPB, PARSEC) 위한 클래스.
+
+    `드라이버` 객체를 하나씩 가진다.
+    """
+
     _bench_driver: BenchDriver
     _bench_config: LaunchableConfig
 
