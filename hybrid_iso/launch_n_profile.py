@@ -66,8 +66,6 @@ async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
             for bench in benches:
                 bench.resume()
 
-            await asyncio.sleep(0.1)
-
             current_tasks = tuple(asyncio.create_task(bench.monitor()) for bench in benches)
             await asyncio.wait(current_tasks)
 
