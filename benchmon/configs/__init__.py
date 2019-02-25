@@ -21,10 +21,9 @@
 """
 
 import json
-from collections import Mapping
 from importlib import resources
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Mapping, Tuple
 
 from ..benchmark.drivers import BenchDriver
 
