@@ -1,4 +1,4 @@
-aio-pika==5.2.3
+aio-pika==5.2.4
 aiofile_linux
 coloredlogs==10.0
 ordered-set==3.1
