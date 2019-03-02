@@ -82,7 +82,7 @@ async def main() -> None:
     parser.add_argument('config_dir', metavar='PARENT_DIR_OF_CONFIG_FILE', type=str, nargs='+',
                         help='Directory path where the config file (config.json) exist. (support wildcard *)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print more detail log')
-    parser.add_argument('-s', '--silent', action='store_true', help='Do not print any log to stdin. (override -v)')
+    parser.add_argument('-s', '--silent', action='store_true', help='Do not print any log to stdin.')
     parser.add_argument('--expt-interval', type=int, default=10, help='interval (sec) to sleep between each experiment')
 
     args = parser.parse_args()
