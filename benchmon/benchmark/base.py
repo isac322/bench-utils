@@ -163,62 +163,105 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         이 객체가 이미 실행된 후에 등록된 모니터로부터 벤치마크의 모니터링을 시작한다.
         """
         logger = logging.getLogger(self._identifier)
-        logger.info('start monitoring...')
+        logger.info('Start monitoring...')
 
         monitoring_tasks: Optional[asyncio.Task] = None
 
         # noinspection PyBroadException
         try:
             if len(self._constraints) is not 0:
+                logger.debug('Initializing constraints...')
                 await self._waits(con.on_start(self._context_variable) for con in self._constraints)
+                logger.debug('Initializing of constraints are done')
+            else:
+                logger.debug('Skips initialization of constraints because there are no registered constraints')
 
+            logger.debug('Initializing monitors...')
             await self._waits(mon.on_init(self._context_variable) for mon in self._monitors)
-            monitoring_tasks = asyncio.create_task(asyncio.wait(
-                    tuple(mon.monitor(self._context_variable) for mon in self._monitors))
+            logger.debug('Initializing of monitors are done')
+
+            logger.debug('Starting monitoring...')
+            monitoring_tasks = asyncio.create_task(self._waits(
+                    mon.monitor(self._context_variable) for mon in self._monitors)
             )
 
+            logger.debug('Wait for benchmark or monitors to finish')
             await asyncio.wait((self.join(), monitoring_tasks),
                                return_when=asyncio.FIRST_COMPLETED)
 
             if self.is_running:
+                logger.debug('Monitoring is complete first. Wait for the benchmark to finish.')
                 await self.join()
             else:
+                logger.debug('The benchmark was completed first. Stopping monitor...')
                 await self._waits(mon.stop() for mon in self._monitors)
+                logger.debug('Waiting for monitors to finish...')
                 await monitoring_tasks
+                logger.debug('Monitors are complete')
+
+            logger.info('The benchmark has been successfully completed.')
 
         except asyncio.CancelledError:
-            logger.debug(f'The task cancelled')
+            logger.info('Monitoring has been canceled.')
+
             if self.is_running:
+                logger.debug('Attempt to force termination of benchmark...')
                 await self.kill()
+                logger.debug('Benchmark has been aborted')
+
             if monitoring_tasks is not None and not monitoring_tasks.done():
+                logger.debug('Stopping monitor...')
                 await self._waits(mon.stop() for mon in self._monitors)
+                logger.debug('Waiting for monitors to finish...')
                 await monitoring_tasks
+                logger.debug('Monitors are complete')
 
         except Exception as e:
             logger.critical(f'The following errors occurred during monitoring : {e}')
+
             if self.is_running:
+                logger.debug('Attempt to force termination of benchmark due to error...')
                 await self.kill()
+                logger.debug('Benchmark has been aborted')
+
             if monitoring_tasks is not None and not monitoring_tasks.done():
+                logger.debug('Stopping monitor...')
                 await self._waits(mon.stop() for mon in self._monitors)
+                logger.debug('Waiting for monitors to finish...')
                 await monitoring_tasks
+                logger.debug('Monitors are complete')
 
         finally:
             logger.info('The benchmark is ended.')
 
             # destroy monitors
+            logger.debug('Deinitializing monitors...')
             await self._waits(mon.on_end(self._context_variable) for mon in self._monitors)
+            logger.debug('Deinitialization of monitors are finished.')
+            logger.debug('Destroying monitors...')
             await self._waits(mon.on_destroy(self._context_variable) for mon in self._monitors)
+            logger.debug('Monitor destruction is complete.')
 
             await self._destroy()
 
     async def _destroy(self) -> None:
+        logger = logging.getLogger(self._identifier)
+
         # destroy constraints
         if len(self._constraints) is not 0:
+            logger.debug('Destroying constraints...')
             await self._waits(con.on_destroy(self._context_variable) for con in self._constraints)
+            logger.debug('Constraint destruction is complete.')
+        else:
+            logger.debug('Skips destruction of constraints because there are no registered constraints')
 
         # destroy pipeline
+        logger.debug('Deinitializing pipeline...')
         await self._pipeline.on_end(self._context_variable)
+        logger.debug('Deinitialization of pipeline is finished.')
+        logger.debug('Destroying pipeline...')
         await self._pipeline.on_destroy(self._context_variable)
+        logger.debug('Pipeline destruction is complete.')
 
         self._remove_logger_handlers()
 
