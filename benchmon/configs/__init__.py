@@ -25,6 +25,8 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Dict, Mapping, Tuple
 
+import copy
+
 from ..benchmark.drivers import BenchDriver
 
 
@@ -68,13 +70,13 @@ def validate_and_load(config_path: Path) -> Dict[str, Any]:
 
     if config_path in _cached_config_map \
             and current_mtime <= _cached_config_map[config_path][1]:
-        return _cached_config_map[config_path][0]
+        return copy.deepcopy(_cached_config_map[config_path][0])
 
     else:
         with config_path.open() as fp:
-            content = json.load(fp)
+            content: Dict[str, Any] = json.load(fp)
             _cached_config_map[config_path] = (content, current_mtime)
-            return content
+            return copy.deepcopy(content)
 
 
 # FIXME: 다른 방법은 없나?
