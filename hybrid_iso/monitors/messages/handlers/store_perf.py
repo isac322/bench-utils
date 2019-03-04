@@ -21,12 +21,12 @@ class StorePerf(BaseHandler):
 
     async def on_init(self, context: Context) -> None:
         benchmark = BaseBenchmark.of(context)
-        workspace = BenchConfig.of(context).workspace / 'monitored'
+        workspace = BenchConfig.of(context).workspace / 'monitored' / 'perf'
         workspace.mkdir(parents=True, exist_ok=True)
 
         # TODO: compare between open and aiofile_linux.
         #  (maybe open() is better when writing small amount of contents to a file at a time)
-        self._dest_file = (workspace / f'perf_{benchmark.identifier}.csv').open(mode='w')
+        self._dest_file = (workspace / f'{benchmark.identifier}.csv').open(mode='w')
         self._event_order = tuple(PerfConfig.of(context).event_names)
         self._dest_file.write(','.join(self._event_order) + '\n')
 
