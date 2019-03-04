@@ -24,6 +24,7 @@ class StoreRuntime(BaseHandler):
         elif self._result_path.is_dir():
             self._result_path.rmdir()
 
+        self._result_path.parent.mkdir(exist_ok=True, parents=True)
         self._result_path.write_text('{}')
 
     async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
@@ -32,8 +33,7 @@ class StoreRuntime(BaseHandler):
 
         # TODO: evaluation between open and aiofile_linux
         with self._result_path.open(mode='r+') as fp:
-            content_str = fp.read()
-            content: Dict[str, float] = json.loads(content_str)
+            content: Dict[str, float] = json.load(fp)
             content[BaseBenchmark.of(context).identifier] = message.data
 
             fp.seek(0)
