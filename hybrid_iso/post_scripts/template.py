@@ -5,19 +5,17 @@ from pathlib import Path
 from typing import List, Tuple
 
 from benchmon.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
-from .tools import WorkloadResult, read_config, read_result
-from ..configs.containers.launcher import LauncherConfig
+from benchmon.configs.parsers import BenchParser
+from .tools import WorkloadResult, read_result
+from ..configs.containers import LauncherConfig
 
 
-def run(workspace: Path, global_cfg_path: Path):
-    results: List[WorkloadResult] = read_result(workspace)
-    output_path = workspace / 'output'
+def run(workspace: Path, launcher_config: LauncherConfig, perf_config: PerfConfig, rabbit_mq_config: RabbitMQConfig):
+    bench_configs: Tuple[BenchConfig, ...] = tuple(BenchParser(workspace).parse())
+    results: List[WorkloadResult] = read_result(bench_configs)
+    output_path = workspace / 'generated'
 
-    bench_configs, perf_config, rabbit_config, launcher_config = read_config(workspace, global_cfg_path)
-    # type: Tuple[BenchConfig, ...], PerfConfig, RabbitMQConfig, LauncherConfig
-
-    if not output_path.exists():
-        output_path.mkdir(parents=True)
+    output_path.mkdir(parents=True, exist_ok=True)
 
     with (output_path / 'avg.csv').open('w') as fp:
         fp.flush()

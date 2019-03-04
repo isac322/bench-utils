@@ -15,6 +15,8 @@ from benchmon.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMo
 from benchmon.monitors.messages.handlers import RabbitMQHandler
 from benchmon.utils.hyperthreading import hyper_threading_guard
 from .benchmark.constraints.rabbit_mq import RabbitMQConstraint
+from .configs.containers import LauncherConfig
+from .configs.parsers import LauncherParser
 from .monitors.messages.handlers import HybridIsoMerger, StorePerf, StoreResCtrl, StoreRuntime
 
 if TYPE_CHECKING:
@@ -27,6 +29,7 @@ MIN_PYTHON = (3, 7)
 async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
     perf_config: PerfConfig = PerfParser(workspace).parse()
     rabbit_mq_config: RabbitMQConfig = RabbitMQParser().parse()
+    launcher_config: LauncherConfig = LauncherParser(workspace).parse()
 
     benches: Tuple[BaseBenchmark, ...] = tuple(
             bench_cfg.generate_builder(logging.DEBUG if verbose else logging.INFO)
@@ -58,18 +61,38 @@ async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
     loop = asyncio.get_event_loop()
     loop.add_signal_handler(signal.SIGINT, cancel_current_tasks)
 
-    async with hyper_threading_guard(False):
+    async with hyper_threading_guard(launcher_config.hyper_threading):
         current_tasks = tuple(asyncio.create_task(bench.start_and_pause(silent)) for bench in benches)
-        await asyncio.wait(current_tasks)
+        _, pending = await asyncio.wait(current_tasks)
+
+        if len(pending) is not 0:
+            return False
 
         if not is_cancelled:
             for bench in benches:
                 bench.resume()
 
             current_tasks = tuple(asyncio.create_task(bench.monitor()) for bench in benches)
-            await asyncio.wait(current_tasks)
+            if launcher_config.stops_with_the_first:
+                return_when = asyncio.FIRST_COMPLETED
+            else:
+                return_when = asyncio.ALL_COMPLETED
+            _, pending = await asyncio.wait(current_tasks, return_when=return_when)
+
+            for task in pending:  # type: asyncio.Task
+                task.cancel()
+                await task
 
     loop.remove_signal_handler(signal.SIGINT)
+
+    logger = logging.getLogger('benchmon')
+
+    for module in launcher_config.post_scripts:
+        try:
+            logger.info(f'Running {module.__spec__.name}...')
+            getattr(module, 'run')(workspace, launcher_config, perf_config, rabbit_mq_config)
+        except Exception as e:
+            logger.warning(f'Failed to run {module.__spec__.name} with error: ', e)
 
     return not is_cancelled
 
@@ -97,5 +120,5 @@ async def main() -> None:
         if i is not 0:
             await asyncio.sleep(interval)
 
-        if not await launch(Path(workspace), silent, verbose and not silent):
+        if not await launch(Path(workspace), silent, verbose):
             break
