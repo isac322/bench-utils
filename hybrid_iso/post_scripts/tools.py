@@ -15,8 +15,8 @@ from benchmon.utils.numa_topology import cur_online_sockets
 class WorkloadResult:
     name: str
     runtime: float
-    perf: Mapping[str, List[int]]
-    resctrl: Tuple[Mapping[str, List[int]], ...]
+    perf: Mapping[str, List[float]]
+    resctrl: Tuple[Mapping[str, List[float]], ...]
     power: float
 
 
@@ -43,8 +43,8 @@ def read_result(bench_configs: Tuple[BenchConfig, ...]) -> List[WorkloadResult]:
     return ret
 
 
-def read_csv(file_path: Path) -> Dict[str, List[int]]:
-    ret: OrderedDict[str, List[int]] = OrderedDict()
+def read_csv(file_path: Path) -> Dict[str, List[float]]:
+    ret: OrderedDict[str, List[float]] = OrderedDict()
 
     with file_path.open() as fp:
         reader = csv.DictReader(fp)
@@ -54,6 +54,6 @@ def read_csv(file_path: Path) -> Dict[str, List[int]]:
 
         for row in reader:
             for k, v in row.items():  # type: str, str
-                ret[k].append(int(v))
+                ret[k].append(float(v))
 
     return ret
