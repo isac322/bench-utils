@@ -201,6 +201,9 @@ tags
 
 # Custom
 
-/bench_toolbox/configs/benchmark_home.json
-/bench_toolbox/configs/perf.json
-/bench_toolbox/configs/rabbit_mq.json
+/benchmon/configs/benchmark_home.json
+/benchmon/configs/perf.json
+/benchmon/configs/rabbit_mq.json
+
+/docs/source/*.rst
+!/docs/source/index.rst

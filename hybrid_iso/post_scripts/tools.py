@@ -3,80 +3,57 @@
 import csv
 import json
 from collections import OrderedDict
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Mapping, Tuple
 
-# FIXME
-# from ..benchmark_launcher import parse_launcher_cfg, parse_perf_cfg, parse_rabbit_mq_cfg, parse_workload_cfg
-from bench_toolbox.configs.containers import BenchConfig, PerfConfig, RabbitMQConfig
-from hybrid_iso.containers.launcher import LauncherConfig
+from benchmon.configs.containers import BenchConfig
+from benchmon.utils.numa_topology import cur_online_sockets
 
 
+@dataclass(frozen=True)
 class WorkloadResult:
-    def __init__(self, name: str, runtime: float, metrics: OrderedDict):
-        self._name: str = name
-        self._runtime: float = runtime
-        self._metrics: OrderedDict = metrics
-
-    @property
-    def runtime(self):
-        return self._runtime
-
-    @property
-    def metrics(self):
-        return self._metrics
-
-    @property
-    def name(self):
-        return self._name
+    name: str
+    runtime: float
+    perf: Mapping[str, List[float]]
+    resctrl: Tuple[Mapping[str, List[float]], ...]
+    power: float
 
 
-def read_result(workspace: Path) -> List[WorkloadResult]:
-    result_file = workspace / 'result.json'
-    metric_path = workspace / 'perf'
-
-    if not result_file.is_file() or not metric_path.is_dir():
-        # FIXME
-        raise ValueError('run benchmark_launcher.py first!')
-
-    with result_file.open() as result_fp:
-        result: Dict[str, Any] = json.load(result_fp)
-
+def read_result(bench_configs: Tuple[BenchConfig, ...]) -> List[WorkloadResult]:
     ret: List[WorkloadResult] = list()
 
-    for workload_name, runtime in result['runtime'].items():  # type: str, float
-        metric_map = OrderedDict()
+    with (bench_configs[0].workspace / 'monitored' / 'runtime.json').open() as fp:
+        runtime_result = json.load(fp)
 
-        with (metric_path / f'{workload_name}.csv').open() as metric_fp:
-            reader = csv.DictReader(metric_fp)
+    for cfg in bench_configs:
+        monitored = cfg.workspace / 'monitored'
 
-            for field in reader.fieldnames:
-                metric_map[field] = []
+        if not monitored.is_dir():
+            raise ValueError('run benchmon first!')
 
-            for row in reader:
-                for k, v in row.items():  # type: str, str
-                    metric_map[k].append(float(v))
+        perf = read_csv(monitored / 'perf' / f'{cfg.identifier}.csv')
+        resctrl = tuple(
+                read_csv(monitored / 'resctrl' / f'{socket_id}_{cfg.identifier}.csv')
+                for socket_id in cur_online_sockets()
+        )
 
-        ret.append(WorkloadResult(workload_name, runtime, metric_map))
+        ret.append(WorkloadResult(cfg.identifier, runtime_result[cfg.identifier], perf, resctrl, 0))
 
     return ret
 
 
-def read_config(workspace: Path, global_cfg_path: Path) -> \
-        Tuple[Tuple[BenchConfig, ...], PerfConfig, RabbitMQConfig, LauncherConfig]:
-    local_cfg_path = workspace / 'config.json'
+def read_csv(file_path: Path) -> Dict[str, List[float]]:
+    ret: OrderedDict[str, List[float]] = OrderedDict()
 
-    if not local_cfg_path.is_file() or not global_cfg_path.is_file():
-        # FIXME
-        raise ValueError('run benchmark_launcher.py first!')
+    with file_path.open() as fp:
+        reader = csv.DictReader(fp)
 
-    with local_cfg_path.open() as local_fp, \
-            global_cfg_path.open() as global_fp:
-        local_cfg: Dict[str, Any] = json.load(local_fp)
-        global_cfg: Dict[str, Any] = json.load(global_fp)
+        for field in reader.fieldnames:
+            ret[field] = []
 
-    return \
-        parse_workload_cfg(local_cfg['workloads']), \
-        parse_perf_cfg(global_cfg['perf'], local_cfg['perf']), \
-        parse_rabbit_mq_cfg(global_cfg['rabbitMQ']), \
-        parse_launcher_cfg(local_cfg['launcher'])
+        for row in reader:
+            for k, v in row.items():  # type: str, str
+                ret[k].append(float(v))
+
+    return ret
