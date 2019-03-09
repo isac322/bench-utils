@@ -41,7 +41,7 @@
 		]
 	},
 	"launcher": {
-		"hyper-threading": false,
+		"hyper-threading": true,
 		"stops_with_the_first": false,
 		"post_scripts": [
 			"avg_csv.py"
