@@ -47,7 +47,7 @@ class PerfMonitor(BaseMonitor[T]):
 
         record = dict.fromkeys(event.alias for event in self._perf_config.events)
 
-        while not self._is_stopped:
+        while not self._is_stopped and perf_proc.returncode is None:
             ignored = False
 
             for event in self._perf_config.events:
