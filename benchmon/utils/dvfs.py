@@ -17,6 +17,8 @@
 import asyncio
 from typing import Iterable, Tuple
 
+from .asyncio_subprocess import check_run
+
 
 async def set_max_freq(core_id: int, freq: int) -> None:
     """
@@ -30,11 +32,8 @@ async def set_max_freq(core_id: int, freq: int) -> None:
     :param freq: 바꿀 주파수 값
     :type freq: int
     """
-    proc = await asyncio.create_subprocess_exec(
-            'sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq',
-            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
-
-    await proc.communicate(f'{freq}\n'.encode())
+    await check_run('sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq',
+                    input=f'{freq}\n'.encode(), stdout=asyncio.subprocess.DEVNULL)
 
 
 async def set_max_freqs(core_ids: Iterable[int], freq: int) -> None:
@@ -54,11 +53,7 @@ async def set_max_freqs(core_ids: Iterable[int], freq: int) -> None:
         for core_id in core_ids
     )
 
-    proc = await asyncio.create_subprocess_exec(
-            'sudo', 'tee', *target_files,
-            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL)
-
-    await proc.communicate(f'{freq}\n'.encode())
+    await check_run('sudo', 'tee', *target_files, input=f'{freq}\n'.encode(), stdout=asyncio.subprocess.DEVNULL)
 
 
 async def read_max_freq(core_id: int) -> int:

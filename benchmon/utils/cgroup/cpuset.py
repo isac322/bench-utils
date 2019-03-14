@@ -1,9 +1,9 @@
 # coding: UTF-8
 
-import asyncio
 from typing import ClassVar
 
 from .base import BaseCGroup
+from ..asyncio_subprocess import check_run
 
 
 class Cpuset(BaseCGroup):
@@ -20,8 +20,7 @@ class Cpuset(BaseCGroup):
         :param core_ids: 설정할 `cpus` 값
         :type core_ids: str
         """
-        proc = await asyncio.create_subprocess_exec('cgset', '-r', f'cpuset.cpus={core_ids}', self._name)
-        await proc.communicate()
+        await check_run('cgset', '-r', f'cpuset.cpus={core_ids}', self._name)
 
     async def assign_mems(self, socket_ids: str) -> None:
         """
@@ -30,5 +29,4 @@ class Cpuset(BaseCGroup):
         :param socket_ids: 설정할 `mems` 값
         :type socket_ids: str
         """
-        proc = await asyncio.create_subprocess_exec('cgset', '-r', f'cpuset.mems={socket_ids}', self._name)
-        await proc.communicate()
+        await check_run('cgset', '-r', f'cpuset.mems={socket_ids}', self._name)

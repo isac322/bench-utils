@@ -1,9 +1,9 @@
 # coding: UTF-8
 
-import asyncio
 from typing import ClassVar
 
 from .base import BaseCGroup
+from ..asyncio_subprocess import check_run
 
 
 class CPU(BaseCGroup):
@@ -20,8 +20,7 @@ class CPU(BaseCGroup):
         :param quota: 설정할 `cfs_quota_us` 값
         :type quota: int
         """
-        proc = await asyncio.create_subprocess_exec('cgset', '-r', f'cpu.cfs_quota_us={quota}', self._name)
-        await proc.communicate()
+        await check_run('cgset', '-r', f'cpu.cfs_quota_us={quota}', self._name)
 
     async def assign_period(self, period: int) -> None:
         """
@@ -30,5 +29,4 @@ class CPU(BaseCGroup):
         :param period: 설정할 `cfs_period_us` 값
         :type period: int
         """
-        proc = await asyncio.create_subprocess_exec('cgset', '-r', f'cpu.cfs_period_us={period}', self._name)
-        await proc.communicate()
+        await check_run('cgset', '-r', f'cpu.cfs_period_us={period}', self._name)

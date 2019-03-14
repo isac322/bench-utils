@@ -1,12 +1,13 @@
 # coding: UTF-8
 
-import asyncio
 import getpass
 import grp
 import os
 from abc import ABCMeta
 from pathlib import Path
 from typing import ClassVar, Iterable
+
+from ..asyncio_subprocess import check_run
 
 
 class BaseCGroup(metaclass=ABCMeta):
@@ -68,10 +69,8 @@ class BaseCGroup(metaclass=ABCMeta):
         gid: int = os.getegid()
         gname: str = grp.getgrgid(gid).gr_name
 
-        proc = await asyncio.create_subprocess_exec(
-                'sudo', 'cgcreate', '-a', f'{uname}:{gname}', '-d', '755', '-f',
-                '644', '-t', f'{uname}:{gname}', '-s', '644', '-g', self.identifier)
-        await proc.communicate()
+        await check_run('sudo', 'cgcreate', '-a', f'{uname}:{gname}', '-d', '755', '-f', '644',
+                        '-t', f'{uname}:{gname}', '-s', '644', '-g', self.identifier)
 
     async def chown(self, uid: int, gid: int) -> None:
         """
@@ -82,9 +81,7 @@ class BaseCGroup(metaclass=ABCMeta):
         :param gid: 새로운 group의 group id
         :type gid: int
         """
-        proc = await asyncio.create_subprocess_exec(
-                'cgm', 'chown', self.CONTROLLER_NAME, self._name, str(uid), str(gid))
-        await proc.communicate()
+        await check_run('cgm', 'chown', self.CONTROLLER_NAME, self._name, str(uid), str(gid))
 
     async def chmod(self, mod: int) -> None:
         """
@@ -94,8 +91,7 @@ class BaseCGroup(metaclass=ABCMeta):
         :type mod: int
         """
         # TODO: validation of `mod`
-        proc = await asyncio.create_subprocess_exec('cgm', 'chmod', self.CONTROLLER_NAME, self._name, str(mod))
-        await proc.communicate()
+        await check_run('cgm', 'chmod', self.CONTROLLER_NAME, self._name, str(mod))
 
     async def chmodfile(self, file: str, mod: int) -> None:
         """
@@ -107,9 +103,7 @@ class BaseCGroup(metaclass=ABCMeta):
         :type mod: int
         """
         # TODO: validation of `mod`
-        proc = await asyncio.create_subprocess_exec('cgm', 'chmodfile',
-                                                    self.CONTROLLER_NAME, self._name, file, str(mod))
-        await proc.communicate()
+        await check_run('cgm', 'chmodfile', self.CONTROLLER_NAME, self._name, file, str(mod))
 
     @property
     def name(self) -> str:
@@ -128,10 +122,7 @@ class BaseCGroup(metaclass=ABCMeta):
         :param new_name: 새로운 group의 이름
         :rtype: str
         """
-        proc = await asyncio.create_subprocess_exec(
-                'sudo', 'mv', str(self.absolute_path() / self._name), str(self.absolute_path() / new_name)
-        )
-        await proc.communicate()
+        await check_run('sudo', 'mv', str(self.absolute_path() / self._name), str(self.absolute_path() / new_name))
 
         self._name = new_name
 
@@ -142,10 +133,8 @@ class BaseCGroup(metaclass=ABCMeta):
         :param pids: group에 추가할 pid들
         :rtype: typing.Iterable[int]
         """
-        proc = await asyncio.create_subprocess_exec('cgclassify', '-g', self.identifier, '--sticky', *map(str, pids))
-        await proc.communicate()
+        await check_run('cgclassify', '-g', self.identifier, '--sticky', *map(str, pids))
 
     async def delete(self) -> None:
         """ 해당 그룹을 삭제한다. """
-        proc = await asyncio.create_subprocess_exec('sudo', 'cgdelete', '-r', '-g', self.identifier)
-        await proc.communicate()
+        await check_run('sudo', 'cgdelete', '-r', '-g', self.identifier)

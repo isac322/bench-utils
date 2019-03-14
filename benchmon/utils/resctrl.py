@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from typing import ClassVar, Dict, Iterable, Mapping, Optional, TextIO, Tuple
 
+from .asyncio_subprocess import check_run
+
 
 def mask_to_bits(mask: str) -> int:
     """
@@ -139,8 +141,7 @@ class ResCtrl:
 
     async def create_group(self) -> None:
         """현재 객체가 가리키고 있는 그룹이 실제로 존재하지 않는 그룹이라면, 그룹 생성"""
-        proc = await asyncio.create_subprocess_exec('sudo', 'mkdir', '-p', str(self._group_path))
-        await proc.communicate()
+        await check_run('sudo', 'mkdir', '-p', str(self._group_path))
 
     async def prepare_to_read(self) -> None:
         """
@@ -166,10 +167,9 @@ class ResCtrl:
         :param pid: 그룹에 추가할 pid
         :type pid: int
         """
-        proc = await asyncio.create_subprocess_exec('sudo', 'tee', '-a', str(self._group_path / 'tasks'),
-                                                    stdin=asyncio.subprocess.PIPE,
-                                                    stdout=asyncio.subprocess.DEVNULL)
-        await proc.communicate(str(pid).encode())
+        await check_run('sudo', 'tee', '-a', str(self._group_path / 'tasks'),
+                        input=str(pid).encode(),
+                        stdout=asyncio.subprocess.DEVNULL)
 
     async def add_tasks(self, pids: Iterable[int]) -> None:
         """
@@ -199,10 +199,9 @@ class ResCtrl:
         :type masks: typing.Tuple[str, ...]
         """
         masks = (f'{i}={m}' for i, m in enumerate(masks))
-        proc = await asyncio.create_subprocess_exec('sudo', 'tee', str(self._group_path / 'schemata'),
-                                                    stdin=asyncio.subprocess.PIPE,
-                                                    stdout=asyncio.subprocess.DEVNULL)
-        await proc.communicate(f'L3:{";".join(masks)}\n'.encode())
+        await check_run('sudo', 'tee', str(self._group_path / 'schemata'),
+                        input=f'L3:{";".join(masks)}\n'.encode(),
+                        stdout=asyncio.subprocess.DEVNULL)
 
     @staticmethod
     def gen_mask(start: int, end: int = None) -> str:
@@ -264,5 +263,4 @@ class ResCtrl:
         if self._group_name is str():
             raise PermissionError('Can not remove root directory of resctrl')
 
-        proc = await asyncio.create_subprocess_exec('sudo', 'rmdir', str(self._group_path))
-        await proc.communicate()
+        await check_run('sudo', 'rmdir', str(self._group_path))

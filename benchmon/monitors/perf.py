@@ -9,6 +9,7 @@ from .base import BaseMonitor
 from .messages import PerBenchMessage
 from .pipelines.base import BasePipeline
 from ..benchmark import BaseBenchmark
+from ..utils.asyncio_subprocess import check_output
 
 if TYPE_CHECKING:
     from .. import Context
@@ -35,10 +36,7 @@ class PerfMonitor(BaseMonitor[T]):
                 stderr=asyncio.subprocess.PIPE)
 
         if self._perf_config.interval < 100:
-            proc = await asyncio.create_subprocess_exec('perf', '--version',
-                                                        stdout=asyncio.subprocess.PIPE,
-                                                        stderr=asyncio.subprocess.DEVNULL)
-            version_line, _ = await proc.communicate()
+            version_line: bytes = await check_output('perf', '--version', stderr=asyncio.subprocess.DEVNULL)
             version_str: str = version_line.decode().split()[2]
             major, minor = map(int, version_str.split('.')[:2])  # type: int, int
             if (major, minor) < (4, 17):
