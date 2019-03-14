@@ -10,7 +10,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Iterable, TYPE_CHECKING, Tuple
 
-from benchmon.configs.parsers import BenchParser, PerfParser, RabbitMQParser
+from benchmon.configs.parsers import BenchParser, PerfParser, PrivilegeParser, RabbitMQParser
 from benchmon.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
 from benchmon.monitors.messages.handlers import RabbitMQHandler
 from benchmon.utils.hyperthreading import hyper_threading_guard
@@ -21,7 +21,7 @@ from .monitors.messages.handlers import HybridIsoMerger, StorePerf, StoreResCtrl
 
 if TYPE_CHECKING:
     from benchmon.benchmark import BaseBenchmark
-    from benchmon.configs.containers import PerfConfig, RabbitMQConfig
+    from benchmon.configs.containers import PerfConfig, RabbitMQConfig, PrivilegeConfig
 
 MIN_PYTHON = (3, 7)
 
@@ -30,9 +30,10 @@ async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
     perf_config: PerfConfig = PerfParser(workspace).parse()
     rabbit_mq_config: RabbitMQConfig = RabbitMQParser().parse()
     launcher_config: LauncherConfig = LauncherParser(workspace).parse()
+    privilege_config: PrivilegeConfig = PrivilegeParser(workspace).parse()
 
     benches: Tuple[BaseBenchmark, ...] = tuple(
-            bench_cfg.generate_builder(logging.DEBUG if verbose else logging.INFO)
+            bench_cfg.generate_builder(privilege_config, logging.DEBUG if verbose else logging.INFO)
                 .add_constraint(RabbitMQConstraint(rabbit_mq_config))
                 .add_monitor(RDTSCMonitor(perf_config.interval))
                 .add_monitor(ResCtrlMonitor(perf_config.interval))

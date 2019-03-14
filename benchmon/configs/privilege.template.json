@@ -1,0 +1,18 @@
+{
+	"execute": {
+		"user": "bhyoo",
+		"group": "bhyoo"
+	},
+	"monitor": {
+		"user": "bhyoo",
+		"group": "bhyoo"
+	},
+	"cgroup": {
+		"user": "bhyoo",
+		"group": "bhyoo"
+	},
+	"result": {
+		"user": "bhyoo",
+		"group": "bhyoo"
+	}
+}

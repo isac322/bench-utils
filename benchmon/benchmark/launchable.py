@@ -16,7 +16,7 @@ from ..monitors.pipelines import DefaultPipeline
 if TYPE_CHECKING:
     from .drivers import BenchDriver
     from .. import Context
-    from ..configs.containers import LaunchableConfig
+    from ..configs.containers import LaunchableConfig, PrivilegeConfig
     from ..monitors.pipelines import BasePipeline
 
 
@@ -100,8 +100,9 @@ class LaunchableBenchmark(BaseBenchmark):
         _bench_config: LaunchableConfig
         _cur_obj: LaunchableBenchmark
 
-        def __init__(self, launchable_config: LaunchableConfig, logger_level: int = logging.INFO) -> None:
-            super().__init__(launchable_config, logger_level)
+        def __init__(self, launchable_config: LaunchableConfig, privilege_config: PrivilegeConfig,
+                     logger_level: int = logging.INFO) -> None:
+            super().__init__(launchable_config, privilege_config, logger_level)
 
         def _init_pipeline(self) -> DefaultPipeline:
             return DefaultPipeline()

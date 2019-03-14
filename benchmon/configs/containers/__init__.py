@@ -14,4 +14,5 @@
 from .base import BaseConfig, HandlerConfig, MonitorConfig
 from .bench import BenchConfig, LaunchableConfig
 from .perf import PerfConfig, PerfEvent
+from .privilege import Privilege, PrivilegeConfig
 from .rabbit_mq import RabbitMQConfig
