@@ -61,7 +61,7 @@ async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
     loop = asyncio.get_event_loop()
     loop.add_signal_handler(signal.SIGINT, cancel_current_tasks)
 
-    async with hyper_threading_guard(launcher_config.hyper_threading):
+    with hyper_threading_guard(launcher_config.hyper_threading):
         current_tasks = tuple(asyncio.create_task(bench.start_and_pause(silent)) for bench in benches)
         _, pending = await asyncio.wait(current_tasks)
 

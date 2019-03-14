@@ -5,8 +5,6 @@ import re
 from pathlib import Path
 from typing import ClassVar, Dict, Iterable, Mapping, Optional, TextIO, Tuple
 
-from .asyncio_subprocess import check_run
-
 
 def mask_to_bits(mask: str) -> int:
     """
@@ -139,9 +137,9 @@ class ResCtrl:
                 for mon_name in ResCtrl._MON_NAMES
         )
 
-    async def create_group(self) -> None:
+    def create_group(self) -> None:
         """현재 객체가 가리키고 있는 그룹이 실제로 존재하지 않는 그룹이라면, 그룹 생성"""
-        await check_run('sudo', 'mkdir', '-p', str(self._group_path))
+        self._group_path.mkdir()
 
     async def prepare_to_read(self) -> None:
         """
@@ -167,9 +165,7 @@ class ResCtrl:
         :param pid: 그룹에 추가할 pid
         :type pid: int
         """
-        await check_run('sudo', 'tee', '-a', str(self._group_path / 'tasks'),
-                        input=str(pid).encode(),
-                        stdout=asyncio.subprocess.DEVNULL)
+        (self._group_path / 'tasks').write_text(str(pid))
 
     async def add_tasks(self, pids: Iterable[int]) -> None:
         """
@@ -183,8 +179,7 @@ class ResCtrl:
         :param pids: 추가할 pid들
         :type pids: typing.Iterable[int]
         """
-        for pid in pids:
-            await self.add_task(pid)
+        await asyncio.wait(tuple(self.add_task(pid) for pid in pids))
 
     async def assign_llc(self, *masks: str) -> None:
         """
@@ -199,9 +194,7 @@ class ResCtrl:
         :type masks: typing.Tuple[str, ...]
         """
         masks = (f'{i}={m}' for i, m in enumerate(masks))
-        await check_run('sudo', 'tee', str(self._group_path / 'schemata'),
-                        input=f'L3:{";".join(masks)}\n'.encode(),
-                        stdout=asyncio.subprocess.DEVNULL)
+        (self._group_path / 'schemata').write_text(f'L3:{";".join(masks)}\n')
 
     @staticmethod
     def gen_mask(start: int, end: int = None) -> str:
@@ -253,9 +246,6 @@ class ResCtrl:
     async def delete(self) -> None:
         """
         이 객체가 가리키고있던 그룹을 실제로 삭제함
-
-        .. note::
-            * root 권한이 필요함
         """
         if self._prepare_read:
             await self.end_read()
@@ -263,4 +253,4 @@ class ResCtrl:
         if self._group_name is str():
             raise PermissionError('Can not remove root directory of resctrl')
 
-        await check_run('sudo', 'rmdir', str(self._group_path))
+        self._group_path.rmdir()

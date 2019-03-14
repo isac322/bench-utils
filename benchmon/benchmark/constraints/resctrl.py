@@ -33,7 +33,7 @@ class ResCtrlConstraint(BaseConstraint):
 
         self._group.group_name = benchmark.group_name
 
-        await self._group.create_group()
+        self._group.create_group()
 
         if len(self._masks) is not 0:
             await self._group.assign_llc(*self._masks)
