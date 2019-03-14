@@ -3,6 +3,15 @@
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Type
 
+from aiofile_linux import AIOContext
+
+# FIXME: hard coded
+_aio_context = AIOContext(128)
+
+
+def aio_context() -> AIOContext:
+    return _aio_context
+
 
 class Context:
     _variable_dict: Dict[Type, Any]

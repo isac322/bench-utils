@@ -3,11 +3,12 @@
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
-from aiofile_linux import AIOContext, WriteCmd
+from aiofile_linux import WriteCmd
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
 from benchmon.configs.containers import BenchConfig
+from benchmon.context import aio_context
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
@@ -16,14 +17,10 @@ from benchmon.monitors.resctrl import T as RESCTRL_MSG_TYPE
 
 class StoreResCtrl(BaseHandler):
     _event_order: Tuple[str, ...]
-    _aio_context: AIOContext
     _aio_blocks: Tuple[WriteCmd, ...] = tuple()
     _workspace: Path
 
     async def on_init(self, context: Context) -> None:
-        # FIXME: hard coded
-        self._aio_context = AIOContext(4)
-
         self._workspace = BenchConfig.of(context).workspace / 'monitored' / 'resctrl'
         self._workspace.mkdir(parents=True, exist_ok=True)
 
@@ -47,13 +44,13 @@ class StoreResCtrl(BaseHandler):
 
             for block in self._aio_blocks:
                 block.buffer = (','.join(self._event_order) + '\n').encode()
-            await self._aio_context.submit(*self._aio_blocks)
+            await aio_context().submit(*self._aio_blocks)
             for block in self._aio_blocks:
                 block.offset += len(block.buffer)
 
         for idx, block in enumerate(self._aio_blocks):
             block.buffer = (','.join(map(str, self._generate_value_stream(message.data, idx))) + '\n').encode()
-        await self._aio_context.submit(*self._aio_blocks)
+        await aio_context().submit(*self._aio_blocks)
         for block in self._aio_blocks:
             block.offset += len(block.buffer)
 
@@ -62,4 +59,3 @@ class StoreResCtrl(BaseHandler):
     async def on_end(self, context: Context) -> None:
         for block in self._aio_blocks:
             block.file.close()
-        self._aio_context.close()
