@@ -20,12 +20,11 @@
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
 
+import copy
 import json
 from importlib import resources
 from pathlib import Path
 from typing import Any, Dict, Mapping, Tuple
-
-import copy
 
 from ..benchmark.drivers import BenchDriver
 
