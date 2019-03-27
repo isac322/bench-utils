@@ -4,11 +4,12 @@ from typing import Iterable, Optional, TextIO, Tuple, Union
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
-from benchmon.configs.containers import BenchConfig, PerfConfig
+from benchmon.configs.containers import BenchConfig, PerfConfig, PrivilegeConfig
 from benchmon.monitors import PerfMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 from benchmon.monitors.perf import T as PERF_MSG_TYPE
+from benchmon.utils.privilege import drop_privilege
 
 
 class StorePerf(BaseHandler):
@@ -22,11 +23,15 @@ class StorePerf(BaseHandler):
     async def on_init(self, context: Context) -> None:
         benchmark = BaseBenchmark.of(context)
         workspace = BenchConfig.of(context).workspace / 'monitored' / 'perf'
-        workspace.mkdir(parents=True, exist_ok=True)
 
-        # TODO: compare between open and aiofile_linux.
-        #  (maybe open() is better when writing small amount of contents to a file at a time)
-        self._dest_file = (workspace / f'{benchmark.identifier}.csv').open(mode='w')
+        privilege_cfg = PrivilegeConfig.of(context).result
+        with drop_privilege(privilege_cfg.user, privilege_cfg.group):
+            workspace.mkdir(parents=True, exist_ok=True)
+
+            # TODO: compare between open and aiofile_linux.
+            #  (maybe open() is better when writing small amount of contents to a file at a time)
+            self._dest_file = (workspace / f'{benchmark.identifier}.csv').open(mode='w')
+
         self._event_order = tuple(PerfConfig.of(context).event_names)
         self._dest_file.write(','.join(self._event_order) + '\n')
 

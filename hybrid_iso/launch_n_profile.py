@@ -91,7 +91,7 @@ async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
     for module in launcher_config.post_scripts:
         try:
             logger.info(f'Running {module.__spec__.name}...')
-            getattr(module, 'run')(workspace, launcher_config, perf_config, rabbit_mq_config)
+            getattr(module, 'run')(workspace, privilege_config, launcher_config, perf_config, rabbit_mq_config)
         except Exception as e:
             logger.warning(f'Failed to run {module.__spec__.name} with error: ', e)
 

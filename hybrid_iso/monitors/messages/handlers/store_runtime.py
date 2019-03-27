@@ -6,10 +6,11 @@ from typing import Dict, Optional
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
-from benchmon.configs.containers import BenchConfig
+from benchmon.configs.containers import BenchConfig, PrivilegeConfig
 from benchmon.monitors import RuntimeMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
+from benchmon.utils.privilege import drop_privilege
 
 
 class StoreRuntime(BaseHandler):
@@ -19,25 +20,29 @@ class StoreRuntime(BaseHandler):
         workspace: Path = BenchConfig.of(context).workspace / 'monitored'
         self._result_path = workspace / 'runtime.json'
 
-        if self._result_path.is_file():
-            self._result_path.unlink()
-        elif self._result_path.is_dir():
-            self._result_path.rmdir()
+        privilege_cfg = PrivilegeConfig.of(context).result
+        with drop_privilege(privilege_cfg.user, privilege_cfg.group):
+            if self._result_path.is_file():
+                self._result_path.unlink()
+            elif self._result_path.is_dir():
+                self._result_path.rmdir()
 
-        self._result_path.parent.mkdir(exist_ok=True, parents=True)
-        self._result_path.write_text('{}')
+            self._result_path.parent.mkdir(exist_ok=True, parents=True)
+            self._result_path.write_text('{}')
 
     async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, RuntimeMonitor):
             return message
 
-        # TODO: evaluation between open and aiofile_linux
-        with self._result_path.open(mode='r+') as fp:
-            content: Dict[str, float] = json.load(fp)
-            content[BaseBenchmark.of(context).identifier] = message.data
+        privilege_cfg = PrivilegeConfig.of(context).result
+        with drop_privilege(privilege_cfg.user, privilege_cfg.group):
+            # TODO: evaluation between open and aiofile_linux
+            with self._result_path.open(mode='r+') as fp:
+                content: Dict[str, float] = json.load(fp)
+                content[BaseBenchmark.of(context).identifier] = message.data
 
-            fp.seek(0)
-            fp.truncate()
-            fp.write(json.dumps(content))
+                fp.seek(0)
+                fp.truncate()
+                fp.write(json.dumps(content))
 
-            return message
+                return message

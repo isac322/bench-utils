@@ -12,6 +12,7 @@ from .base_builder import BaseBuilder
 from .drivers import gen_driver
 from .drivers.engines import CGroupEngine
 from ..monitors.pipelines import DefaultPipeline
+from ..utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
     from .drivers import BenchDriver
@@ -59,8 +60,12 @@ class LaunchableBenchmark(BaseBenchmark):
 
         self._bench_driver.resume()
 
-    async def _start(self) -> None:
-        await self._bench_driver.run()
+    async def _start(self, context: Context) -> None:
+        from ..configs.containers import PrivilegeConfig
+        privilege_config = PrivilegeConfig.of(context).execute
+
+        with drop_privilege(privilege_config.user, privilege_config.group):
+            await self._bench_driver.run()
 
     async def kill(self) -> None:
         logger = logging.getLogger(self._identifier)

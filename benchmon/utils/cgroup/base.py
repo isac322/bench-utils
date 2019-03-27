@@ -1,11 +1,12 @@
 # coding: UTF-8
 
-import getpass
 import grp
-import os
-from abc import ABCMeta
+import pwd
 from pathlib import Path
 from typing import ClassVar, Iterable
+
+import os
+from abc import ABCMeta
 
 from ..asyncio_subprocess import check_run
 
@@ -58,14 +59,13 @@ class BaseCGroup(metaclass=ABCMeta):
         """
         return f'{self.CONTROLLER_NAME}:{self._name}'
 
-    async def create_group(self) -> None:
+    async def create_group(self, uid: int = os.geteuid(), gid: int = os.getegid()) -> None:
         """
         지정한 그룹 이름으로 group을 생성한다.
 
         그룹의 소유권은 현재 shell의 owner와 group으로 지정되며, `root` 권한이 필요하다.
         """
-        uname: str = getpass.getuser()
-        gid: int = os.getegid()
+        uname: str = pwd.getpwuid(uid).pw_name
         gname: str = grp.getgrgid(gid).gr_name
 
         await check_run('cgcreate', '-a', f'{uname}:{gname}', '-d', '755', '-f', '644',

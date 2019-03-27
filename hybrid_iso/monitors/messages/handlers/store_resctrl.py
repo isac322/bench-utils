@@ -7,11 +7,12 @@ from aiofile_linux import AIOContext, WriteCmd
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
-from benchmon.configs.containers import BenchConfig
+from benchmon.configs.containers import BenchConfig, Privilege, PrivilegeConfig
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 from benchmon.monitors.resctrl import T as RESCTRL_MSG_TYPE
+from benchmon.utils.privilege import drop_privilege
 
 
 class StoreResCtrl(BaseHandler):
@@ -25,11 +26,16 @@ class StoreResCtrl(BaseHandler):
         self._aio_context = AIOContext(4)
 
         self._workspace = BenchConfig.of(context).workspace / 'monitored' / 'resctrl'
-        self._workspace.mkdir(parents=True, exist_ok=True)
 
-    def _create_aio_blocks(self, bench_name: str, message: RESCTRL_MSG_TYPE) -> Iterable[WriteCmd]:
+        privilege_cfg = PrivilegeConfig.of(context).result
+        with drop_privilege(privilege_cfg.user, privilege_cfg.group):
+            self._workspace.mkdir(parents=True, exist_ok=True)
+
+    def _create_aio_blocks(self, privilege: Privilege, bench_name: str,
+                           message: RESCTRL_MSG_TYPE) -> Iterable[WriteCmd]:
         for socket_id in range(len(message)):
-            file = open(str(self._workspace / f'{socket_id}_{bench_name}.csv'), mode='w')
+            with drop_privilege(privilege.user, privilege.group):
+                file = open(str(self._workspace / f'{socket_id}_{bench_name}.csv'), mode='w')
             yield WriteCmd(file, '')
 
     def _generate_value_stream(self, message: RESCTRL_MSG_TYPE, idx: int) -> Iterable[int]:
@@ -42,7 +48,8 @@ class StoreResCtrl(BaseHandler):
 
         if self._aio_blocks is tuple():
             benchmark = BaseBenchmark.of(context)
-            self._aio_blocks = tuple(self._create_aio_blocks(benchmark.identifier, message.data))
+            privilege_cfg = PrivilegeConfig.of(context).result
+            self._aio_blocks = tuple(self._create_aio_blocks(privilege_cfg, benchmark.identifier, message.data))
             self._event_order = tuple(message.data[0].keys())
 
             for block in self._aio_blocks:
