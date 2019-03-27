@@ -14,13 +14,11 @@
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
 
-import asyncio
+import os
 from typing import Iterable, Tuple
 
-from .asyncio_subprocess import check_run
 
-
-async def set_max_freq(core_id: int, freq: int) -> None:
+def set_max_freq(core_id: int, freq: int) -> None:
     """
     `core_id` 번 코어의 최대 주파수를 `freq` MHz로 설정한다.
 
@@ -32,8 +30,8 @@ async def set_max_freq(core_id: int, freq: int) -> None:
     :param freq: 바꿀 주파수 값
     :type freq: int
     """
-    await check_run('sudo', 'tee', f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq',
-                    input=f'{freq}\n'.encode(), stdout=asyncio.subprocess.DEVNULL)
+    with open(f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq', 'w') as fp:
+        fp.write(f'{freq}\n')
 
 
 async def set_max_freqs(core_ids: Iterable[int], freq: int) -> None:
@@ -48,15 +46,14 @@ async def set_max_freqs(core_ids: Iterable[int], freq: int) -> None:
     :param freq: 바꿀 주파수 값
     :type freq: int
     """
-    target_files = (
-        f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq'
-        for core_id in core_ids
-    )
+    encoded_freq = f'{freq}\n'.encode()
+    for core_id in core_ids:
+        fd = os.open(f'/sys/devices/system/cpu/cpu{core_id}/cpufreq/scaling_max_freq', os.O_WRONLY)
+        os.write(fd, encoded_freq)
+        os.close(fd)
 
-    await check_run('sudo', 'tee', *target_files, input=f'{freq}\n'.encode(), stdout=asyncio.subprocess.DEVNULL)
 
-
-async def read_max_freq(core_id: int) -> int:
+def read_max_freq(core_id: int) -> int:
     """
     `core_id` 번 코어의 최대 주파수를 읽어온다
 
@@ -70,7 +67,7 @@ async def read_max_freq(core_id: int) -> int:
         return int(line)
 
 
-async def read_max_freqs(core_ids: Iterable[int]) -> Tuple[int, ...]:
+def read_max_freqs(core_ids: Iterable[int]) -> Tuple[int, ...]:
     """
     `core_ids` 번 코어들의 최대 주파수를 읽어온다
 
@@ -79,4 +76,4 @@ async def read_max_freqs(core_ids: Iterable[int]) -> Tuple[int, ...]:
     :return: 코어들의 최대 주파수
     :rtype: typing.Tuple[int, ...]
     """
-    return await asyncio.gather(*map(read_max_freq, core_ids))
+    return tuple(read_max_freq(core_id) for core_id in core_ids)

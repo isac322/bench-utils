@@ -11,6 +11,7 @@ from typing import ClassVar, Iterable, Optional, TYPE_CHECKING, Tuple, Type
 from coloredlogs import ColoredFormatter
 
 from .. import Context, ContextReadable
+from ..utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
     from ..configs.containers import BenchConfig
@@ -87,10 +88,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         obj._pipeline = pipeline
 
         # setup for logger
-        log_dir = bench_config.workspace / 'logs'
-        log_dir.mkdir(parents=True, exist_ok=True)
-
-        obj._log_path: Path = log_dir / f'{bench_config.identifier}.log'
+        obj._log_path: Path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'
 
         logger = logging.getLogger(bench_config.identifier)
         logger.setLevel(logger_level)
@@ -114,10 +112,16 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         # setup for loggers
         logger = logging.getLogger(self._identifier)
 
-        fh = logging.FileHandler(self._log_path, mode='w')
-        fh.setFormatter(BaseBenchmark._FILE_FORMATTER)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
+        from ..configs.containers import PrivilegeConfig
+        privilege_cfg = PrivilegeConfig.of(self._context_variable).result
+
+        with drop_privilege(privilege_cfg.user, privilege_cfg.group):
+            self._log_path.parent.mkdir(parents=True, exist_ok=True)
+
+            fh = logging.FileHandler(self._log_path, mode='w')
+            fh.setFormatter(BaseBenchmark._FILE_FORMATTER)
+            fh.setLevel(logging.DEBUG)
+            logger.addHandler(fh)
 
         if not silent:
             stream_handler = logging.StreamHandler()
@@ -138,7 +142,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             logger.debug('Pipe is initialized')
 
             logger.info('Starting benchmark...')
-            await self._start()
+            await self._start(self._context_variable)
             logger.info(f'The benchmark has started. pid : {self.pid}')
 
             logger.debug('Pausing benchmark...')
@@ -287,7 +291,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def _start(self) -> None:
+    async def _start(self, context: Context) -> None:
         """ 벤치마크별로 실제 벤치마크의 실행 방법을 서술한다. """
         pass
 

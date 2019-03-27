@@ -13,6 +13,7 @@ from ... import ContextReadable
 from ...benchmark import BaseBenchmark, LaunchableBenchmark
 
 if TYPE_CHECKING:
+    from ..containers import PrivilegeConfig
     from ... import Context
     from ...benchmark.base_builder import BaseBuilder as BenchmarkBuilder
     from ...benchmark.constraints import BaseConstraint
@@ -38,7 +39,7 @@ class BenchConfig(BaseConfig, ContextReadable, metaclass=ABCMeta):
             return benchmark._bench_config
 
     @abstractmethod
-    def generate_builder(self, logger_level: int = logging.INFO) -> BenchmarkBuilder:
+    def generate_builder(self, privilege_config: PrivilegeConfig, logger_level: int = logging.INFO) -> BenchmarkBuilder:
         pass
 
 
@@ -52,5 +53,6 @@ class LaunchableConfig(BenchConfig):
         # noinspection PyProtectedMember
         return benchmark._bench_config
 
-    def generate_builder(self, logger_level: int = logging.INFO) -> LaunchableBenchmark.Builder:
-        return LaunchableBenchmark.Builder(self, logger_level)
+    def generate_builder(self, privilege_config: PrivilegeConfig,
+                         logger_level: int = logging.INFO) -> LaunchableBenchmark.Builder:
+        return LaunchableBenchmark.Builder(self, privilege_config, logger_level)

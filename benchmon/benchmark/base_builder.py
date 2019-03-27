@@ -12,7 +12,7 @@ from .. import Context
 from ..monitors.idle import IdleMonitor
 
 if TYPE_CHECKING:
-    from ..configs.containers import BenchConfig
+    from ..configs.containers import BenchConfig, PrivilegeConfig
     from ..monitors import BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
     from ..monitors.pipelines import BasePipeline
@@ -45,6 +45,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     """
     _is_finalized: bool = False
     _bench_config: BenchConfig
+    _privilege_config: PrivilegeConfig
     _pipeline: BasePipeline
     _cur_obj: _BT
     _context: Context
@@ -52,8 +53,9 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     _monitors: List[BaseMonitor[MonitorData]]
     _constraints: Dict[Type[BaseConstraint], BaseConstraint]
 
-    def __init__(self, bench_config: BenchConfig, logger_level: int) -> None:
+    def __init__(self, bench_config: BenchConfig, privilege_config: PrivilegeConfig, logger_level: int) -> None:
         self._bench_config = bench_config
+        self._privilege_config = privilege_config
         self._logger_level = logger_level
 
         self._monitors = list()
@@ -86,6 +88,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
 
         context._assign(self._cur_obj.__class__, self._cur_obj)
         context._assign(self._pipeline.__class__, self._pipeline)
+        context._assign(self._privilege_config.__class__, self._privilege_config)
 
         return context
 

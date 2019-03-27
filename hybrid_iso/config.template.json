@@ -40,6 +40,12 @@
 			"some-event"
 		]
 	},
+	"privilege": {
+		"monitor": {
+			"user": 0,
+			"group": "root"
+		}
+	},
 	"launcher": {
 		"hyper-threading": true,
 		"stops_with_the_first": false,

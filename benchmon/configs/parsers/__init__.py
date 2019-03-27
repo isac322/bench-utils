@@ -16,4 +16,5 @@
 from .base import BaseParser, LocalReadParser
 from .bench import BenchParser
 from .perf import PerfParser
+from .privilege import PrivilegeParser
 from .rabbit_mq import RabbitMQParser

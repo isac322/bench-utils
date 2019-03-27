@@ -1,11 +1,12 @@
 # coding: UTF-8
 
-import getpass
 import grp
-import os
-from abc import ABCMeta
+import pwd
 from pathlib import Path
 from typing import ClassVar, Iterable
+
+import os
+from abc import ABCMeta
 
 from ..asyncio_subprocess import check_run
 
@@ -16,7 +17,6 @@ class BaseCGroup(metaclass=ABCMeta):
 
     .. note::
         * 내부적으로는 `cgcreate`, `cgm` 과 같은 shell command 들을 사용한다.
-        * `root` 권한을 위해 `sudo` 를 내부적으로 사용한다
 
     .. todo::
         * command parameter들의 validation check
@@ -59,17 +59,16 @@ class BaseCGroup(metaclass=ABCMeta):
         """
         return f'{self.CONTROLLER_NAME}:{self._name}'
 
-    async def create_group(self) -> None:
+    async def create_group(self, uid: int = os.geteuid(), gid: int = os.getegid()) -> None:
         """
         지정한 그룹 이름으로 group을 생성한다.
 
         그룹의 소유권은 현재 shell의 owner와 group으로 지정되며, `root` 권한이 필요하다.
         """
-        uname: str = getpass.getuser()
-        gid: int = os.getegid()
+        uname: str = pwd.getpwuid(uid).pw_name
         gname: str = grp.getgrgid(gid).gr_name
 
-        await check_run('sudo', 'cgcreate', '-a', f'{uname}:{gname}', '-d', '755', '-f', '644',
+        await check_run('cgcreate', '-a', f'{uname}:{gname}', '-d', '755', '-f', '644',
                         '-t', f'{uname}:{gname}', '-s', '644', '-g', self.identifier)
 
     async def chown(self, uid: int, gid: int) -> None:
@@ -122,7 +121,7 @@ class BaseCGroup(metaclass=ABCMeta):
         :param new_name: 새로운 group의 이름
         :rtype: str
         """
-        await check_run('sudo', 'mv', str(self.absolute_path() / self._name), str(self.absolute_path() / new_name))
+        (self.absolute_path() / self._name).rename(self.absolute_path() / new_name)
 
         self._name = new_name
 
@@ -137,4 +136,4 @@ class BaseCGroup(metaclass=ABCMeta):
 
     async def delete(self) -> None:
         """ 해당 그룹을 삭제한다. """
-        await check_run('sudo', 'cgdelete', '-r', '-g', self.identifier)
+        await check_run('cgdelete', '-r', '-g', self.identifier)

@@ -12,11 +12,12 @@ from .base_builder import BaseBuilder
 from .drivers import gen_driver
 from .drivers.engines import CGroupEngine
 from ..monitors.pipelines import DefaultPipeline
+from ..utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
     from .drivers import BenchDriver
     from .. import Context
-    from ..configs.containers import LaunchableConfig
+    from ..configs.containers import LaunchableConfig, PrivilegeConfig
     from ..monitors.pipelines import BasePipeline
 
 
@@ -59,8 +60,12 @@ class LaunchableBenchmark(BaseBenchmark):
 
         self._bench_driver.resume()
 
-    async def _start(self) -> None:
-        await self._bench_driver.run()
+    async def _start(self, context: Context) -> None:
+        from ..configs.containers import PrivilegeConfig
+        privilege_config = PrivilegeConfig.of(context).execute
+
+        with drop_privilege(privilege_config.user, privilege_config.group):
+            await self._bench_driver.run()
 
     async def kill(self) -> None:
         logger = logging.getLogger(self._identifier)
@@ -100,8 +105,9 @@ class LaunchableBenchmark(BaseBenchmark):
         _bench_config: LaunchableConfig
         _cur_obj: LaunchableBenchmark
 
-        def __init__(self, launchable_config: LaunchableConfig, logger_level: int = logging.INFO) -> None:
-            super().__init__(launchable_config, logger_level)
+        def __init__(self, launchable_config: LaunchableConfig, privilege_config: PrivilegeConfig,
+                     logger_level: int = logging.INFO) -> None:
+            super().__init__(launchable_config, privilege_config, logger_level)
 
         def _init_pipeline(self) -> DefaultPipeline:
             return DefaultPipeline()

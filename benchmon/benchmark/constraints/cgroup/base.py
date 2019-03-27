@@ -20,7 +20,10 @@ class BaseCgroupConstraint(BaseConstraint, metaclass=ABCMeta):
     _group: BaseCGroup
 
     async def on_init(self, context: Context) -> None:
-        await self._group.create_group()
+        from ....configs.containers import PrivilegeConfig
+        privilege = PrivilegeConfig.of(context).cgroup
+
+        await self._group.create_group(privilege.user, privilege.group)
 
     async def on_start(self, context: Context) -> None:
         await self._group.rename(BaseBenchmark.of(context).group_name)

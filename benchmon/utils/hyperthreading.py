@@ -14,16 +14,15 @@
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
 
-import asyncio
 import contextlib
+import os
 from typing import Set
 
-from .asyncio_subprocess import check_run
 from .hyphen import convert_to_set
 
 
-@contextlib.asynccontextmanager
-async def hyper_threading_guard(ht_flag: bool) -> None:
+@contextlib.contextmanager
+def hyper_threading_guard(ht_flag: bool) -> None:
     """
     :keyword:`async with` 과 사용되며, 그 블럭 안에서 `ht_flag` 에 따라서 Hyper-Threading을 끄는것을 보장한다.
 
@@ -34,14 +33,12 @@ async def hyper_threading_guard(ht_flag: bool) -> None:
     :type ht_flag: bool
     """
 
-    # TODO: compare between open and aiofile_linux.
-    #  (maybe open() is better when writing small amount of contents to a file at a time)
-    with open('/sys/devices/system/cpu/online') as fp:
-        raw_input: str = fp.readline()
-
-    online_cores: Set[int] = convert_to_set(raw_input)
-
     if not ht_flag:
+        with open('/sys/devices/system/cpu/online') as fp:
+            raw_input: str = fp.readline()
+
+        online_cores: Set[int] = convert_to_set(raw_input)
+
         print('disabling Hyper-Threading...')
 
         logical_cores: Set[int] = set()
@@ -51,16 +48,19 @@ async def hyper_threading_guard(ht_flag: bool) -> None:
                 line: str = fp.readline()
                 logical_cores.update(map(int, line.strip().split(',')[1:]))
 
-        files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in logical_cores)
-        await check_run('sudo', 'tee', *files_to_write, input=b'0', stdout=asyncio.subprocess.DEVNULL)
+        for core_id in logical_cores:
+            fd = os.open(f'/sys/devices/system/cpu/cpu{core_id}/online', os.O_WRONLY)
+            os.write(fd, b'0')
+            os.close(fd)
 
         print('Hyper-Threading is disabled.')
-
-    yield
-
-    if not ht_flag:
+        yield
         print('restoring Hyper-Threading...')
 
-        files_to_write = (f'/sys/devices/system/cpu/cpu{core_id}/online' for core_id in online_cores if
-                          core_id is not 0)
-        await check_run('sudo', 'tee', *files_to_write, input=b'1', stdout=asyncio.subprocess.DEVNULL)
+        for core_id in logical_cores:
+            fd = os.open(f'/sys/devices/system/cpu/cpu{core_id}/online', os.O_WRONLY)
+            os.write(fd, b'1')
+            os.close(fd)
+
+    else:
+        yield

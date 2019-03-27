@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Dict, Iterable, TYPE_CHECKING, Tuple
 
 from .base import BaseConstraint
@@ -33,14 +32,12 @@ class DVFSConstraint(BaseConstraint):
         self._orig_freq = dict()
 
     async def on_init(self, context: Context) -> None:
-        orig_freq = await read_max_freqs(self._core_ids)
+        orig_freq = read_max_freqs(self._core_ids)
         self._orig_freq = dict(zip(self._core_ids, orig_freq))
 
     async def on_start(self, context: Context) -> None:
         await set_max_freqs(self._core_ids, self._target_freq)
 
     async def on_destroy(self, context: Context) -> None:
-        await asyncio.wait(tuple(
-                set_max_freq(core_id, freq)
-                for core_id, freq in self._orig_freq.items()
-        ))
+        for core_id, freq in self._orig_freq.items():
+            set_max_freq(core_id, freq)
