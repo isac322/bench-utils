@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Iterable, List, TYPE_CHECKING, Tuple
+from typing import Callable, Iterable, TYPE_CHECKING, Tuple
 
 from .base import BaseMonitor, MonitorData
 from .messages import BaseMessage, GeneratedMessage
@@ -42,7 +42,7 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
 
     async def _monitor(self, context: Context) -> None:
         while True:
-            data: List[BaseMessage[MonitorData]] = await asyncio.gather(
+            data: Tuple[BaseMessage[MonitorData]] = await asyncio.gather(
                     _gen_message(context, m) for m in self._monitors
             )
             merged = self._data_merger(data)

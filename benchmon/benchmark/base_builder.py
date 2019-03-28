@@ -169,7 +169,6 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         self._cur_obj._constraints = tuple(self._constraints.values())
         self._cur_obj._context_variable = self._context
 
-        ret, self._cur_obj = self._cur_obj, None
         self._is_finalized = True
 
-        return ret
+        return self._cur_obj
