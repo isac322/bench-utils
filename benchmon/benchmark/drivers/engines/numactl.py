@@ -3,7 +3,7 @@
 import asyncio
 
 from .base import BaseEngine
-from ...constraints.cgroup import CpusetConstraint
+from ...constraints import CGroupConstraint
 
 
 class NumaCtlEngine(BaseEngine):
@@ -18,15 +18,22 @@ class NumaCtlEngine(BaseEngine):
 
     async def launch(self, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
         for constraint in self._benchmark._constraints:
-            if isinstance(constraint, CpusetConstraint):
-                if constraint.mems is None:
+            if isinstance(constraint, CGroupConstraint):
+                initial_values = constraint.initial_values()
+
+                if 'cpuset.mems' is initial_values:
                     mem_flag = '--localalloc'
                 else:
-                    mem_flag = '--membind={}'.format(constraint.mems)
+                    mem_flag = '--membind={}'.format(initial_values['cpuset.mems'])
+
+                if 'cpuset.cpus' is initial_values:
+                    cpu_flag = ''
+                else:
+                    cpu_flag = '--physcpubind={}'.format(initial_values['cpuset.cpus'])
 
                 return await asyncio.create_subprocess_exec(
                         'numactl',
-                        '--physcpubind={}'.format(constraint.cpus),
+                        cpu_flag,
                         mem_flag,
                         *cmd, **kwargs)
 
