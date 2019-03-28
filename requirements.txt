@@ -1,6 +1,7 @@
 aio-pika==5.4.0
 aiofile_linux
 coloredlogs==10.0
+libcgroup
 ordered-set==3.1
 psutil==5.6.1
 rdtsc==0.2.1

@@ -23,5 +23,6 @@
 """
 
 from .base import BaseConstraint
+from .cgroup import CGroupConstraint
 from .dvfs import DVFSConstraint
 from .resctrl import ResCtrlConstraint
