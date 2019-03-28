@@ -3,33 +3,41 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Iterable, TYPE_CHECKING, Tuple
+from typing import Callable, Iterable, TYPE_CHECKING, Tuple, TypeVar
 
 from .base import BaseMonitor, MonitorData
-from .messages import BaseMessage, GeneratedMessage
+from .messages import MergedMessage, MonitoredMessage
 from .oneshot import OneShotMonitor
 from .pipelines.base import BasePipeline
 
 if TYPE_CHECKING:
     from .. import Context
-    # because of circular import
-    from .messages import BaseMessage, MonitoredMessage
+
+_MSG_CLASS = TypeVar('_MSG_CLASS', MonitoredMessage, MergedMessage)
+_MSG_TYPE = _MSG_CLASS[MonitorData]
+MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], MonitorData]
+_MON_TYPE = OneShotMonitor[MonitorData]
 
 
-async def _gen_message(context: Context, monitor: OneShotMonitor[MonitorData]) -> BaseMessage[MonitorData]:
+async def _gen_message(context: Context, monitor: _MON_TYPE) -> _MSG_TYPE:
     data = await monitor.monitor_once(context)
     # noinspection PyProtectedMember
     transformed = await monitor._transform_data(data)
-    return await monitor.create_message(context, transformed)
+    message = await monitor.create_message(context, transformed)
+
+    if isinstance(message, (MonitoredMessage, MergedMessage)):
+        return message
+    else:
+        raise ValueError(f'{message} (from monitor {monitor}) is not an instance of '
+                         f'{MonitoredMessage.__class__.__name__}.')
 
 
 class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
     _interval: float
-    _monitors: Tuple[OneShotMonitor[MonitorData], ...]
-    _data_merger: Callable[[Iterable[MonitoredMessage[MonitorData]]], MonitorData]
+    _monitors: Tuple[_MON_TYPE, ...]
+    _data_merger: MERGER_TYPE
 
-    def __init__(self, interval: int, monitors: Iterable[OneShotMonitor[MonitorData]],
-                 data_merger: Callable[[Iterable[MonitoredMessage[MonitorData]]], MonitorData] = None) -> None:
+    def __init__(self, interval: int, monitors: Iterable[_MON_TYPE], data_merger: MERGER_TYPE = None) -> None:
         super().__init__()
 
         self._interval = interval / 1000
@@ -42,7 +50,7 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
 
     async def _monitor(self, context: Context) -> None:
         while True:
-            data: Tuple[BaseMessage[MonitorData]] = await asyncio.gather(
+            data: Tuple[_MSG_TYPE] = await asyncio.gather(
                     _gen_message(context, m) for m in self._monitors
             )
             merged = self._data_merger(data)
@@ -55,9 +63,9 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
     async def stop(self) -> None:
         await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
 
-    async def create_message(self, context: Context, data: MonitorData) -> GeneratedMessage[MonitorData]:
-        return GeneratedMessage(data, self)
+    async def create_message(self, context: Context, data: MonitorData) -> MergedMessage[MonitorData]:
+        return MergedMessage(data, self, self._monitors)
 
     @classmethod
-    def _default_merger(cls, data: Iterable[MonitoredMessage[MonitorData]]) -> MonitorData:
+    def _default_merger(cls, data: Iterable[_MSG_TYPE]) -> MonitorData:
         return dict((m.source, m.data) for m in data)
