@@ -23,7 +23,7 @@
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
 
-from .base import BaseMessage, GeneratedMessage, MonitoredMessage
+from .base import BaseMessage, GeneratedMessage, MergedMessage, MonitoredMessage
 from .per_bench import PerBenchMessage
 from .rabbit_mq import RabbitMQMessage
 from .system import SystemMessage

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABCMeta
 from dataclasses import dataclass
-from typing import Generic, TYPE_CHECKING, TypeVar
+from typing import Generic, TYPE_CHECKING, Tuple, TypeVar
 
 if TYPE_CHECKING:
     from ..base import BaseMonitor
@@ -38,6 +38,18 @@ class MonitoredMessage(BaseMessage[_MT], metaclass=ABCMeta):
     """ :class:`모니터 <benchmon.monitors.base.BaseMonitor>` 를 통해 생성된 메시지 """
     source: BaseMonitor[_MT]
     """ 본 메시지를 생성한 모니터 객체 """
+
+
+@dataclass(frozen=True)
+class MergedMessage(BaseMessage[_MT], Generic[_MT], metaclass=ABCMeta):
+    """
+    :class:`모니터 <benchmon.monitors.base.BaseMonitor>` 를 통해 생성된 메시지가 다른 모니터에 의해 재가공되고 머지된 메시지.
+    """
+    source: BaseMonitor[_MT]
+    """ 본 메시지를 재가공한 모니터 객체 """
+    providers: Tuple[BaseMonitor[_MT], ...]
+    level: int = 1
+    """ 재가공된 횟수. (e.g. 1: 다른 모니터에서 생성된 데이터를 한번 재가공 함) """
 
 
 @dataclass(frozen=True)
