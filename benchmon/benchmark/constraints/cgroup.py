@@ -18,15 +18,18 @@ if TYPE_CHECKING:
 
 class CGroupConstraint(BaseConstraint):
     """
-    :mod:`~benchmon.benchmark.constraints.cgroup` 에 속한 constraint들이 모두 공유하는 공통 부분을 묶어놓은 추상 클래스
+    같은 경로를 가지는 여러 서브 시스템의 cgroup들을 묶어서 하나로 관리하는 constraint
     """
     _cgroup: Optional[CGroup] = None
     _identifier: str
     _controllers: Tuple[str, ...]
     _values: Mapping[str, Union[int, bool, str]]
 
-    def __init__(self, identifier: str, first_controller: str,
-                 *controllers: str, **values: Union[int, bool, str]) -> None:
+    def __init__(self,
+                 identifier: str,
+                 first_controller: str,
+                 *controllers: str,
+                 **values: Union[int, bool, str]) -> None:
         self._identifier = identifier
         self._controllers = tuple(chain((first_controller,), controllers))
         self._values = values
@@ -62,7 +65,7 @@ class CGroupConstraint(BaseConstraint):
         :return: 그룹이름
         :rtype: str
         """
-        return self._identifier
+        return str(self._cgroup.path)
 
     def initial_values(self) -> Mapping[str, Union[int, bool, str]]:
         return copy.copy(self._values)
