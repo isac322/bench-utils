@@ -47,7 +47,8 @@ class CGroupConstraint(BaseConstraint):
         self._cgroup.move_to(BaseBenchmark.of(context).group_name)
 
     async def on_destroy(self, context: Context) -> None:
-        await self._cgroup.delete()
+        if self._cgroup is not None:
+            self._cgroup.delete(DeleteFlag.RECURSIVE)
 
     @property
     def cgroup(self) -> CGroup:
