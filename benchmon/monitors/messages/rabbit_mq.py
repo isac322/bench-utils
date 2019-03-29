@@ -1,15 +1,13 @@
 # coding: UTF-8
 
 from dataclasses import dataclass
-from typing import Generic, Mapping, Union
+from typing import Mapping, Union
 
 from .base import GeneratedMessage
 
-_MT = Mapping[str, Union[int, float, str]]
-
 
 @dataclass(frozen=True)
-class RabbitMQMessage(GeneratedMessage[_MT], Generic[_MT]):
+class RabbitMQMessage(GeneratedMessage[Mapping[str, Union[int, float, str]]]):
     """
     RabbitMQ를 통해 전송될 목적으로 메시지 핸들러가 생성한 메시지
 

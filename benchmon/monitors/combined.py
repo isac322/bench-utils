@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Iterable, TYPE_CHECKING, Tuple, TypeVar
+from typing import Callable, Iterable, TYPE_CHECKING, Tuple, Union
 
 from .base import BaseMonitor, MonitorData
 from .messages import MergedMessage, MonitoredMessage
@@ -13,8 +13,7 @@ from .pipelines.base import BasePipeline
 if TYPE_CHECKING:
     from .. import Context
 
-_MSG_CLASS = TypeVar('_MSG_CLASS', MonitoredMessage, MergedMessage)
-_MSG_TYPE = _MSG_CLASS[MonitorData]
+_MSG_TYPE = Union[MonitoredMessage[MonitorData], MergedMessage[MonitorData]]
 MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], MonitorData]
 _MON_TYPE = OneShotMonitor[MonitorData]
 
