@@ -11,8 +11,7 @@ from typing import (
 )
 
 from ...containers import BenchConfig
-from ....benchmark.constraints import BaseConstraint, DVFSConstraint, ResCtrlConstraint
-from ....benchmark.constraints.cgroup import CpusetConstraint
+from ....benchmark.constraints import BaseConstraint, CGroupConstraint, DVFSConstraint, ResCtrlConstraint
 from ....utils import ResCtrl
 from ....utils.hyphen import convert_to_hyphen, convert_to_set
 from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
@@ -211,9 +210,15 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
         """
         constrains: List[BaseConstraint] = list()
 
-        constrains.append(CpusetConstraint(config['identifier'], config['bound_cores'], config['mem_bound_sockets']))
         constrains.append(ResCtrlConstraint(config['cbm_ranges']))
-        # TODO: add CPUConstraint
+
+        # TODO: add cpu cgroup values
+        cgroup_values = {
+            'cpuset.cpus': config['bound_cores'],
+            'cpuset.mems': config['mem_bound_sockets']
+        }
+
+        constrains.append(CGroupConstraint(config['identifier'], 'cpuset', 'cpu', **cgroup_values))
 
         if 'cpu_freq' in config:
             cpu_freq: int = int(config['cpu_freq'] * 1_000_000)
