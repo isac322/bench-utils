@@ -20,5 +20,6 @@ class CGroupEngine(BaseEngine):
         for constraint in self._benchmark._constraints:
             if isinstance(constraint, CGroupConstraint):
                 kwargs['preexec_fn'] = constraint.cgroup.add_current_process
+                break
 
         return await asyncio.create_subprocess_exec(*cmd, **kwargs)
