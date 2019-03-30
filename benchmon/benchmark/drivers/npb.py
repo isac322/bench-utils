@@ -6,6 +6,7 @@ from typing import ClassVar, Dict, FrozenSet, Optional
 import psutil
 
 from .base import BenchDriver
+from ... import Context
 
 
 class NPBDriver(BenchDriver):
@@ -44,7 +45,10 @@ class NPBDriver(BenchDriver):
 
         return None
 
-    async def _launch_bench(self) -> asyncio.subprocess.Process:
-        return await self._engine.launch(f'{self._bench_home}/bin/{self._exec_name}',
-                                         stdout=asyncio.subprocess.DEVNULL,
-                                         env={'OMP_NUM_THREADS': str(self._num_threads)})
+    async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
+        return await self._engine.launch(
+                context,
+                f'{self._bench_home}/bin/{self._exec_name}',
+                stdout=asyncio.subprocess.DEVNULL,
+                env={'OMP_NUM_THREADS': str(self._num_threads)}
+        )

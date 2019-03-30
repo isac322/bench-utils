@@ -4,6 +4,8 @@ import asyncio
 
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
+from .... import Context
+from ....utils.privilege import drop_privilege
 
 
 class NumaCtlEngine(BaseEngine):
@@ -16,7 +18,10 @@ class NumaCtlEngine(BaseEngine):
             :mod:`benchmon.benchmark.drivers.engines` 모듈
     """
 
-    async def launch(self, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
+    async def launch(self, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
+        from ....configs.containers import PrivilegeConfig
+        privilege_config = PrivilegeConfig.of(context).execute
+
         for constraint in self._benchmark._constraints:
             if isinstance(constraint, CGroupConstraint):
                 initial_values = constraint.initial_values()
@@ -31,10 +36,12 @@ class NumaCtlEngine(BaseEngine):
                 else:
                     cpu_flag = '--physcpubind={}'.format(initial_values['cpuset.cpus'])
 
-                return await asyncio.create_subprocess_exec(
-                        'numactl',
-                        cpu_flag,
-                        mem_flag,
-                        *cmd, **kwargs)
+                with drop_privilege(privilege_config.user, privilege_config.group):
+                    return await asyncio.create_subprocess_exec(
+                            'numactl',
+                            cpu_flag,
+                            mem_flag,
+                            *cmd, **kwargs)
 
-        return await asyncio.create_subprocess_exec(*cmd, **kwargs)
+        with drop_privilege(privilege_config.user, privilege_config.group):
+            return await asyncio.create_subprocess_exec(*cmd, **kwargs)

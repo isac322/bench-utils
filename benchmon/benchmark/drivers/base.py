@@ -12,6 +12,7 @@ import psutil
 
 if TYPE_CHECKING:
     from .engines.base import BaseEngine
+    from ... import Context
 
 
 class BenchDriver(metaclass=ABCMeta):
@@ -186,7 +187,7 @@ class BenchDriver(metaclass=ABCMeta):
             return self._bench_proc_info.pid
 
     @abstractmethod
-    async def _launch_bench(self) -> asyncio.subprocess.Process:
+    async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
         """
         :attr:`_engine` 을 사용하여서 워크로드를 실행한다.
 
@@ -209,13 +210,13 @@ class BenchDriver(metaclass=ABCMeta):
         """
         pass
 
-    async def run(self) -> None:
+    async def run(self, context: Context) -> None:
         """
         벤치마크를 실행한다.
         실행 명령을 내린 후 :meth:`_find_bench_proc` 를 통해 실제 벤치마크 프로세스의 시작이 될 때 까지 기다린다.
         """
         self._bench_proc_info = None
-        self._wrapper_proc = await self._launch_bench()
+        self._wrapper_proc = await self._launch_bench(context)
         self._wrapper_proc_info = psutil.Process(self._wrapper_proc.pid)
 
         while True:

@@ -9,6 +9,7 @@ from typing import ClassVar, FrozenSet, Optional
 import psutil
 
 from .base import BenchDriver
+from ... import Context
 
 
 class SpecDriver(BenchDriver):
@@ -31,7 +32,7 @@ class SpecDriver(BenchDriver):
 
         return None
 
-    async def _launch_bench(self) -> asyncio.subprocess.Process:
+    async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
         cmd = f'runspec --config=vm.cfg --size=ref --noreportable --delay=0 --nobuild --iteration=1 {self._name}'
 
         bench_bin = os.path.join(SpecDriver._bench_home, 'bin')
@@ -44,7 +45,7 @@ class SpecDriver(BenchDriver):
         env['LC_LANG'] = 'C'
         env['LC_ALL'] = 'C'
 
-        return await self._engine.launch(*shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
+        return await self._engine.launch(context, *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
 
     def stop(self) -> None:
         try:
