@@ -4,6 +4,8 @@ import asyncio
 
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
+from .... import Context
+from ....utils.privilege import drop_privilege
 
 
 class CGroupEngine(BaseEngine):
@@ -16,10 +18,14 @@ class CGroupEngine(BaseEngine):
             :mod:`benchmon.benchmark.drivers.engines` 모듈
     """
 
-    async def launch(self, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
+    async def launch(self, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
         for constraint in self._benchmark._constraints:
             if isinstance(constraint, CGroupConstraint):
                 kwargs['preexec_fn'] = constraint.cgroup.add_current_process
                 break
 
-        return await asyncio.create_subprocess_exec(*cmd, **kwargs)
+        from ....configs.containers import PrivilegeConfig
+        privilege_config = PrivilegeConfig.of(context).execute
+
+        with drop_privilege(privilege_config.user, privilege_config.group):
+            return await asyncio.create_subprocess_exec(*cmd, **kwargs)
