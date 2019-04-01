@@ -1,17 +1,15 @@
 # coding: UTF-8
 
-from typing import Iterable, Optional, TextIO, Tuple, TypeVar, Union
+from typing import Iterable, Optional, TextIO, Tuple, Union
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
-from benchmon.configs.containers import PerfConfig, PrivilegeConfig
+from benchmon.configs.containers import PrivilegeConfig
 from benchmon.monitors import PerfMonitor
-from benchmon.monitors.messages import PerBenchMessage
+from benchmon.monitors.messages import BaseMessage, PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 from benchmon.monitors.perf import T as PERF_MSG_TYPE
 from benchmon.utils.privilege import drop_privilege
-
-_MT = TypeVar('_MT')
 
 
 class StorePerf(BaseHandler):
@@ -34,10 +32,12 @@ class StorePerf(BaseHandler):
             #  (maybe open() is better when writing small amount of contents to a file at a time)
             self._dest_file = (workspace / f'{benchmark.identifier}.csv').open(mode='w')
 
-        self._event_order = tuple(PerfConfig.of(context).event_names)
+        # FIXME: None check
+        perf_monitor = PerfMonitor.of(context)
+        self._event_order = tuple(perf_monitor.config.event_names)
         self._dest_file.write(','.join(self._event_order) + '\n')
 
-    async def on_message(self, context: Context, message: PerBenchMessage[_MT]) -> Optional[PerBenchMessage[_MT]]:
+    async def on_message(self, context: Context, message: BaseMessage[PERF_MSG_TYPE]) -> BaseMessage[PERF_MSG_TYPE]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, PerfMonitor):
             return message
 

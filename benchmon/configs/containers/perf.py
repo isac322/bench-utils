@@ -3,15 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generator, Optional, TYPE_CHECKING, Tuple
+from typing import Generator, Tuple
 
 from .base import MonitorConfig
-from ... import ContextReadable
-from ...benchmark import BaseBenchmark
-from ...monitors import PerfMonitor
-
-if TYPE_CHECKING:
-    from ... import Context
 
 
 @dataclass(frozen=True)
@@ -24,7 +18,7 @@ class PerfEvent:
 
 
 @dataclass(frozen=True)
-class PerfConfig(MonitorConfig, ContextReadable):
+class PerfConfig(MonitorConfig):
     """
     :class:`~benchmon.monitors.perf.PerfMonitor` 객체를 생성할 때 쓰이는 정보.
     어떤 이벤트를 얼만큼의 주기로 모니터링 해야할지가 적혀있다.
@@ -32,21 +26,6 @@ class PerfConfig(MonitorConfig, ContextReadable):
 
     interval: int
     events: Tuple[PerfEvent, ...]
-
-    @classmethod
-    def of(cls, context: Context) -> Optional[PerfConfig]:
-        benchmark = BaseBenchmark.of(context)
-
-        if benchmark is None:
-            return None
-
-        # noinspection PyProtectedMember
-        for monitor in benchmark._monitors:
-            if isinstance(monitor, PerfMonitor):
-                # noinspection PyProtectedMember
-                return monitor._perf_config
-
-        return None
 
     @property
     def event_names(self) -> Generator[str, None, None]:
