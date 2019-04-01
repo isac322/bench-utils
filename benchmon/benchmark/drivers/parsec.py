@@ -7,6 +7,7 @@ from typing import ClassVar, FrozenSet, Optional
 import psutil
 
 from .base import BenchDriver
+from .engines.base import BaseEngine
 from ... import Context
 
 
@@ -33,5 +34,6 @@ class ParsecDriver(BenchDriver):
 
     async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
         cmd = f'{self._bench_home}/parsecmgmt -a run -p {self._name} -i native -n {self._num_threads}'
+        engine = BaseEngine.of(context)
 
-        return await self._engine.launch(context, *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL)
+        return await engine.launch(context, *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL)

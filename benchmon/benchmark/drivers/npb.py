@@ -6,6 +6,7 @@ from typing import ClassVar, Dict, FrozenSet, Optional
 import psutil
 
 from .base import BenchDriver
+from .engines.base import BaseEngine
 from ... import Context
 
 
@@ -46,7 +47,9 @@ class NPBDriver(BenchDriver):
         return None
 
     async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
-        return await self._engine.launch(
+        engine = BaseEngine.of(context)
+
+        return await engine.launch(
                 context,
                 f'{self._bench_home}/bin/{self._exec_name}',
                 stdout=asyncio.subprocess.DEVNULL,

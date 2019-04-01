@@ -40,7 +40,7 @@ BenchDriver.register_driver(RodiniaDriver)
 BenchDriver.register_driver(SpecDriver)
 
 
-def gen_driver(workload_name: str, num_threads: int, engine: BaseEngine) -> BenchDriver:
+def gen_driver(workload_name: str, num_threads: int) -> BenchDriver:
     """
     `engine` 을 실행 엔진으로 하며, `num_threads` 개의 thread를 사용하는 `workload_name` 워크로드의 드라이버를 생성한다.
 
@@ -48,12 +48,10 @@ def gen_driver(workload_name: str, num_threads: int, engine: BaseEngine) -> Benc
     :type workload_name: str
     :param num_threads: 워크로드가 사용할 thread 수
     :type num_threads: int
-    :param engine: 만들어질 드라이버가 사용할 실행 엔진
-    :type engine: benchmon.benchmark.drivers.engines.base.BaseEngine
     :return: 드라이버 객체
     :rtype: benchmon.benchmark.drivers.base.BenchDriver
     :raise ValueError: 드라이버를 찾을 수 없을 때
     """
     _bench_driver = BenchDriver.get_driver(workload_name)
 
-    return _bench_driver(workload_name, num_threads, engine)
+    return _bench_driver(workload_name, num_threads)

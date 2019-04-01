@@ -42,7 +42,7 @@ class LaunchableBenchmark(BaseBenchmark):
                 logger_level: int = logging.INFO) -> LaunchableBenchmark:
         obj: LaunchableBenchmark = super().__new__(cls, launchable_config, pipeline, logger_level)
 
-        obj._bench_driver = gen_driver(launchable_config.name, launchable_config.num_of_threads, CGroupEngine(obj))
+        obj._bench_driver = gen_driver(launchable_config.name, launchable_config.num_of_threads)
 
         return obj
 
@@ -109,3 +109,11 @@ class LaunchableBenchmark(BaseBenchmark):
 
         def _init_bench_obj(self, pipeline: BasePipeline) -> LaunchableBenchmark:
             return LaunchableBenchmark.__new__(LaunchableBenchmark, self._bench_config, pipeline, self._logger_level)
+
+        def _init_context_var(self) -> Context:
+            context = super()._init_context_var()
+
+            # noinspection PyProtectedMember
+            context._assign(CGroupEngine, CGroupEngine)
+
+            return context
