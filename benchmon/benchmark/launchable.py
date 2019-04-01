@@ -47,7 +47,7 @@ class LaunchableBenchmark(BaseBenchmark):
         return obj
 
     def __init__(self, **kwargs) -> None:
-        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(self.__class__.__name__))
+        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(type(self).__name__))
 
     def pause(self) -> None:
         logging.getLogger(self._identifier).info('pausing...')

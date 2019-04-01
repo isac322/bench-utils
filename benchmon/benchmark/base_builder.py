@@ -86,9 +86,9 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         """
         context = Context()
 
-        context._assign(self._cur_obj.__class__, self._cur_obj)
-        context._assign(self._pipeline.__class__, self._pipeline)
-        context._assign(self._privilege_config.__class__, self._privilege_config)
+        context._assign(type(self._cur_obj), self._cur_obj)
+        context._assign(type(self._pipeline), self._pipeline)
+        context._assign(type(self._privilege_config), self._privilege_config)
 
         return context
 

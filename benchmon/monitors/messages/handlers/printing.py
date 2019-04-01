@@ -21,5 +21,5 @@ class PrintHandler(BaseHandler):
     """
 
     async def on_message(self, context: Context, message: MonitoredMessage) -> Optional[MonitoredMessage]:
-        print({'data': message.data, 'src': message.source.__class__.__name__})
+        print({'data': message.data, 'src': type(message.source).__name__})
         return message

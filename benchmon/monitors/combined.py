@@ -28,7 +28,7 @@ async def _gen_message(context: Context, monitor: _MON_TYPE) -> _MSG_TYPE:
         return message
     else:
         raise ValueError(f'{message} (from monitor {monitor}) is not an instance of '
-                         f'{MonitoredMessage.__class__.__name__}.')
+                         f'{MonitoredMessage.__name__} or {MergedMessage.__name__}.')
 
 
 class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
