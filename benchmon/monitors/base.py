@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Generic, Mapping, TYPE_CHECKING, Tuple, TypeVar
+from typing import Generic, Mapping, Optional, TYPE_CHECKING, Tuple, Type, TypeVar
+
+from .. import ContextReadable
+from ..benchmark import BaseBenchmark
 
 if TYPE_CHECKING:
     from .. import Context
@@ -13,10 +16,23 @@ if TYPE_CHECKING:
 
 MonitorData = TypeVar('MonitorData', int, float, Tuple, Mapping)
 
+_CT = TypeVar('_CT', bound='BaseMonitor')
+
 
 # parametrize message type too
-class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
+class BaseMonitor(ContextReadable, Generic[MonitorData], metaclass=ABCMeta):
     _initialized: bool
+
+    @classmethod
+    def of(cls: Type[_CT], context: Context) -> Optional[_CT]:
+        benchmark = BaseBenchmark.of(context)
+
+        # noinspection PyProtectedMember
+        for monitor in benchmark._monitors:
+            if isinstance(monitor, cls):
+                return monitor
+
+        return None
 
     def __init__(self) -> None:
         self._initialized = False
