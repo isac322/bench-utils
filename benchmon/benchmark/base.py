@@ -156,7 +156,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             await self._destroy()
 
         except Exception as e:
-            logger.critical(f'The following errors occurred during startup : {e}')
+            logger.critical(f'The following errors occurred during startup : {e}', e)
             if self.is_running:
                 await self.kill()
 
@@ -221,7 +221,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
                 logger.debug('Monitors are complete')
 
         except Exception as e:
-            logger.critical(f'The following errors occurred during monitoring : {e}')
+            logger.critical(f'The following errors occurred during monitoring : {e}', e)
 
             if self.is_running:
                 logger.debug('Attempt to force termination of benchmark due to error...')
