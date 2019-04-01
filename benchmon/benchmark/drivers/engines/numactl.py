@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from abc import ABC
 from typing import Optional, Type
 
 from .base import BaseEngine
@@ -13,7 +12,7 @@ from ....benchmark.base import BaseBenchmark
 from ....utils.privilege import drop_privilege
 
 
-class NumaCtlEngine(BaseEngine, ABC):
+class NumaCtlEngine(BaseEngine):
     """
     프로그램을 처음 실행할때부터 메모리나 CPU 사용을 제한할 수 있게하는 `numactl` 을 사용하여 벤치마크를 실행한다.
 

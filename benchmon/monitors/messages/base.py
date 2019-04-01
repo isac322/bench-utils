@@ -34,14 +34,14 @@ class BaseMessage(Generic[_MT], metaclass=ABCMeta):
 
 
 @dataclass(frozen=True)
-class MonitoredMessage(BaseMessage[_MT], Generic[_MT], metaclass=ABCMeta):
+class MonitoredMessage(BaseMessage[_MT], Generic[_MT]):
     """ :class:`모니터 <benchmon.monitors.base.BaseMonitor>` 를 통해 생성된 메시지 """
     source: BaseMonitor[_MT]
     """ 본 메시지를 생성한 모니터 객체 """
 
 
 @dataclass(frozen=True)
-class MergedMessage(BaseMessage[_MT], Generic[_MT], metaclass=ABCMeta):
+class MergedMessage(BaseMessage[_MT], Generic[_MT]):
     """
     :class:`모니터 <benchmon.monitors.base.BaseMonitor>` 를 통해 생성된 메시지가 다른 모니터에 의해 재가공되고 머지된 메시지.
     """
@@ -53,7 +53,7 @@ class MergedMessage(BaseMessage[_MT], Generic[_MT], metaclass=ABCMeta):
 
 
 @dataclass(frozen=True)
-class GeneratedMessage(BaseMessage[_MT], Generic[_MT], metaclass=ABCMeta):
+class GeneratedMessage(BaseMessage[_MT], Generic[_MT]):
     """ 모니터가 아닌 :class:`메시지 핸들러 <benchmon.monitors.messages.base.BaseHandler>` 를 통해 생성된 메시지 """
     generator: BaseHandler
     """ 본 메시지를 생성한 핸들러 객체 """

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from typing import Optional, TYPE_CHECKING
 
 from .base import MonitorData
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 # FIXME: rename
-class IterationDependentMonitor(OneShotMonitor[MonitorData], metaclass=ABCMeta):
+class IterationDependentMonitor(OneShotMonitor[MonitorData]):
     _prev_data: Optional[MonitorData]
 
     def __init__(self, interval: int) -> None:

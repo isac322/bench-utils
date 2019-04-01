@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from abc import ABC
 from typing import Optional, Type
 
 from .base import BaseEngine
@@ -13,7 +12,7 @@ from ....benchmark.base import BaseBenchmark
 from ....utils.privilege import drop_privilege
 
 
-class CGroupEngine(BaseEngine, ABC):
+class CGroupEngine(BaseEngine):
     """
     :meth:`~asyncio.create_subprocess_exec` 를 사용하여 벤치마크를 실행한다.
 

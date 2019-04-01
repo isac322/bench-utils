@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class BenchConfig(BaseConfig, ContextReadable, metaclass=ABCMeta):
+class BenchConfig(BaseConfig, ContextReadable):
     num_of_threads: int
     type: str
     constraints: Tuple[BaseConstraint, ...]
