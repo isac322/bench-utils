@@ -8,6 +8,7 @@ import psutil
 from .base import BenchDriver
 from .engines.base import BaseEngine
 from ... import Context
+from ...benchmark import BaseBenchmark
 
 
 class RodiniaDriver(BenchDriver):
@@ -32,11 +33,12 @@ class RodiniaDriver(BenchDriver):
 
     async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
         engine = BaseEngine.of(context)
+        config = BaseBenchmark.of(context).bench_config
 
         return await engine.launch(
                 context,
                 f'{self._bench_home}/openmp/{self._name}/run',
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
-                env={'OMP_NUM_THREADS': str(self._num_threads)}
+                env={'OMP_NUM_THREADS': str(config.num_of_threads)}
         )

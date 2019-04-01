@@ -50,24 +50,20 @@ class BenchDriver(metaclass=ABCMeta):
     """
 
     _name: str
-    _num_threads: int
     _bench_proc_info: Optional[psutil.Process] = None
     _wrapper_proc: Optional[asyncio.subprocess.Process] = None
     _wrapper_proc_info: Optional[psutil.Process] = None
 
-    def __init__(self, name: str, num_threads: int):
+    def __init__(self, name: str):
         """
         `engine` 을 실행 엔진으로 하며, `num_threads` 개의 thread를 사용하는 `workload_name` 워크로드의 드라이버를 생성한다.
 
         :param name: 드라이버로 만들고자 하는 워크로드의 이름
         :type name: str
-        :param num_threads: 워크로드가 사용할 thread 수
-        :type num_threads: int
         :return: 드라이버 객체
         :rtype: benchmon.benchmark.drivers.base.BenchDriver
         """
         self._name = name
-        self._num_threads = num_threads
 
     def __del__(self):
         if self._is_running:

@@ -8,6 +8,7 @@ import psutil
 from .base import BenchDriver
 from .engines.base import BaseEngine
 from ... import Context
+from ...benchmark import BaseBenchmark
 
 
 class NPBDriver(BenchDriver):
@@ -48,10 +49,11 @@ class NPBDriver(BenchDriver):
 
     async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
         engine = BaseEngine.of(context)
+        config = BaseBenchmark.of(context).bench_config
 
         return await engine.launch(
                 context,
                 f'{self._bench_home}/bin/{self._exec_name}',
                 stdout=asyncio.subprocess.DEVNULL,
-                env={'OMP_NUM_THREADS': str(self._num_threads)}
+                env={'OMP_NUM_THREADS': str(config.num_of_threads)}
         )

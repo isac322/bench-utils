@@ -55,7 +55,7 @@ class LaunchableBenchmark(BaseBenchmark):
                 logger_level
         )
 
-        obj._bench_driver = gen_driver(launchable_config.name, launchable_config.num_of_threads)
+        obj._bench_driver = gen_driver(launchable_config.name)
 
         return obj
 
