@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Type, TypeVar
+
+from ..base import BaseBenchmark
+from ... import ContextReadable
 
 if TYPE_CHECKING:
     from ... import Context
 
+_CT = TypeVar('_CT', bound='BaseConstraint')
+
 
 # FIXME: update docstring
-class BaseConstraint(metaclass=ABCMeta):
+class BaseConstraint(ContextReadable, metaclass=ABCMeta):
     """
     :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 실행 전후로 환경을 설정한다.
 
@@ -27,6 +32,17 @@ class BaseConstraint(metaclass=ABCMeta):
         역할과 설명
             :mod:`benchmon.benchmark.constraints` 참조
     """
+
+    @classmethod
+    def of(cls: Type[_CT], context: Context) -> Optional[_CT]:
+        benchmark = BaseBenchmark.of(context)
+
+        # noinspection PyProtectedMember
+        for constraint in benchmark._constraints:
+            if isinstance(constraint, cls):
+                return constraint
+
+        return None
 
     async def on_init(self, context: Context) -> None:
         """
