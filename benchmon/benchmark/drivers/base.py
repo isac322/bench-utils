@@ -6,9 +6,11 @@ import asyncio
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
-from typing import ClassVar, FrozenSet, Optional, Set, TYPE_CHECKING, Tuple, Type
+from typing import ClassVar, FrozenSet, Mapping, Optional, Set, TYPE_CHECKING, Tuple, Type
 
 import psutil
+
+from ...configs import get_full_path, validate_and_load
 
 if TYPE_CHECKING:
     from ... import Context
@@ -75,6 +77,17 @@ class BenchDriver(metaclass=ABCMeta):
                 pass
 
     @classmethod
+    def _parse_bench_home(cls) -> None:
+        """
+        :mod:`benchmon.benchmark.drivers` 에 등록된 모든 :class:`드라이버 <benchmon.benchmark.drivers.baseBenchDriver>` 에 대해서
+        각 드라이버가 실행하는 벤치마크의 경로를 `benchmark_home.json` 로부터 읽어 입력한다.
+        """
+        config: Mapping[str, str] = validate_and_load(get_full_path('benchmark_home.json'))
+
+        for _bench_driver in cls._registered_drivers:
+            _bench_driver._bench_home = config[_bench_driver.bench_name]
+
+    @classmethod
     def register_driver(cls, new_driver: Type[BenchDriver]) -> None:
         """
         벤치마크 드라이버로 `new_driver` 를 등록한다.
@@ -83,6 +96,7 @@ class BenchDriver(metaclass=ABCMeta):
         :param new_driver: 새로 등록할 벤치마크 드라이버
         :type new_driver: typing.Type[benchmon.benchmark.drivers.base.BenchDriver]
         """
+        cls._parse_bench_home()
         cls._registered_drivers.add(new_driver)
 
     @classmethod

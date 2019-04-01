@@ -24,9 +24,7 @@ import copy
 import json
 from importlib import resources
 from pathlib import Path
-from typing import Any, Dict, Mapping, Tuple
-
-from ..benchmark.drivers import BenchDriver
+from typing import Any, Dict, Tuple
 
 
 def get_full_path(config_file_name: str) -> Path:
@@ -76,18 +74,3 @@ def validate_and_load(config_path: Path) -> Dict[str, Any]:
             content: Dict[str, Any] = json.load(fp)
             _cached_config_map[config_path] = (content, current_mtime)
             return copy.deepcopy(content)
-
-
-# FIXME: 다른 방법은 없나?
-def _parse_bench_home() -> None:
-    """
-    :mod:`benchmon.benchmark.drivers` 에 등록된 모든 :class:`드라이버 <benchmon.benchmark.drivers.baseBenchDriver>` 에 대해서
-    각 드라이버가 실행하는 벤치마크의 경로를 `benchmark_home.json` 로부터 읽어 입력한다.
-    """
-    config: Mapping[str, str] = validate_and_load(get_full_path('benchmark_home.json'))
-
-    for _bench_driver in BenchDriver._registered_drivers:
-        _bench_driver._bench_home = config[_bench_driver.bench_name]
-
-
-_parse_bench_home()
