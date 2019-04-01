@@ -14,14 +14,14 @@ from benchmon.configs.parsers import BenchParser, PerfParser, PrivilegeParser, R
 from benchmon.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
 from benchmon.monitors.messages.handlers import RabbitMQHandler
 from benchmon.utils.hyperthreading import hyper_threading_guard
-from .benchmark.constraints.rabbit_mq import RabbitMQConstraint
-from .configs.containers import LauncherConfig
+from .benchmark.constraints import RabbitMQConstraint
 from .configs.parsers import LauncherParser
 from .monitors.messages.handlers import HybridIsoMerger, StorePerf, StoreResCtrl, StoreRuntime
 
 if TYPE_CHECKING:
     from benchmon.benchmark import BaseBenchmark
     from benchmon.configs.containers import PerfConfig, RabbitMQConfig, PrivilegeConfig
+    from .configs.containers import LauncherConfig
 
 MIN_PYTHON = (3, 7)
 

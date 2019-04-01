@@ -6,7 +6,7 @@ from types import ModuleType
 from typing import Tuple
 
 from benchmon.configs.parsers import LocalReadParser
-from ..containers.launcher import LauncherConfig
+from ..containers import LauncherConfig
 
 
 class LauncherParser(LocalReadParser[LauncherConfig]):

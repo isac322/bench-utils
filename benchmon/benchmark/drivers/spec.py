@@ -1,16 +1,20 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 import os
 import shlex
 from signal import SIGCONT, SIGSTOP
-from typing import ClassVar, FrozenSet, Optional
+from typing import ClassVar, FrozenSet, Optional, TYPE_CHECKING
 
 import psutil
 
 from .base import BenchDriver
-from .engines.base import BaseEngine
-from ... import Context
+from .engines import BaseEngine
+
+if TYPE_CHECKING:
+    from ... import Context
 
 
 class SpecDriver(BenchDriver):

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING, Tuple
 
 from .base import BaseConstraint
-from ..base import BaseBenchmark
+from .. import BaseBenchmark
 from ...utils import ResCtrl
 
 if TYPE_CHECKING:

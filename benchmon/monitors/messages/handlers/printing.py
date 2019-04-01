@@ -7,7 +7,7 @@ from typing import Optional, TYPE_CHECKING, TypeVar
 from .base import BaseHandler
 
 if TYPE_CHECKING:
-    from ..base import MonitoredMessage
+    from .. import MonitoredMessage
     from .... import Context
 
 _MT = TypeVar('_MT')

@@ -7,7 +7,7 @@ from typing import Mapping, TYPE_CHECKING, Union
 
 from .base import BaseMonitor
 from .messages import PerBenchMessage
-from .pipelines.base import BasePipeline
+from .pipelines import BasePipeline
 from ..benchmark import BaseBenchmark
 from ..utils.asyncio_subprocess import check_output
 

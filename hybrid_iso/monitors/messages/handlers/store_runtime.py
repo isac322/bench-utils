@@ -1,16 +1,21 @@
 # coding: UTF-8
 
-import json
-from pathlib import Path
-from typing import Dict, Optional, TypeVar
+from __future__ import annotations
 
-from benchmon import Context
+import json
+from typing import Dict, Optional, TYPE_CHECKING, TypeVar
+
 from benchmon.benchmark import BaseBenchmark
 from benchmon.configs.containers import PrivilegeConfig
 from benchmon.monitors import RuntimeMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 from benchmon.utils.privilege import drop_privilege
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from benchmon import Context
 
 _MT = TypeVar('_MT')
 

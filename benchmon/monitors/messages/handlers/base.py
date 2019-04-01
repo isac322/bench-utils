@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional, TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from ..base import BaseMessage
+    from .. import BaseMessage
     from .... import Context
 
 _MT = TypeVar('_MT')

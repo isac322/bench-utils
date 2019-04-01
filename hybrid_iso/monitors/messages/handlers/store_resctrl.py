@@ -1,19 +1,25 @@
 # coding: UTF-8
 
-from pathlib import Path
-from typing import Iterable, Optional, Tuple, TypeVar
+from __future__ import annotations
+
+from typing import Iterable, Optional, TYPE_CHECKING, Tuple, TypeVar
 
 from aiofile_linux import WriteCmd
 
-from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
-from benchmon.configs.containers import Privilege, PrivilegeConfig
+from benchmon.configs.containers import PrivilegeConfig
 from benchmon.context import aio_context
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
-from benchmon.monitors.resctrl import T as RESCTRL_MSG_TYPE
 from benchmon.utils.privilege import drop_privilege
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from benchmon import Context
+    from benchmon.configs.containers import Privilege
+    from benchmon.monitors.resctrl import T as RESCTRL_MSG_TYPE
 
 _MT = TypeVar('_MT')
 

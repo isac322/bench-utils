@@ -8,7 +8,7 @@ from typing import Optional, TYPE_CHECKING
 import aio_pika
 
 from .base import BaseHandler
-from ..rabbit_mq import RabbitMQMessage
+from .. import RabbitMQMessage
 
 if TYPE_CHECKING:
     from .... import Context

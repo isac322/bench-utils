@@ -29,5 +29,6 @@
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
 
+from .base import BaseEngine
 from .cgroup import CGroupEngine
 from .numactl import NumaCtlEngine

@@ -10,9 +10,8 @@ from .. import ContextReadable
 from ..benchmark import BaseBenchmark
 
 if TYPE_CHECKING:
+    from .messages import BaseMessage
     from .. import Context
-    # because of circular import
-    from .messages.base import BaseMessage
 
 MonitorData = TypeVar('MonitorData', int, float, Tuple, Mapping)
 

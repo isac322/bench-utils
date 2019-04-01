@@ -7,7 +7,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from .base import BaseMonitor, MonitorData
-from .pipelines.base import BasePipeline
+from .pipelines import BasePipeline
 
 if TYPE_CHECKING:
     from .. import Context

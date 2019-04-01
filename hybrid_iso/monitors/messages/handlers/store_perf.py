@@ -1,15 +1,20 @@
 # coding: UTF-8
 
-from typing import Iterable, Optional, TextIO, Tuple, Union
+from __future__ import annotations
 
-from benchmon import Context
+from typing import Iterable, Optional, TYPE_CHECKING, TextIO, Tuple, Union
+
 from benchmon.benchmark import BaseBenchmark
 from benchmon.configs.containers import PrivilegeConfig
 from benchmon.monitors import PerfMonitor
-from benchmon.monitors.messages import BaseMessage, PerBenchMessage
+from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
-from benchmon.monitors.perf import T as PERF_MSG_TYPE
 from benchmon.utils.privilege import drop_privilege
+
+if TYPE_CHECKING:
+    from benchmon import Context
+    from benchmon.monitors.messages import BaseMessage
+    from benchmon.monitors.perf import T as PERF_MSG_TYPE
 
 
 class StorePerf(BaseHandler):

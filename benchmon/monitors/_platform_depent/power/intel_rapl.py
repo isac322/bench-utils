@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import ClassVar, Dict, List, TYPE_CHECKING, Tuple, Union
 
-from ...base import BaseMonitor
+from ... import BaseMonitor
 from ...messages import SystemMessage
-from ...pipelines.base import BasePipeline
+from ...pipelines import BasePipeline
 
 if TYPE_CHECKING:
     from .... import Context

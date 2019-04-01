@@ -7,15 +7,15 @@ from typing import Callable, Iterable, TYPE_CHECKING, Tuple, Union
 
 from .base import BaseMonitor, MonitorData
 from .messages import MergedMessage, MonitoredMessage
-from .oneshot import OneShotMonitor
-from .pipelines.base import BasePipeline
+from .pipelines import BasePipeline
 
 if TYPE_CHECKING:
+    from .oneshot import OneShotMonitor
     from .. import Context
 
-_MSG_TYPE = Union[MonitoredMessage[MonitorData], MergedMessage[MonitorData]]
-MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], MonitorData]
-_MON_TYPE = OneShotMonitor[MonitorData]
+    _MSG_TYPE = Union[MonitoredMessage[MonitorData], MergedMessage[MonitorData]]
+    MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], MonitorData]
+    _MON_TYPE = OneShotMonitor[MonitorData]
 
 
 async def _gen_message(context: Context, monitor: _MON_TYPE) -> _MSG_TYPE:

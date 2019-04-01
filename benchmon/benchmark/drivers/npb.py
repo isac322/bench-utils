@@ -1,14 +1,17 @@
 # coding: UTF-8
 
-import asyncio
-from typing import ClassVar, Dict, FrozenSet, Optional
+from __future__ import annotations
 
-import psutil
+import asyncio
+from typing import ClassVar, Dict, FrozenSet, Optional, TYPE_CHECKING
 
 from .base import BenchDriver
-from .engines.base import BaseEngine
-from ... import Context
+from .engines import BaseEngine
 from ...benchmark import BaseBenchmark
+
+if TYPE_CHECKING:
+    import psutil
+    from ... import Context
 
 
 class NPBDriver(BenchDriver):

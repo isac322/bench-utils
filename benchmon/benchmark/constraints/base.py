@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Optional, TYPE_CHECKING, Type, TypeVar
 
-from ..base import BaseBenchmark
+from .. import BaseBenchmark
 from ... import ContextReadable
 
 if TYPE_CHECKING:

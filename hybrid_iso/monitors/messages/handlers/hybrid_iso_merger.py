@@ -5,17 +5,13 @@ from __future__ import annotations
 from typing import Dict, Optional, TYPE_CHECKING, Type, TypeVar, Union
 
 from benchmon.benchmark import BaseBenchmark
-from benchmon.monitors.messages.base import MonitoredMessage
-from benchmon.monitors.messages.handlers.base import BaseHandler
-from benchmon.monitors.messages.rabbit_mq import RabbitMQMessage
-from benchmon.monitors.perf import PerfMonitor
-from benchmon.monitors.rdtsc import RDTSCMonitor
-from benchmon.monitors.resctrl import ResCtrlMonitor
+from benchmon.monitors import PerfMonitor, RDTSCMonitor, ResCtrlMonitor
+from benchmon.monitors.messages import MonitoredMessage, RabbitMQMessage
+from benchmon.monitors.messages.handlers import BaseHandler
 
 if TYPE_CHECKING:
     from benchmon import Context
-    from benchmon.monitors import MonitorData
-    from benchmon.monitors.base import BaseMonitor
+    from benchmon.monitors import BaseMonitor, MonitorData
 
 _MT = TypeVar('_MT')
 

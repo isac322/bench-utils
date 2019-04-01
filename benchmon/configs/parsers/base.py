@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, ABCMeta, abstractmethod
-from pathlib import Path
-from typing import Any, Generic, Mapping, Optional, TypeVar
+from typing import Any, Generic, Mapping, Optional, TYPE_CHECKING, TypeVar
 
 from .. import validate_and_load
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _DT = TypeVar('_DT')
 

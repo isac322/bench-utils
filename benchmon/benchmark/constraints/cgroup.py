@@ -10,7 +10,7 @@ from libcgroup import CGroup
 from libcgroup_bind.groups import DeleteFlag
 
 from .base import BaseConstraint
-from ..base import BaseBenchmark
+from .. import BaseBenchmark
 
 if TYPE_CHECKING:
     from ... import Context

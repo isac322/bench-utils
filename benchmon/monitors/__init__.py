@@ -2,6 +2,7 @@
 
 from .base import BaseMonitor, MonitorData
 from .combined import CombinedOneShotMonitor
+from .idle import IdleMonitor
 from .iteration_dependent import IterationDependentMonitor
 from .oneshot import OneShotMonitor
 from .perf import PerfMonitor

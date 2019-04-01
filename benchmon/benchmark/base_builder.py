@@ -7,11 +7,11 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Generic, List, TYPE_CHECKING, Type, TypeVar
 
 from .base import BaseBenchmark
-from .constraints.base import BaseConstraint
 from .. import Context
-from ..monitors.idle import IdleMonitor
+from ..monitors import IdleMonitor
 
 if TYPE_CHECKING:
+    from .constraints import BaseConstraint
     from ..configs.containers import BenchConfig, PrivilegeConfig
     from ..monitors import BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler

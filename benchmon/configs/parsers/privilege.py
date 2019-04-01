@@ -1,7 +1,5 @@
 # coding: UTF-8
 
-from __future__ import annotations
-
 import grp
 import pwd
 from dataclasses import Field, fields

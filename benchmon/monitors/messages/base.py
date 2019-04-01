@@ -7,9 +7,9 @@ from dataclasses import dataclass
 from typing import Generic, TYPE_CHECKING, Tuple, TypeVar
 
 if TYPE_CHECKING:
-    from ..base import BaseMonitor
     # because of circular import
-    from .handlers.base import BaseHandler
+    from .handlers import BaseHandler
+    from .. import BaseMonitor
 
 _MT = TypeVar('_MT')
 

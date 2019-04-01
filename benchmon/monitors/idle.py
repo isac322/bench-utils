@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import MonitorData
-from .base import BaseMonitor
+from .base import BaseMonitor, MonitorData
 from ..benchmark import BaseBenchmark
 
 if TYPE_CHECKING:

@@ -7,12 +7,11 @@ from typing import TYPE_CHECKING
 
 from .base import BaseMonitor
 from .messages import PerBenchMessage
-from .pipelines.base import BasePipeline
+from .pipelines import BasePipeline
 from ..benchmark import BaseBenchmark
 
 if TYPE_CHECKING:
     from .. import Context
-    # because of circular import
 
 
 # TODO: handle pause and resume of Benchmark

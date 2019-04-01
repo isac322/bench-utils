@@ -7,14 +7,18 @@ from collections import OrderedDict, defaultdict
 from itertools import chain
 from pathlib import Path
 from typing import (
-    ClassVar, DefaultDict, Dict, Generic, Iterable, List, MutableMapping, MutableSet, Set, Tuple, Type, TypeVar, Union
+    ClassVar, DefaultDict, Dict, Generic, Iterable, List, MutableMapping,
+    MutableSet, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 )
 
 from ...containers import BenchConfig
-from ....benchmark.constraints import BaseConstraint, CGroupConstraint, DVFSConstraint, ResCtrlConstraint
+from ....benchmark.constraints import CGroupConstraint, DVFSConstraint, ResCtrlConstraint
 from ....utils import ResCtrl
 from ....utils.hyphen import convert_to_hyphen, convert_to_set
 from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
+
+if TYPE_CHECKING:
+    from ....benchmark.constraints import BaseConstraint
 
 _CT = TypeVar('_CT', bound=BenchConfig)
 

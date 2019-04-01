@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from .base import BaseConfig
-from ... import Context, ContextReadable
+from ... import ContextReadable
+
+if TYPE_CHECKING:
+    from ... import Context
 
 
 @dataclass(frozen=True)

@@ -1,15 +1,18 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
 import shlex
-from typing import ClassVar, FrozenSet, Optional
-
-import psutil
+from typing import ClassVar, FrozenSet, Optional, TYPE_CHECKING
 
 from .base import BenchDriver
-from .engines.base import BaseEngine
-from ... import Context
+from .engines import BaseEngine
 from ...benchmark import BaseBenchmark
+
+if TYPE_CHECKING:
+    import psutil
+    from ... import Context
 
 
 class ParsecDriver(BenchDriver):

@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from itertools import chain, groupby
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, TYPE_CHECKING
 
 from .base import LocalReadParser
-from .benchmark.base import BaseBenchParser, BenchJson
+from .benchmark import BaseBenchParser
 from ..containers import BenchConfig
+
+if TYPE_CHECKING:
+    from .benchmark.base import BenchJson
 
 
 class BenchParser(LocalReadParser[Iterable[BenchConfig]]):

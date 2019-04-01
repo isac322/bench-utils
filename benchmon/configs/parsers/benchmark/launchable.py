@@ -1,13 +1,19 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 from collections import defaultdict
-from pathlib import Path
-from typing import ClassVar, DefaultDict, Iterable, List, Tuple
+from typing import ClassVar, DefaultDict, Iterable, List, TYPE_CHECKING, Tuple
 
 from ordered_set import OrderedSet
 
-from .base import BaseBenchParser, BenchJson
+from .base import BaseBenchParser
 from ...containers import LaunchableConfig
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from .base import BenchJson
 
 
 class LaunchableParser(BaseBenchParser[LaunchableConfig]):

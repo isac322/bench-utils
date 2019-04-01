@@ -5,20 +5,22 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
-from pathlib import Path
 from typing import ClassVar, Iterable, Optional, TYPE_CHECKING, Tuple, Type
 
 from coloredlogs import ColoredFormatter
 
-from .. import Context, ContextReadable
+from .. import ContextReadable
 from ..utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    from .. import Context
     from ..configs.containers import BenchConfig
     from ..monitors import BaseMonitor, MonitorData
     from ..monitors.pipelines import BasePipeline
     # because of circular import
-    from .constraints.base import BaseConstraint
+    from .constraints import BaseConstraint
 
 
 class BaseBenchmark(ContextReadable, metaclass=ABCMeta):

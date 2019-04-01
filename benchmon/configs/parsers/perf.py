@@ -1,7 +1,5 @@
 # coding: UTF-8
 
-from __future__ import annotations
-
 from itertools import chain
 from typing import Dict, List, Union
 

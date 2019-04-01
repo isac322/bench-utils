@@ -52,4 +52,5 @@
 """
 
 from .base import BaseBenchmark
+from .base_builder import BaseBuilder
 from .launchable import LaunchableBenchmark

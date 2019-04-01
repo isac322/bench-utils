@@ -7,7 +7,6 @@ from typing import Generic, TYPE_CHECKING, TypeVar
 
 from .base import MonitoredMessage
 
-# because of circular import
 if TYPE_CHECKING:
     from ...benchmark import BaseBenchmark
 
