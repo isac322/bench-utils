@@ -11,7 +11,6 @@ from typing import ClassVar, FrozenSet, Optional, Set, TYPE_CHECKING, Tuple, Typ
 import psutil
 
 if TYPE_CHECKING:
-    from .engines.base import BaseEngine
     from ... import Context
 
 
@@ -50,12 +49,11 @@ class BenchDriver(metaclass=ABCMeta):
 
     _name: str
     _num_threads: int
-    _engine: BaseEngine
     _bench_proc_info: Optional[psutil.Process] = None
     _wrapper_proc: Optional[asyncio.subprocess.Process] = None
     _wrapper_proc_info: Optional[psutil.Process] = None
 
-    def __init__(self, name: str, num_threads: int, engine: BaseEngine):
+    def __init__(self, name: str, num_threads: int):
         """
         `engine` 을 실행 엔진으로 하며, `num_threads` 개의 thread를 사용하는 `workload_name` 워크로드의 드라이버를 생성한다.
 
@@ -63,14 +61,11 @@ class BenchDriver(metaclass=ABCMeta):
         :type name: str
         :param num_threads: 워크로드가 사용할 thread 수
         :type num_threads: int
-        :param engine: 만들어질 드라이버가 사용할 실행 엔진
-        :type engine: benchmon.benchmark.drivers.engines.base.BaseEngine
         :return: 드라이버 객체
         :rtype: benchmon.benchmark.drivers.base.BenchDriver
         """
         self._name = name
         self._num_threads = num_threads
-        self._engine = engine
 
     def __del__(self):
         if self._is_running:

@@ -6,6 +6,7 @@ from typing import ClassVar, FrozenSet, Optional
 import psutil
 
 from .base import BenchDriver
+from .engines.base import BaseEngine
 from ... import Context
 
 
@@ -30,7 +31,9 @@ class RodiniaDriver(BenchDriver):
         return None
 
     async def _launch_bench(self, context: Context) -> asyncio.subprocess.Process:
-        return await self._engine.launch(
+        engine = BaseEngine.of(context)
+
+        return await engine.launch(
                 context,
                 f'{self._bench_home}/openmp/{self._name}/run',
                 stdout=asyncio.subprocess.DEVNULL,

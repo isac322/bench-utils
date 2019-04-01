@@ -1,14 +1,19 @@
 # coding: UTF-8
 
+from __future__ import annotations
+
 import asyncio
+from abc import ABC
+from typing import Optional, Type
 
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
 from .... import Context
+from ....benchmark.base import BaseBenchmark
 from ....utils.privilege import drop_privilege
 
 
-class CGroupEngine(BaseEngine):
+class CGroupEngine(BaseEngine, ABC):
     """
     :meth:`~asyncio.create_subprocess_exec` 를 사용하여 벤치마크를 실행한다.
 
@@ -20,8 +25,16 @@ class CGroupEngine(BaseEngine):
             :mod:`benchmon.benchmark.drivers.engines` 모듈
     """
 
-    async def launch(self, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
-        for constraint in self._benchmark._constraints:
+    @classmethod
+    def of(cls, context: Context) -> Optional[Type[CGroupEngine]]:
+        # noinspection PyProtectedMember
+        return context._variable_dict.get(cls)
+
+    @classmethod
+    async def launch(cls, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
+        benchmark = BaseBenchmark.of(context)
+
+        for constraint in benchmark._constraints:
             if isinstance(constraint, CGroupConstraint):
                 kwargs['preexec_fn'] = constraint.cgroup.add_current_process
                 break

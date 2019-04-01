@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Type
+
+from .... import ContextReadable
 
 if TYPE_CHECKING:
-    from ...base import BaseBenchmark
+    import asyncio
     from .... import Context
 
 
-class BaseEngine(metaclass=ABCMeta):
+class BaseEngine(ContextReadable, metaclass=ABCMeta):
     """
     :class:`~benchmon.benchmark.drivers.base.BenchDriver` 가 벤치마크를 실행할 때 어떻게 실행할지 서술하는 클래스.
 
@@ -21,15 +22,18 @@ class BaseEngine(metaclass=ABCMeta):
             :mod:`benchmon.benchmark.drivers.engines` 모듈
     """
 
-    _benchmark: BaseBenchmark
+    @classmethod
+    def of(cls, context: Context) -> Optional[Type[BaseEngine]]:
+        # noinspection PyProtectedMember
+        for c, v in context._variable_dict.items():
+            if issubclass(c, cls):
+                return v
 
-    def __init__(self, benchmark: BaseBenchmark) -> None:
-        super().__init__()
+        return None
 
-        self._benchmark = benchmark
-
+    @classmethod
     @abstractmethod
-    async def launch(self, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
+    async def launch(cls, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
         """
         `cmd` 로 주어진 벤치마크 실행 커맨드를 이 클래스의 목적에 맞게 바꾸거나 감싸서 실행한다.
 

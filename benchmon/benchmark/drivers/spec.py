@@ -9,6 +9,7 @@ from typing import ClassVar, FrozenSet, Optional
 import psutil
 
 from .base import BenchDriver
+from .engines.base import BaseEngine
 from ... import Context
 
 
@@ -45,7 +46,9 @@ class SpecDriver(BenchDriver):
         env['LC_LANG'] = 'C'
         env['LC_ALL'] = 'C'
 
-        return await self._engine.launch(context, *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
+        engine = BaseEngine.of(context)
+
+        return await engine.launch(context, *shlex.split(cmd), stdout=asyncio.subprocess.DEVNULL, env=env)
 
     def stop(self) -> None:
         try:
