@@ -1,7 +1,7 @@
 # coding: UTF-8
 
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, TypeVar
 
 from aiofile_linux import WriteCmd
 
@@ -14,6 +14,8 @@ from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 from benchmon.monitors.resctrl import T as RESCTRL_MSG_TYPE
 from benchmon.utils.privilege import drop_privilege
+
+_MT = TypeVar('_MT')
 
 
 class StoreResCtrl(BaseHandler):
@@ -39,13 +41,14 @@ class StoreResCtrl(BaseHandler):
         for event_name in self._event_order:
             yield message[idx][event_name]
 
-    async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
+    async def on_message(self, context: Context, message: PerBenchMessage[_MT]) -> Optional[PerBenchMessage[_MT]]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, ResCtrlMonitor):
             return message
 
         if self._aio_blocks is tuple():
             benchmark = BaseBenchmark.of(context)
             privilege_cfg = PrivilegeConfig.of(context).result
+
             self._aio_blocks = tuple(self._create_aio_blocks(privilege_cfg, benchmark.identifier, message.data))
             self._event_order = tuple(message.data[0].keys())
 

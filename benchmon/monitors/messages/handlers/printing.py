@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, TypeVar
 
 from .base import BaseHandler
 
 if TYPE_CHECKING:
     from ..base import MonitoredMessage
     from .... import Context
+
+_MT = TypeVar('_MT')
 
 
 class PrintHandler(BaseHandler):
@@ -20,6 +22,6 @@ class PrintHandler(BaseHandler):
         디버깅용이기 때문에, 로깅에 사용하지 않는다.
     """
 
-    async def on_message(self, context: Context, message: MonitoredMessage) -> Optional[MonitoredMessage]:
+    async def on_message(self, context: Context, message: MonitoredMessage[_MT]) -> Optional[MonitoredMessage[_MT]]:
         print({'data': message.data, 'src': type(message.source).__name__})
         return message

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     from ..base import BaseMessage
     from .... import Context
+
+_MT = TypeVar('_MT')
 
 
 class BaseHandler(metaclass=ABCMeta):
@@ -48,7 +50,7 @@ class BaseHandler(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def on_message(self, context: Context, message: BaseMessage) -> Optional[BaseMessage]:
+    async def on_message(self, context: Context, message: BaseMessage[_MT]) -> Optional[BaseMessage[_MT]]:
         """
         이전의 핸들러 혹은 파이프라인으로부터 전달받은 메시지를 처리하는 메소드.
 

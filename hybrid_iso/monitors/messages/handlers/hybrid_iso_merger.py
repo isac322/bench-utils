@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional, TYPE_CHECKING, Type, Union
+from typing import Dict, Optional, TYPE_CHECKING, Type, TypeVar, Union
 
 from benchmon.benchmark import BaseBenchmark
 from benchmon.monitors.messages.base import MonitoredMessage
@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from benchmon.monitors import MonitorData
     from benchmon.monitors.base import BaseMonitor
 
+_MT = TypeVar('_MT')
+
 
 class HybridIsoMerger(BaseHandler):
     _merge_dict: Dict[Type[BaseMonitor[MonitorData]], Optional[MonitoredMessage]]
@@ -24,7 +26,9 @@ class HybridIsoMerger(BaseHandler):
     def __init__(self) -> None:
         self._merge_dict = dict.fromkeys((PerfMonitor, RDTSCMonitor, ResCtrlMonitor), None)
 
-    async def on_message(self, context: Context, message: MonitoredMessage) -> Union[RabbitMQMessage, MonitoredMessage]:
+    async def on_message(self,
+                         context: Context,
+                         message: MonitoredMessage[_MT]) -> Union[RabbitMQMessage, MonitoredMessage[_MT]]:
         if not isinstance(message, MonitoredMessage):
             return message
 

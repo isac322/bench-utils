@@ -43,6 +43,7 @@ class BaseMonitor(Generic[MonitorData], metaclass=ABCMeta):
     async def create_message(self, context: Context, data: MonitorData) -> BaseMessage[MonitorData]:
         pass
 
+    # TODO: should be abstractmethod?
     async def on_cancel(self, context: Context, cancel_error: asyncio.CancelledError) -> None:
         pass
 

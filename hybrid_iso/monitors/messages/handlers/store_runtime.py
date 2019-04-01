@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, TypeVar
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
@@ -11,6 +11,8 @@ from benchmon.monitors import RuntimeMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 from benchmon.utils.privilege import drop_privilege
+
+_MT = TypeVar('_MT')
 
 
 class StoreRuntime(BaseHandler):
@@ -30,7 +32,7 @@ class StoreRuntime(BaseHandler):
             self._result_path.parent.mkdir(exist_ok=True, parents=True)
             self._result_path.write_text('{}')
 
-    async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
+    async def on_message(self, context: Context, message: PerBenchMessage[_MT]) -> Optional[PerBenchMessage[_MT]]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, RuntimeMonitor):
             return message
 

@@ -1,6 +1,6 @@
 # coding: UTF-8
 
-from typing import Iterable, Optional, TextIO, Tuple, Union
+from typing import Iterable, Optional, TextIO, Tuple, TypeVar, Union
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
@@ -10,6 +10,8 @@ from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
 from benchmon.monitors.perf import T as PERF_MSG_TYPE
 from benchmon.utils.privilege import drop_privilege
+
+_MT = TypeVar('_MT')
 
 
 class StorePerf(BaseHandler):
@@ -35,7 +37,7 @@ class StorePerf(BaseHandler):
         self._event_order = tuple(PerfConfig.of(context).event_names)
         self._dest_file.write(','.join(self._event_order) + '\n')
 
-    async def on_message(self, context: Context, message: PerBenchMessage) -> Optional[PerBenchMessage]:
+    async def on_message(self, context: Context, message: PerBenchMessage[_MT]) -> Optional[PerBenchMessage[_MT]]:
         if not isinstance(message, PerBenchMessage) or not isinstance(message.source, PerfMonitor):
             return message
 
