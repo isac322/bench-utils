@@ -7,7 +7,7 @@ from aiofile_linux import WriteCmd
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
-from benchmon.configs.containers import BenchConfig, Privilege, PrivilegeConfig
+from benchmon.configs.containers import Privilege, PrivilegeConfig
 from benchmon.context import aio_context
 from benchmon.monitors import ResCtrlMonitor
 from benchmon.monitors.messages import PerBenchMessage
@@ -24,7 +24,8 @@ class StoreResCtrl(BaseHandler):
     _workspace: Path
 
     async def on_init(self, context: Context) -> None:
-        self._workspace = BenchConfig.of(context).workspace / 'monitored' / 'resctrl'
+        benchmark = BaseBenchmark.of(context)
+        self._workspace = benchmark.bench_config.workspace / 'monitored' / 'resctrl'
 
         privilege_cfg = PrivilegeConfig.of(context).result
         with drop_privilege(privilege_cfg.user, privilege_cfg.group):

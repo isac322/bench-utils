@@ -8,7 +8,7 @@ import aio_pika
 
 from benchmon.benchmark.base import BaseBenchmark
 from benchmon.benchmark.constraints.base import BaseConstraint
-from benchmon.configs.containers import BenchConfig, RabbitMQConfig
+from benchmon.configs.containers import RabbitMQConfig
 
 if TYPE_CHECKING:
     from benchmon import Context
@@ -31,7 +31,7 @@ class RabbitMQConstraint(BaseConstraint):
             await channel.declare_queue(self._creation_q_name)
 
             benchmark = BaseBenchmark.of(context)
-            bench_config = BenchConfig.of(context)
+            bench_config = benchmark.bench_config
 
             await channel.default_exchange.publish(
                     aio_pika.Message(f'{benchmark.identifier},{bench_config.type},{benchmark.pid}'.encode()),

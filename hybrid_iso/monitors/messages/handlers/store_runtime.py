@@ -6,7 +6,7 @@ from typing import Dict, Optional, TypeVar
 
 from benchmon import Context
 from benchmon.benchmark import BaseBenchmark
-from benchmon.configs.containers import BenchConfig, PrivilegeConfig
+from benchmon.configs.containers import PrivilegeConfig
 from benchmon.monitors import RuntimeMonitor
 from benchmon.monitors.messages import PerBenchMessage
 from benchmon.monitors.messages.handlers import BaseHandler
@@ -19,7 +19,8 @@ class StoreRuntime(BaseHandler):
     _result_path: Path
 
     async def on_init(self, context: Context) -> None:
-        workspace: Path = BenchConfig.of(context).workspace / 'monitored'
+        benchmark = BaseBenchmark.of(context)
+        workspace: Path = benchmark.bench_config.workspace / 'monitored'
         self._result_path = workspace / 'runtime.json'
 
         privilege_cfg = PrivilegeConfig.of(context).result
