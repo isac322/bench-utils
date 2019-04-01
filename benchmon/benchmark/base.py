@@ -63,13 +63,14 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
     _context_variable: Context
 
     @classmethod
-    def of(cls, context: Context) -> Optional[BaseBenchmark]:
+    def of(cls, context: Context) -> BaseBenchmark:
         # noinspection PyProtectedMember
         for c, v in context._variable_dict.items():
             if issubclass(c, cls):
                 return v
 
-        return None
+        # FIXME: detail exception type
+        raise RuntimeError('Context variable should have exactly one Benchmark')
 
     @classmethod
     def _waits(cls, iterable: Iterable) -> asyncio.Future:
