@@ -8,7 +8,6 @@ from typing import Optional, Type
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
 from .... import Context
-from ....benchmark.base import BaseBenchmark
 from ....utils.privilege import drop_privilege
 
 
@@ -31,12 +30,9 @@ class CGroupEngine(BaseEngine):
 
     @classmethod
     async def launch(cls, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
-        benchmark = BaseBenchmark.of(context)
-
-        for constraint in benchmark._constraints:
-            if isinstance(constraint, CGroupConstraint):
-                kwargs['preexec_fn'] = constraint.cgroup.add_current_process
-                break
+        constraint = CGroupConstraint.of(context)
+        if constraint is not None:
+            kwargs['preexec_fn'] = constraint.cgroup.add_current_process
 
         from ....configs.containers import PrivilegeConfig
         privilege_config = PrivilegeConfig.of(context).execute

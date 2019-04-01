@@ -8,7 +8,6 @@ from typing import Optional, Type
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
 from .... import Context
-from ....benchmark.base import BaseBenchmark
 from ....utils.privilege import drop_privilege
 
 
@@ -32,28 +31,27 @@ class NumaCtlEngine(BaseEngine):
         from ....configs.containers import PrivilegeConfig
         privilege_config = PrivilegeConfig.of(context).execute
 
-        benchmark = BaseBenchmark.of(context)
+        constraint = CGroupConstraint.of(context)
 
-        for constraint in benchmark._constraints:
-            if isinstance(constraint, CGroupConstraint):
-                initial_values = constraint.initial_values()
+        if constraint is not None:
+            initial_values = constraint.initial_values()
 
-                if 'cpuset.mems' is initial_values:
-                    mem_flag = '--localalloc'
-                else:
-                    mem_flag = '--membind={}'.format(initial_values['cpuset.mems'])
+            if 'cpuset.mems' is initial_values:
+                mem_flag = '--localalloc'
+            else:
+                mem_flag = '--membind={}'.format(initial_values['cpuset.mems'])
 
-                if 'cpuset.cpus' is initial_values:
-                    cpu_flag = ''
-                else:
-                    cpu_flag = '--physcpubind={}'.format(initial_values['cpuset.cpus'])
+            if 'cpuset.cpus' is initial_values:
+                cpu_flag = ''
+            else:
+                cpu_flag = '--physcpubind={}'.format(initial_values['cpuset.cpus'])
 
-                with drop_privilege(privilege_config.user, privilege_config.group):
-                    return await asyncio.create_subprocess_exec(
-                            'numactl',
-                            cpu_flag,
-                            mem_flag,
-                            *cmd, **kwargs)
+            with drop_privilege(privilege_config.user, privilege_config.group):
+                return await asyncio.create_subprocess_exec(
+                        'numactl',
+                        cpu_flag,
+                        mem_flag,
+                        *cmd, **kwargs)
 
         with drop_privilege(privilege_config.user, privilege_config.group):
             return await asyncio.create_subprocess_exec(*cmd, **kwargs)
