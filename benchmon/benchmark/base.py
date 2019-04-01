@@ -77,15 +77,23 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: BenchConfig,
+                constraints: Tuple[BaseConstraint, ...],
+                monitors: Tuple[BaseMonitor[MonitorData], ...],
                 pipeline: BasePipeline,
+                context_variable: Context,
                 logger_level=logging.INFO) -> BaseBenchmark:
         obj: BaseBenchmark = super().__new__(cls)
 
         obj._bench_config = bench_config
         obj._identifier = bench_config.identifier
 
-        obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = tuple()
+        obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = monitors
+        obj._constraints = constraints
         obj._pipeline = pipeline
+        obj._context_variable = context_variable
+
+        # noinspection PyProtectedMember
+        context_variable._assign(cls, obj)
 
         # setup for logger
         obj._log_path: Path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'

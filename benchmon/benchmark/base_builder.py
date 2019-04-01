@@ -47,7 +47,6 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     _bench_config: BenchConfig
     _privilege_config: PrivilegeConfig
     _pipeline: BasePipeline
-    _cur_obj: _BT
     _context: Context
     _logger_level: int
     _monitors: List[BaseMonitor[MonitorData]]
@@ -62,8 +61,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         self._constraints = dict()
 
         self._pipeline = self._init_pipeline()
-        self._cur_obj = self._init_bench_obj(self._pipeline)
-        self._context = self._init_context_var()
+        self._context = Context()
 
         for constraint in bench_config.constraints:
             self.add_constraint(constraint)
@@ -72,25 +70,16 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     def _init_pipeline(self) -> BasePipeline:
         pass
 
-    @abstractmethod
-    def _init_bench_obj(self, pipeline: BasePipeline) -> _BT:
-        pass
-
     # noinspection PyProtectedMember
-    def _init_context_var(self) -> Context:
+    def _init_context_var(self) -> None:
         """
         모니터와 제약에서 쓰일 Context 객체를 생성하고, 값들을 설정한다.
 
         :return: 이 객체에서 쓰일 Context 객체
         :rtype: benchmon.context.Context
         """
-        context = Context()
-
-        context._assign(type(self._cur_obj), self._cur_obj)
-        context._assign(type(self._pipeline), self._pipeline)
-        context._assign(type(self._privilege_config), self._privilege_config)
-
-        return context
+        self._context._assign(type(self._pipeline), self._pipeline)
+        self._context._assign(type(self._privilege_config), self._privilege_config)
 
     def add_handler(self, handler: BaseHandler) -> BaseBuilder[_BT]:
         """
@@ -142,13 +131,13 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
 
         return self
 
-    def _finalize(self) -> None:
+    @abstractmethod
+    def _finalize(self) -> _BT:
         """
         :meth:`finalize` 안에서 호출되며, 이 클래스의 자식 클레스에서는 :meth:`finalize` 메소드보다 이 메소드를 override해서
         그 클래스가 finalize 전에 해야할 동작을 서술하는것이 좋다.
         """
-        if len(self._monitors) is 0:
-            self.add_monitor(IdleMonitor())
+        pass
 
     def finalize(self) -> _BT:
         """
@@ -163,12 +152,12 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         if self._is_finalized:
             raise AssertionError('Can\'t not reuse the finalized builder.')
 
-        self._finalize()
+        if len(self._monitors) is 0:
+            self.add_monitor(IdleMonitor())
 
-        self._cur_obj._monitors = tuple(self._monitors)
-        self._cur_obj._constraints = tuple(self._constraints.values())
-        self._cur_obj._context_variable = self._context
+        benchmark = self._finalize()
+        self._init_context_var()
 
         self._is_finalized = True
 
-        return self._cur_obj
+        return benchmark
