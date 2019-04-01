@@ -359,6 +359,10 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         """
         pass
 
+    @property
+    def bench_config(self) -> BenchConfig:
+        return self._bench_config
+
     @abstractmethod
     def all_child_tid(self) -> Tuple[int, ...]:
         pass
