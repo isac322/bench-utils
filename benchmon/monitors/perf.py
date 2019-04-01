@@ -79,5 +79,9 @@ class PerfMonitor(BaseMonitor[T]):
     async def is_stopped(self) -> bool:
         return self._is_stopped
 
+    @property
+    def config(self) -> PerfConfig:
+        return self._perf_config
+
     async def create_message(self, context: Context, data: T) -> PerBenchMessage[T]:
         return PerBenchMessage(data, self, BaseBenchmark.of(context))
