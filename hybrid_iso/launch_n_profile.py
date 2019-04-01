@@ -82,7 +82,11 @@ async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
 
             for task in pending:  # type: asyncio.Task
                 task.cancel()
-                await task
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    # TODO: is this right?
+                    pass
 
     loop.remove_signal_handler(signal.SIGINT)
 
