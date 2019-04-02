@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 class BenchConfig(BaseConfig):
     num_of_threads: int
     type: str
-    constraints: Tuple[BaseConstraint, ...]
+    _init_constraints: Tuple[BaseConstraint, ...]
     identifier: str
     workspace: Path
     width_in_log: int

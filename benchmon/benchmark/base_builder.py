@@ -63,7 +63,8 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         self._pipeline = self._init_pipeline()
         self._context = Context()
 
-        for constraint in bench_config.constraints:
+        # noinspection PyProtectedMember
+        for constraint in bench_config._init_constraints:
             self.add_constraint(constraint)
 
     @abstractmethod
