@@ -56,7 +56,7 @@ class BenchDriver(metaclass=ABCMeta):
 
     def __init__(self, name: str):
         """
-        `engine` 을 실행 엔진으로 하며, `num_threads` 개의 thread를 사용하는 `workload_name` 워크로드의 드라이버를 생성한다.
+        `workload_name` 워크로드의 드라이버를 생성한다.
 
         :param name: 드라이버로 만들고자 하는 워크로드의 이름
         :type name: str
@@ -73,17 +73,6 @@ class BenchDriver(metaclass=ABCMeta):
                 pass
 
     @classmethod
-    def _parse_bench_home(cls) -> None:
-        """
-        :mod:`benchmon.benchmark.drivers` 에 등록된 모든 :class:`드라이버 <benchmon.benchmark.drivers.baseBenchDriver>` 에 대해서
-        각 드라이버가 실행하는 벤치마크의 경로를 `benchmark_home.json` 로부터 읽어 입력한다.
-        """
-        config: Mapping[str, str] = validate_and_load(get_full_path('benchmark_home.json'))
-
-        for _bench_driver in cls._registered_drivers:
-            _bench_driver._bench_home = config[_bench_driver.bench_name]
-
-    @classmethod
     def register_driver(cls, new_driver: Type[BenchDriver]) -> None:
         """
         벤치마크 드라이버로 `new_driver` 를 등록한다.
@@ -92,7 +81,10 @@ class BenchDriver(metaclass=ABCMeta):
         :param new_driver: 새로 등록할 벤치마크 드라이버
         :type new_driver: typing.Type[benchmon.benchmark.drivers.base.BenchDriver]
         """
-        cls._parse_bench_home()
+        # 드라이버가 실행하는 벤치마크의 경로를 `benchmark_home.json` 로부터 읽어 입력한다.
+        config: Mapping[str, str] = validate_and_load(get_full_path('benchmark_home.json'))
+        new_driver._bench_home = config[new_driver.bench_name]
+
         cls._registered_drivers.add(new_driver)
 
     @classmethod
