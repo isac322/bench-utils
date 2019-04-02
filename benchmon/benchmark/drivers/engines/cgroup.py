@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional, Type
+from typing import TYPE_CHECKING
 
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
-from .... import Context
 from ....utils.privilege import drop_privilege
+
+if TYPE_CHECKING:
+    from .... import Context
 
 
 class CGroupEngine(BaseEngine):
@@ -22,11 +24,6 @@ class CGroupEngine(BaseEngine):
         엔진의 목적과 사용
             :mod:`benchmon.benchmark.drivers.engines` 모듈
     """
-
-    @classmethod
-    def of(cls, context: Context) -> Optional[Type[CGroupEngine]]:
-        # noinspection PyProtectedMember
-        return context._variable_dict.get(cls)
 
     @classmethod
     async def launch(cls, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
