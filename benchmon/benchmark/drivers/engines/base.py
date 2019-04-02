@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, TYPE_CHECKING, Type
+from typing import Optional, TYPE_CHECKING, Type, TypeVar
 
 from .... import ContextReadable
 
 if TYPE_CHECKING:
     import asyncio
     from .... import Context
+
+_ET = TypeVar('_ET', bound='BaseEngine')
 
 
 class BaseEngine(ContextReadable, metaclass=ABCMeta):
@@ -23,7 +25,7 @@ class BaseEngine(ContextReadable, metaclass=ABCMeta):
     """
 
     @classmethod
-    def of(cls, context: Context) -> Optional[Type[BaseEngine]]:
+    def of(cls: Type[_ET], context: Context) -> Optional[Type[_ET]]:
         # noinspection PyProtectedMember
         for c, v in context._variable_dict.items():
             if issubclass(c, cls):

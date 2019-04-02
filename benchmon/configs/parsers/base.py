@@ -61,6 +61,9 @@ class BaseParser(Generic[_DT], metaclass=ABCMeta):
         return self._cached is not None
 
 
+_LRP = TypeVar('_LRP', bound='LocalReadParser')
+
+
 class LocalReadParser(BaseParser[_DT], ABC):
     """
     :class:`BaseParser` 와 다르게 외부에 존재하는 local `config.json` 파일을 읽어서 파싱한다.
@@ -74,7 +77,7 @@ class LocalReadParser(BaseParser[_DT], ABC):
         self._local_config = validate_and_load(workspace / 'config.json')
         self._workspace = workspace
 
-    def reload_local_cfg(self) -> LocalReadParser:
+    def reload_local_cfg(self: _LRP) -> _LRP:
         """
         캐싱된 결과를 무시하고 다시 파싱한다.
         `config.json` 의 내용이 바뀔 경우 유용하다.

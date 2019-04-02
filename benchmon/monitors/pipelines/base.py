@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional, TYPE_CHECKING, Tuple
+from typing import List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar
 
 from ... import ContextReadable
 
@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from ..messages import BaseMessage
     from ..messages.handlers import BaseHandler
     from ... import Context
+
+_PT = TypeVar('_PT', bound='BasePipeline')
 
 
 class BasePipeline(ContextReadable, metaclass=ABCMeta):
@@ -31,7 +33,7 @@ class BasePipeline(ContextReadable, metaclass=ABCMeta):
     """
 
     @classmethod
-    def of(cls, context: Context) -> Optional[BasePipeline]:
+    def of(cls: Type[_PT], context: Context) -> Optional[_PT]:
         # noinspection PyProtectedMember
         for c, v in context._variable_dict.items():
             if issubclass(c, cls):
@@ -42,7 +44,7 @@ class BasePipeline(ContextReadable, metaclass=ABCMeta):
     def __init__(self) -> None:
         self._handlers: List[BaseHandler] = list()
 
-    def add_handler(self, handler: BaseHandler) -> BasePipeline:
+    def add_handler(self: _PT, handler: BaseHandler) -> _PT:
         """
         파이프라인의 맨 끝에 `handler` 를 추가한다.
 
