@@ -38,6 +38,7 @@ class BaseMonitor(ContextReadable, Generic[MonitorData], metaclass=ABCMeta):
 
     async def monitor(self, context: Context) -> None:
         if not self._initialized:
+            # FIXME: detail exception type
             raise AssertionError('"on_init()" must be invoked before "monitor()"')
 
         try:
@@ -64,6 +65,7 @@ class BaseMonitor(ContextReadable, Generic[MonitorData], metaclass=ABCMeta):
 
     async def on_init(self, context: Context) -> None:
         if self._initialized:
+            # FIXME: detail exception type
             raise AssertionError('This monitor has already been initialized.')
         else:
             self._initialized = True

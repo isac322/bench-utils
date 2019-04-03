@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 _CT = TypeVar('_CT', bound='BaseConstraint')
 
 
-# FIXME: update docstring
 class BaseConstraint(ContextReadable, metaclass=ABCMeta):
     """
     :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 실행 전후로 환경을 설정한다.

@@ -17,7 +17,6 @@
 .. todo::
 
     * local config.json을 보고 유추하거나, 설정할 수 있는 기능 추가
-    * context pattern을 사용한다면 그냥 드라이버에 통합 될수도?
 
 .. seealso::
 

@@ -33,3 +33,5 @@ class ContextReadable(metaclass=ABCMeta):
     @abstractmethod
     def of(cls, context: Context) -> Any:
         pass
+
+    # TODO: add in() class method and check the context has `cls` variable

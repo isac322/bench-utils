@@ -30,6 +30,7 @@ def read_result(bench_configs: Tuple[BenchConfig, ...]) -> List[WorkloadResult]:
         monitored = cfg.workspace / 'monitored'
 
         if not monitored.is_dir():
+            # FIXME: detail exception type
             raise ValueError('run benchmon first!')
 
         perf = read_csv(monitored / 'perf' / f'{cfg.identifier}.csv')

@@ -70,6 +70,7 @@ class PerfMonitor(BaseMonitor[T]):
             try:
                 perf_proc.kill()
             except ProcessLookupError:
+                # TODO: Error handling
                 pass
 
     async def stop(self) -> None:
