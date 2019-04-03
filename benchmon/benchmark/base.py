@@ -95,14 +95,16 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         obj._pipeline = pipeline
         obj._context_variable = context_variable
 
-        # noinspection PyProtectedMember
-        context_variable._assign(cls, obj)
-
         # setup for logger
         obj._log_path: Path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'
 
         logger = logging.getLogger(bench_config.identifier)
         logger.setLevel(logger_level)
+
+        # noinspection PyProtectedMember
+        context_variable._assign(cls, obj)
+        # noinspection PyProtectedMember
+        context_variable._assign(logging.Logger, logger)
 
         return obj
 
@@ -312,7 +314,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         pass
 
     def _remove_logger_handlers(self) -> None:
-        logger: logging.Logger = logging.getLogger(self._identifier)
+        logger = logging.getLogger(self._identifier)
 
         for handler in tuple(logger.handlers):  # type: logging.Handler
             logger.removeHandler(handler)

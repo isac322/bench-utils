@@ -1,5 +1,6 @@
 # coding: UTF-8
 
+import logging
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Type
 
@@ -21,6 +22,10 @@ class Context:
 
     def _assign(self, cls: Type, val: Any) -> None:
         self._variable_dict[cls] = val
+
+    @property
+    def logger(self) -> logging.Logger:
+        return self._variable_dict[logging.Logger]
 
 
 class ContextReadable(metaclass=ABCMeta):
