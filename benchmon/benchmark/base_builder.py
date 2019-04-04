@@ -8,6 +8,7 @@ from typing import Dict, Generic, List, TYPE_CHECKING, Type, TypeVar
 
 from .base import BaseBenchmark
 from .. import Context
+from ..exceptions import AlreadyFinalizedError
 from ..monitors import IdleMonitor
 
 if TYPE_CHECKING:
@@ -92,8 +93,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         :rtype: benchmon.benchmark.base_builder.BaseBuilder
         """
         if self._is_finalized:
-            # FIXME: detail exception type
-            raise AssertionError('Can\'t not reuse the finalized builder.')
+            raise AlreadyFinalizedError('Can\'t not reuse the finalized builder.')
 
         self._pipeline.add_handler(handler)
 
@@ -109,8 +109,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         :rtype: benchmon.benchmark.base_builder.BaseBuilder
         """
         if self._is_finalized:
-            # FIXME: detail exception type
-            raise AssertionError('Can\'t not reuse the finalized builder.')
+            raise AlreadyFinalizedError('Can\'t not reuse the finalized builder.')
 
         self._monitors.append(monitor)
 
@@ -126,8 +125,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         :rtype: benchmon.benchmark.base_builder.BaseBuilder
         """
         if self._is_finalized:
-            # FIXME: detail exception type
-            raise AssertionError('Can\'t not reuse the finalized builder.')
+            raise AlreadyFinalizedError('Can\'t not reuse the finalized builder.')
         elif type(constraint) in self._constraints:
             warnings.warn(f'{type(constraint)} type constraint is already added')
 
@@ -154,8 +152,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         :rtype: benchmon.benchmark.base.BaseBenchmark
         """
         if self._is_finalized:
-            # FIXME: detail exception type
-            raise AssertionError('Can\'t not reuse the finalized builder.')
+            raise AlreadyFinalizedError('Can\'t not reuse the finalized builder.')
 
         if len(self._monitors) is 0:
             self.add_monitor(IdleMonitor())

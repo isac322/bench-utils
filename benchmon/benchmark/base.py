@@ -10,6 +10,7 @@ from typing import ClassVar, Iterable, Optional, TYPE_CHECKING, Tuple, Type
 from coloredlogs import ColoredFormatter
 
 from .. import ContextReadable
+from ..exceptions import BenchNotFoundError
 from ..utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
@@ -71,8 +72,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             if issubclass(c, cls):
                 return v
 
-        # FIXME: detail exception type
-        raise RuntimeError('Context variable should have exactly one Benchmark')
+        raise BenchNotFoundError('Context variable should have exactly one Benchmark')
 
     @classmethod
     def _waits(cls, iterable: Iterable) -> asyncio.Future:
