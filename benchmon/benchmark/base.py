@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
-from typing import ClassVar, Iterable, Optional, TYPE_CHECKING, Tuple, Type
+from asyncio import Future
+from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
 
 from coloredlogs import ColoredFormatter
 
@@ -75,7 +76,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         raise RuntimeError('Context variable should have exactly one Benchmark')
 
     @classmethod
-    def _waits(cls, iterable: Iterable) -> asyncio.Future:
+    def _waits(cls, iterable: Iterable[Union[Future, Coroutine]]) -> Future[Tuple[Set[Future], Set[Future]]]:
         return asyncio.wait(tuple(iterable))
 
     def __new__(cls: Type[BaseBenchmark],
