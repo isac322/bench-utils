@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from signal import SIGCONT, SIGSTOP
@@ -50,9 +51,11 @@ class BenchDriver(metaclass=ABCMeta):
     """
 
     _name: str
+    # FIXME: set None when those variables are invalid
     _bench_proc_info: Optional[psutil.Process] = None
     _wrapper_proc: Optional[asyncio.subprocess.Process] = None
     _wrapper_proc_info: Optional[psutil.Process] = None
+    _logger: Optional[logging.Logger] = None
 
     def __init__(self, name: str):
         """
@@ -69,8 +72,8 @@ class BenchDriver(metaclass=ABCMeta):
         if self._is_running:
             try:
                 self.stop()
-            except (psutil.NoSuchProcess, ProcessLookupError):
-                pass
+            except (psutil.NoSuchProcess, ProcessLookupError) as e:
+                self._logger.warning(f'Benchmark termination failed due to {e}.', e)
 
     @classmethod
     def register_driver(cls, new_driver: Type[BenchDriver]) -> None:
@@ -214,6 +217,7 @@ class BenchDriver(metaclass=ABCMeta):
         """
         self._bench_proc_info = None
         self._wrapper_proc = await self._launch_bench(context)
+        self._logger = context.logger
         self._wrapper_proc_info = psutil.Process(self._wrapper_proc.pid)
 
         while True:
@@ -231,6 +235,8 @@ class BenchDriver(metaclass=ABCMeta):
         self._wrapper_proc.kill()
         self._bench_proc_info.kill()
         self._wrapper_proc_info.kill()
+
+        self._logger = None
 
     def pause(self) -> None:
         """ 이 드라이버가 실행한 벤치마크를 잠시 멈춘다. """

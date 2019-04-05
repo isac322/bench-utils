@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .. import Context
 
 
-class RDTSCMonitor(IterationDependentMonitor[int]):
+class RDTSCMonitor(IterationDependentMonitor[SystemMessage, int]):
     _prev_data: int
     _is_stopped: bool = False
 

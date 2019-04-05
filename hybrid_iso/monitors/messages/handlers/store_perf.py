@@ -14,7 +14,7 @@ from benchmon.utils.privilege import drop_privilege
 if TYPE_CHECKING:
     from benchmon import Context
     from benchmon.monitors.messages import BaseMessage
-    from benchmon.monitors.perf import T as PERF_MSG_TYPE
+    from benchmon.monitors.perf import DAT_TYPE as PERF_MSG_TYPE
 
 
 class StorePerf(BaseHandler):

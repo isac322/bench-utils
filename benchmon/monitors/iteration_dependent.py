@@ -4,19 +4,22 @@ from __future__ import annotations
 
 import asyncio
 from abc import abstractmethod
-from typing import Optional, TYPE_CHECKING
+from typing import Generic, Optional, TYPE_CHECKING, TypeVar
 
-from .base import MonitorData
+from .messages import BaseMessage
 from .oneshot import OneShotMonitor
 from .pipelines.base import BasePipeline
 
 if TYPE_CHECKING:
     from .. import Context
 
+_DAT_T = TypeVar('_DAT_T')
+_MSG_T = TypeVar('_MSG_T', bound=BaseMessage)
+
 
 # FIXME: rename
-class IterationDependentMonitor(OneShotMonitor[MonitorData]):
-    _prev_data: Optional[MonitorData]
+class IterationDependentMonitor(OneShotMonitor[_MSG_T, _DAT_T], Generic[_MSG_T, _DAT_T]):
+    _prev_data: Optional[_DAT_T]
 
     def __init__(self, interval: int) -> None:
         super().__init__(interval)
@@ -38,5 +41,5 @@ class IterationDependentMonitor(OneShotMonitor[MonitorData]):
 
     # FIXME: rename
     @abstractmethod
-    def calc_diff(self, before: MonitorData, after: MonitorData) -> MonitorData:
+    def calc_diff(self, before: _DAT_T, after: _DAT_T) -> _DAT_T:
         pass

@@ -5,18 +5,17 @@ from __future__ import annotations
 from typing import Dict, List, Mapping, TYPE_CHECKING, Tuple
 
 from .iteration_dependent import IterationDependentMonitor
-from .messages import PerBenchMessage, SystemMessage
+from .messages import MonitoredMessage, PerBenchMessage, SystemMessage
 from ..benchmark import BaseBenchmark
 from ..utils import ResCtrl
 
 if TYPE_CHECKING:
-    from .messages import MonitoredMessage
     from .. import Context
 
-T = Tuple[Mapping[str, int], ...]
+DAT_TYPE = Tuple[Mapping[str, int], ...]
 
 
-class ResCtrlMonitor(IterationDependentMonitor[T]):
+class ResCtrlMonitor(IterationDependentMonitor[MonitoredMessage, DAT_TYPE]):
     _is_stopped: bool = False
     _group: ResCtrl
 
@@ -37,7 +36,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
 
         self._prev_data = await self.monitor_once(context)
 
-    async def monitor_once(self, context: Context) -> T:
+    async def monitor_once(self, context: Context) -> DAT_TYPE:
         return await self._group.read()
 
     @property
@@ -47,7 +46,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
     async def stop(self) -> None:
         self._is_stopped = True
 
-    def calc_diff(self, before: T, after: T) -> T:
+    def calc_diff(self, before: DAT_TYPE, after: DAT_TYPE) -> DAT_TYPE:
         result: List[Dict[str, int]] = list()
 
         for idx, d in enumerate(after):
@@ -63,7 +62,7 @@ class ResCtrlMonitor(IterationDependentMonitor[T]):
 
         return tuple(result)
 
-    async def create_message(self, context: Context, data: T) -> MonitoredMessage[T]:
+    async def create_message(self, context: Context, data: DAT_TYPE) -> MonitoredMessage[DAT_TYPE]:
         benchmark = BaseBenchmark.of(context)
 
         if benchmark is None:
