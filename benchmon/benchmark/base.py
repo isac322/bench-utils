@@ -358,12 +358,12 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def pid(self) -> int:
+    def pid(self) -> Optional[int]:
         """
         벤치마크 프로세스의 PID를 반환한다.
 
-        :return: 벤치마크 프로세스의 PID
-        :rtype: int
+        :return: 벤치마크 프로세스의 PID. 아직 PID가 없다면 ``None``.
+        :rtype: typing.Optional[int]
         """
         pass
 

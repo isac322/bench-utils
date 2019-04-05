@@ -12,6 +12,7 @@ import psutil
 
 from .base import BenchDriver
 from .engines import BaseEngine
+from ...exceptions import InitRequiredError
 
 if TYPE_CHECKING:
     from ... import Context
@@ -31,7 +32,7 @@ class SpecDriver(BenchDriver):
         else:
             exec_name = f'{self._name}_base.proc'
 
-        for process in self._wrapper_proc_info.children(recursive=True):
+        for process in self._wrapper_proc_info.children(recursive=True):  # type: psutil.Process
             if process.name() == exec_name and process.is_running():
                 return process
 
@@ -65,9 +66,15 @@ class SpecDriver(BenchDriver):
         super().stop()
 
     def pause(self) -> None:
+        if self._wrapper_proc is None:
+            raise InitRequiredError('Run the benchmark first by calling run().')
+
         self._wrapper_proc.send_signal(SIGSTOP)
         self._find_bench_proc().suspend()
 
     def resume(self) -> None:
+        if self._wrapper_proc is None:
+            raise InitRequiredError('Run the benchmark first by calling run().')
+
         self._wrapper_proc.send_signal(SIGCONT)
         self._find_bench_proc().resume()

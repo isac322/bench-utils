@@ -28,7 +28,7 @@ class RodiniaDriver(BenchDriver):
         else:
             exec_name = self._name
 
-        for process in self._wrapper_proc_info.children(recursive=True):
+        for process in self._wrapper_proc_info.children(recursive=True):  # type: psutil.Process
             if process.name() == exec_name and process.is_running():
                 return process
 
