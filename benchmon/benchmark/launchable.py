@@ -18,7 +18,8 @@ if TYPE_CHECKING:
     from .drivers import BenchDriver
     from .. import Context
     from ..configs.containers import LaunchableConfig, PrivilegeConfig
-    from ..monitors import BaseMonitor, MonitorData
+    from ..monitors import BaseMonitor
+    from benchmon.monitors import MonitorData
     from ..monitors.pipelines import BasePipeline
 
 

@@ -3,22 +3,24 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Iterable, TYPE_CHECKING, Tuple, Union
+from typing import Callable, Generic, Iterable, TYPE_CHECKING, Tuple, TypeVar, Union
 
-from .base import BaseMonitor, MonitorData
+from .base import BaseMonitor
 from .messages import MergedMessage, MonitoredMessage
 from .pipelines import BasePipeline
+
+_DAT_T = TypeVar('_DAT_T')
 
 if TYPE_CHECKING:
     from .oneshot import OneShotMonitor
     from .. import Context
 
-    _MSG_TYPE = Union[MonitoredMessage[MonitorData], MergedMessage[MonitorData]]
-    MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], MonitorData]
-    _MON_TYPE = OneShotMonitor[MonitorData]
+    _MSG_TYPE = Union[MonitoredMessage[_DAT_T], MergedMessage[_DAT_T]]
+    MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], _DAT_T]
+    _MON_T = TypeVar('_MON_T', bound=OneShotMonitor)
 
 
-async def _gen_message(context: Context, monitor: _MON_TYPE) -> _MSG_TYPE:
+async def _gen_message(context: Context, monitor: _MON_T[_DAT_T]) -> _MSG_TYPE:
     data = await monitor.monitor_once(context)
     # noinspection PyProtectedMember
     transformed = await monitor._transform_data(data)
@@ -31,12 +33,12 @@ async def _gen_message(context: Context, monitor: _MON_TYPE) -> _MSG_TYPE:
                          f'{MonitoredMessage.__name__} or {MergedMessage.__name__}.')
 
 
-class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
+class CombinedOneShotMonitor(BaseMonitor[MergedMessage, _DAT_T], Generic[_DAT_T]):
     _interval: float
-    _monitors: Tuple[_MON_TYPE, ...]
+    _monitors: Tuple[_MON_T[_DAT_T], ...]
     _data_merger: MERGER_TYPE
 
-    def __init__(self, interval: int, monitors: Iterable[_MON_TYPE], data_merger: MERGER_TYPE = None) -> None:
+    def __init__(self, interval: int, monitors: Iterable[_MON_T[_DAT_T]], data_merger: MERGER_TYPE = None) -> None:
         super().__init__()
 
         self._interval = interval / 1000
@@ -49,7 +51,7 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
 
     async def _monitor(self, context: Context) -> None:
         while True:
-            data: Tuple[_MSG_TYPE] = await asyncio.gather(
+            data: Tuple[_MSG_TYPE, ...] = await asyncio.gather(
                     _gen_message(context, m) for m in self._monitors
             )
             merged = self._data_merger(data)
@@ -62,9 +64,9 @@ class CombinedOneShotMonitor(BaseMonitor[MonitorData]):
     async def stop(self) -> None:
         await asyncio.wait(tuple(mon.stop() for mon in self._monitors))
 
-    async def create_message(self, context: Context, data: MonitorData) -> MergedMessage[MonitorData]:
+    async def create_message(self, context: Context, data: _DAT_T) -> MergedMessage[_DAT_T]:
         return MergedMessage(data, self, self._monitors)
 
     @classmethod
-    def _default_merger(cls, data: Iterable[_MSG_TYPE]) -> MonitorData:
+    def _default_merger(cls, data: Iterable[_MSG_TYPE]) -> _DAT_T:
         return dict((m.source, m.data) for m in data)

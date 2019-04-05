@@ -4,26 +4,26 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABCMeta, abstractmethod
-from typing import Generic, Mapping, Optional, TYPE_CHECKING, Tuple, Type, TypeVar
+from typing import Generic, Optional, TYPE_CHECKING, Type, TypeVar
 
+from .messages import BaseMessage
 from .. import ContextReadable
 from ..benchmark import BaseBenchmark
 
 if TYPE_CHECKING:
-    from .messages import BaseMessage
     from .. import Context
 
-MonitorData = TypeVar('MonitorData', int, float, Tuple, Mapping)
-
-_CT = TypeVar('_CT', bound='BaseMonitor')
+_MT = TypeVar('_MT', bound='BaseMonitor')
+_DAT_T = TypeVar('_DAT_T')
+_MSG_T = TypeVar('_MSG_T', bound=BaseMessage)
 
 
 # parametrize message type too
-class BaseMonitor(ContextReadable, Generic[MonitorData], metaclass=ABCMeta):
+class BaseMonitor(ContextReadable, Generic[_MSG_T, _DAT_T], metaclass=ABCMeta):
     _initialized: bool
 
     @classmethod
-    def of(cls: Type[_CT], context: Context) -> Optional[_CT]:
+    def of(cls: Type[_MT], context: Context) -> Optional[_MT]:
         benchmark = BaseBenchmark.of(context)
 
         # noinspection PyProtectedMember
@@ -56,7 +56,7 @@ class BaseMonitor(ContextReadable, Generic[MonitorData], metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def create_message(self, context: Context, data: MonitorData) -> BaseMessage[MonitorData]:
+    async def create_message(self, context: Context, data: _DAT_T) -> _MSG_T[_DAT_T]:
         pass
 
     # TODO: should be abstractmethod?

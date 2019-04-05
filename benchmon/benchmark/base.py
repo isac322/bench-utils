@@ -6,7 +6,7 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from asyncio import Future
-from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, Union
+from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 
 from coloredlogs import ColoredFormatter
 
@@ -16,12 +16,14 @@ from ..utils.privilege import drop_privilege
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from .. import Context
-    from ..configs.containers import BenchConfig
-    from ..monitors import BaseMonitor, MonitorData
-    from ..monitors.pipelines import BasePipeline
     # because of circular import
     from .constraints import BaseConstraint
+    from .. import Context
+    from ..configs.containers import BenchConfig
+    from ..monitors import BaseMonitor
+    from ..monitors.pipelines import BasePipeline
+
+    _MON_T = TypeVar('_MON_T', bound=BaseMonitor)
 
 
 class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
@@ -59,7 +61,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
     _bench_config: BenchConfig
     _identifier: str
-    _monitors: Tuple[BaseMonitor[MonitorData], ...]
+    _monitors: Tuple[_MON_T, ...]
     _constraints: Tuple[BaseConstraint, ...]
     _pipeline: BasePipeline
     _log_path: Path
@@ -82,7 +84,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: BenchConfig,
                 constraints: Tuple[BaseConstraint, ...],
-                monitors: Tuple[BaseMonitor[MonitorData], ...],
+                monitors: Tuple[_MON_T, ...],
                 pipeline: BasePipeline,
                 context_variable: Context,
                 logger_level=logging.INFO) -> BaseBenchmark:
@@ -91,7 +93,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         obj._bench_config = bench_config
         obj._identifier = bench_config.identifier
 
-        obj._monitors: Tuple[BaseMonitor[MonitorData], ...] = monitors
+        obj._monitors: Tuple[_MON_T, ...] = monitors
         obj._constraints = constraints
         obj._pipeline = pipeline
         obj._context_variable = context_variable

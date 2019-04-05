@@ -15,10 +15,10 @@ if TYPE_CHECKING:
     from .. import Context
     from ..configs.containers import PerfConfig
 
-T = Mapping[str, Union[int, float]]
+DAT_TYPE = Mapping[str, Union[int, float]]
 
 
-class PerfMonitor(BaseMonitor[T]):
+class PerfMonitor(BaseMonitor[PerBenchMessage, DAT_TYPE]):
     _perf_config: PerfConfig
     _is_stopped: bool = False
 
@@ -84,5 +84,5 @@ class PerfMonitor(BaseMonitor[T]):
     def config(self) -> PerfConfig:
         return self._perf_config
 
-    async def create_message(self, context: Context, data: T) -> PerBenchMessage[T]:
+    async def create_message(self, context: Context, data: DAT_TYPE) -> PerBenchMessage[DAT_TYPE]:
         return PerBenchMessage(data, self, BaseBenchmark.of(context))

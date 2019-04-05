@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from benchmon import Context
     from benchmon.configs.containers import Privilege
-    from benchmon.monitors.resctrl import T as RESCTRL_MSG_TYPE
+    from benchmon.monitors.resctrl import DAT_TYPE as RESCTRL_MSG_TYPE
 
 _MT = TypeVar('_MT')
 

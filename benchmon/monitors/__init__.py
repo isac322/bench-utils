@@ -1,6 +1,8 @@
 # coding: UTF-8
 
-from .base import BaseMonitor, MonitorData
+from typing import Mapping, Tuple, TypeVar
+
+from .base import BaseMonitor
 from .combined import CombinedOneShotMonitor
 from .idle import IdleMonitor
 from .iteration_dependent import IterationDependentMonitor
@@ -10,3 +12,5 @@ from .power import PowerMonitor
 from .rdtsc import RDTSCMonitor
 from .resctrl import ResCtrlMonitor
 from .runtime import RuntimeMonitor
+
+MonitorData = TypeVar('MonitorData', int, float, Tuple, Mapping)

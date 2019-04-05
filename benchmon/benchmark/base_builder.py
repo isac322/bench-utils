@@ -13,7 +13,8 @@ from ..monitors import IdleMonitor
 if TYPE_CHECKING:
     from .constraints import BaseConstraint
     from ..configs.containers import BenchConfig, PrivilegeConfig
-    from ..monitors import BaseMonitor, MonitorData
+    from ..monitors import BaseMonitor
+    from benchmon.monitors import MonitorData
     from ..monitors.messages.handlers import BaseHandler
     from ..monitors.pipelines import BasePipeline
 
