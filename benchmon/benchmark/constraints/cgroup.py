@@ -54,7 +54,7 @@ class CGroupConstraint(BaseConstraint):
             self._cgroup.delete(DeleteFlag.RECURSIVE)
 
     @property
-    def cgroup(self) -> CGroup:
+    def cgroup(self) -> Optional[CGroup]:
         return self._cgroup
 
     @property
@@ -65,7 +65,10 @@ class CGroupConstraint(BaseConstraint):
         :return: 그룹이름
         :rtype: str
         """
-        return str(self._cgroup.path)
+        if self._cgroup is None:
+            return self._identifier
+        else:
+            return str(self._cgroup.path)
 
     def initial_values(self) -> Mapping[str, Union[int, bool, str]]:
         return copy.copy(self._values)

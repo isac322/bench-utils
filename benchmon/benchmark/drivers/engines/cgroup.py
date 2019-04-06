@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
+from ....exceptions import InitRequiredError
 from ....utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
@@ -29,6 +30,10 @@ class CGroupEngine(BaseEngine):
     async def launch(cls, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
         constraint = CGroupConstraint.of(context)
         if constraint is not None:
+            if constraint.cgroup is None:
+                raise InitRequiredError(
+                    f'Initialize the {type(CGroupConstraint).__name__} before running the benchmark.')
+
             kwargs['preexec_fn'] = constraint.cgroup.add_current_process
 
         from ....configs.containers import PrivilegeConfig
