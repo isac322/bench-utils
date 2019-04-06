@@ -10,14 +10,14 @@ from .messages import MergedMessage, MonitoredMessage
 from .pipelines import BasePipeline
 
 _DAT_T = TypeVar('_DAT_T')
+_MSG_TYPE = Union[MonitoredMessage[_DAT_T], MergedMessage[_DAT_T]]
+MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], _DAT_T]
 
 if TYPE_CHECKING:
-    from .oneshot import OneShotMonitor
+    from .interval import IntervalMonitor
     from .. import Context
 
-    _MSG_TYPE = Union[MonitoredMessage[_DAT_T], MergedMessage[_DAT_T]]
-    MERGER_TYPE = Callable[[Iterable[_MSG_TYPE]], _DAT_T]
-    _MON_T = TypeVar('_MON_T', bound=OneShotMonitor)
+    _MON_T = TypeVar('_MON_T', bound=IntervalMonitor)
 
 
 async def _gen_message(context: Context, monitor: _MON_T[_DAT_T]) -> _MSG_TYPE:

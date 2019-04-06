@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Mapping, TYPE_CHECKING, Tuple
 
-from .iteration_dependent import IterationDependentMonitor
+from .accumulative import AccumulativeMonitor
 from .messages import MonitoredMessage, PerBenchMessage, SystemMessage
 from ..benchmark import BaseBenchmark
 from ..utils import ResCtrl
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 DAT_TYPE = Tuple[Mapping[str, int], ...]
 
 
-class ResCtrlMonitor(IterationDependentMonitor[MonitoredMessage, DAT_TYPE]):
+class ResCtrlMonitor(AccumulativeMonitor[MonitoredMessage, DAT_TYPE]):
     _is_stopped: bool = False
     _group: ResCtrl
 
@@ -46,7 +46,7 @@ class ResCtrlMonitor(IterationDependentMonitor[MonitoredMessage, DAT_TYPE]):
     async def stop(self) -> None:
         self._is_stopped = True
 
-    def calc_diff(self, before: DAT_TYPE, after: DAT_TYPE) -> DAT_TYPE:
+    def accumulate(self, before: DAT_TYPE, after: DAT_TYPE) -> DAT_TYPE:
         result: List[Dict[str, int]] = list()
 
         for idx, d in enumerate(after):

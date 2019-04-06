@@ -2,11 +2,11 @@
 
 from typing import Mapping, Tuple, TypeVar
 
+from .accumulative import AccumulativeMonitor
 from .base import BaseMonitor
 from .combined import CombinedOneShotMonitor
 from .idle import IdleMonitor
-from .iteration_dependent import IterationDependentMonitor
-from .oneshot import OneShotMonitor
+from .interval import IntervalMonitor
 from .perf import PerfMonitor
 from .power import PowerMonitor
 from .rdtsc import RDTSCMonitor

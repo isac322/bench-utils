@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING
 
 import rdtsc
 
-from .iteration_dependent import IterationDependentMonitor
+from .accumulative import AccumulativeMonitor
 from .messages import SystemMessage
 
 if TYPE_CHECKING:
     from .. import Context
 
 
-class RDTSCMonitor(IterationDependentMonitor[SystemMessage, int]):
+class RDTSCMonitor(AccumulativeMonitor[SystemMessage, int]):
     _prev_data: int
     _is_stopped: bool = False
 
@@ -27,7 +27,7 @@ class RDTSCMonitor(IterationDependentMonitor[SystemMessage, int]):
 
         self._prev_data = rdtsc.get_cycles()
 
-    def calc_diff(self, before: int, after: int) -> int:
+    def accumulate(self, before: int, after: int) -> int:
         return after - before
 
     async def create_message(self, context: Context, data: int) -> SystemMessage[int]:
