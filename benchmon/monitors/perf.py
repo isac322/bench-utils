@@ -69,9 +69,8 @@ class PerfMonitor(BaseMonitor[PerBenchMessage, DAT_TYPE]):
         if perf_proc.returncode is None:
             try:
                 perf_proc.kill()
-            except ProcessLookupError:
-                # TODO: Error handling
-                pass
+            except ProcessLookupError as e:
+                context.logger.debug(f'The perf kill was unsuccessful for the following reasons: {e}', e)
 
     async def stop(self) -> None:
         self._is_stopped = True

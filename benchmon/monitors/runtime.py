@@ -21,7 +21,12 @@ class RuntimeMonitor(BaseMonitor[PerBenchMessage, float]):
     async def on_init(self, context: Context) -> None:
         await super().on_init(context)
 
-        self._start_time = time.time()
+        from benchmon.benchmark import LaunchableBenchmark
+        benchmark = BaseBenchmark.of(context)
+        if isinstance(benchmark, LaunchableBenchmark):
+            self._start_time = benchmark.launched_time
+        else:
+            self._start_time = time.time()
 
     async def _monitor(self, context: Context) -> None:
         await BaseBenchmark.of(context).join()

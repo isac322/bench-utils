@@ -9,6 +9,7 @@ from typing import Generic, Optional, TYPE_CHECKING, Type, TypeVar
 from .messages import BaseMessage
 from .. import ContextReadable
 from ..benchmark import BaseBenchmark
+from ..exceptions import AlreadyInitedError, InitRequiredError
 
 if TYPE_CHECKING:
     from .. import Context
@@ -38,8 +39,7 @@ class BaseMonitor(ContextReadable, Generic[_MSG_T, _DAT_T], metaclass=ABCMeta):
 
     async def monitor(self, context: Context) -> None:
         if not self._initialized:
-            # FIXME: detail exception type
-            raise AssertionError('"on_init()" must be invoked before "monitor()"')
+            raise InitRequiredError('"on_init()" must be invoked before "monitor()"')
 
         try:
             await self._monitor(context)
@@ -65,8 +65,7 @@ class BaseMonitor(ContextReadable, Generic[_MSG_T, _DAT_T], metaclass=ABCMeta):
 
     async def on_init(self, context: Context) -> None:
         if self._initialized:
-            # FIXME: detail exception type
-            raise AssertionError('This monitor has already been initialized.')
+            raise AlreadyInitedError('This monitor has already been initialized.')
         else:
             self._initialized = True
 

@@ -11,6 +11,7 @@ from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, 
 from coloredlogs import ColoredFormatter
 
 from .. import ContextReadable
+from ..exceptions import BenchNotFoundError
 from ..utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
@@ -74,8 +75,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
             if issubclass(c, cls):
                 return v
 
-        # FIXME: detail exception type
-        raise RuntimeError('Context variable should have exactly one Benchmark')
+        raise BenchNotFoundError('Context variable should have exactly one Benchmark')
 
     @classmethod
     def _waits(cls, iterable: Iterable[Union[Future, Coroutine]]) -> Future[Tuple[Set[Future], Set[Future]]]:
@@ -358,12 +358,12 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def pid(self) -> int:
+    def pid(self) -> Optional[int]:
         """
         벤치마크 프로세스의 PID를 반환한다.
 
-        :return: 벤치마크 프로세스의 PID
-        :rtype: int
+        :return: 벤치마크 프로세스의 PID. 아직 PID가 없다면 ``None``.
+        :rtype: typing.Optional[int]
         """
         pass
 

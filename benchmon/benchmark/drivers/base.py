@@ -12,6 +12,7 @@ from typing import ClassVar, FrozenSet, Mapping, Optional, Set, TYPE_CHECKING, T
 import psutil
 
 from ...configs import get_full_path, validate_and_load
+from ...exceptions import AlreadyInitedError, InitRequiredError
 
 if TYPE_CHECKING:
     from ... import Context
@@ -51,11 +52,11 @@ class BenchDriver(metaclass=ABCMeta):
     """
 
     _name: str
-    # FIXME: set None when those variables are invalid
     _bench_proc_info: Optional[psutil.Process] = None
     _wrapper_proc: Optional[asyncio.subprocess.Process] = None
     _wrapper_proc_info: Optional[psutil.Process] = None
     _logger: Optional[logging.Logger] = None
+    _last_launched_time: Optional[float] = None
 
     def __init__(self, name: str):
         """
@@ -69,7 +70,7 @@ class BenchDriver(metaclass=ABCMeta):
         self._name = name
 
     def __del__(self):
-        if self._is_running:
+        if self.is_running(deep=True):
             try:
                 self.stop()
             except (psutil.NoSuchProcess, ProcessLookupError) as e:
@@ -85,6 +86,7 @@ class BenchDriver(metaclass=ABCMeta):
         :type new_driver: typing.Type[benchmon.benchmark.drivers.base.BenchDriver]
         """
         # 드라이버가 실행하는 벤치마크의 경로를 `benchmark_home.json` 로부터 읽어 입력한다.
+        # FIXME: cache global configs
         config: Mapping[str, str] = validate_and_load(get_full_path('benchmark_home.json'))
         new_driver._bench_home = config[new_driver.bench_name]
 
@@ -134,30 +136,17 @@ class BenchDriver(metaclass=ABCMeta):
         return self._name
 
     @property
-    def created_time(self) -> float:
+    def created_time(self) -> Optional[float]:
         """
         :return: 프로세스가 시작한 시간
         :rtype: float
         """
-        return self._bench_proc_info.create_time()
-
-    @property
-    def _is_running(self) -> bool:
-        """
-        Check if this benchmark is running.
-
-        The difference with :meth:`BenchDriver.is_running` is this method is more precise,
-        but has more cost.
-
-        :return: ``True`` if running
-        :rtype: bool
-        """
-        return self.is_running and self._find_bench_proc() is not None
+        return self._last_launched_time
 
     @property
     def has_invoked(self) -> bool:
         """
-        :return: 한번이라도 실행된 적 있다면 ``True``
+        :return: :meth:`run` 이 호출되었으며, 실행에 성공하여 실행 정보가 캐싱 되었다면 ``True``
         :rtype: bool
         """
         return \
@@ -165,13 +154,25 @@ class BenchDriver(metaclass=ABCMeta):
             self._wrapper_proc is not None and \
             self._wrapper_proc_info is not None
 
-    @property
-    def is_running(self) -> bool:
+    def is_running(self, deep: bool = False) -> bool:
         """
+        Check if this benchmark is running.
+
+        The difference with :meth:`has_invoked` is this method is more precise,
+        but has more cost.
+
+        :param deep: ``True`` 일 경우, 이 객체에 캐싱된 실행정보로 벤치마크의 실행 여부를 판단하지 않고,
+                     벤치마의 실제 프로세스 정보를 읽어서 판단한다.
+        :type deep: bool
         :return: 워크로드가 실행되고 있다면 ``True``
         :rtype: bool
         """
-        return self.has_invoked and self._bench_proc_info.is_running()
+        _is_running = self.has_invoked and self._bench_proc_info.is_running()
+
+        if _is_running and deep:
+            return _is_running and self._find_bench_proc() is not None
+        else:
+            return _is_running
 
     @property
     def pid(self) -> Optional[int]:
@@ -215,36 +216,56 @@ class BenchDriver(metaclass=ABCMeta):
         벤치마크를 실행한다.
         실행 명령을 내린 후 :meth:`_find_bench_proc` 를 통해 실제 벤치마크 프로세스의 시작이 될 때 까지 기다린다.
         """
-        self._bench_proc_info = None
+        if self.has_invoked:
+            raise AlreadyInitedError('Benchmark is already running.')
+
         self._wrapper_proc = await self._launch_bench(context)
-        self._logger = context.logger
         self._wrapper_proc_info = psutil.Process(self._wrapper_proc.pid)
+        self._logger = context.logger
 
         while True:
             self._bench_proc_info = self._find_bench_proc()
+
             if self._bench_proc_info is not None:
+                self._last_launched_time = self._bench_proc_info.create_time()
                 return
+
             await asyncio.sleep(0.1)
 
     async def join(self) -> None:
         """ 이 드라이버가 실행한 벤치마크가 종료될 때 까지 기다린다. """
+        if self._wrapper_proc is None:
+            raise InitRequiredError('Run the benchmark first by calling run().')
+
         await self._wrapper_proc.wait()
 
     def stop(self) -> None:
         """ 이 드라이버가 실행한 벤치마크를 종료시킨다. """
+        if not self.has_invoked:
+            raise InitRequiredError('Run the benchmark first by calling run().')
+
         self._wrapper_proc.kill()
         self._bench_proc_info.kill()
         self._wrapper_proc_info.kill()
 
         self._logger = None
+        self._wrapper_proc = None
+        self._bench_proc_info = None
+        self._wrapper_proc_info = None
 
     def pause(self) -> None:
         """ 이 드라이버가 실행한 벤치마크를 잠시 멈춘다. """
+        if self._wrapper_proc is None or self._bench_proc_info is None:
+            raise InitRequiredError('Run the benchmark first by calling run().')
+
         self._wrapper_proc.send_signal(SIGSTOP)
         self._bench_proc_info.suspend()
 
     def resume(self) -> None:
         """ 이 드라이버가 실행한 벤치마크를 다시 실행시킨다. """
+        if self._wrapper_proc is None or self._bench_proc_info is None:
+            raise InitRequiredError('Run the benchmark first by calling run().')
+
         self._wrapper_proc.send_signal(SIGCONT)
         self._bench_proc_info.resume()
 

@@ -100,8 +100,8 @@ class ResCtrl:
     # tuple of each feature monitors for each socket
     _monitors: Tuple[Dict[Path, Optional[TextIO]], ...]
 
-    def __init__(self) -> None:
-        self.group_name = str()
+    def __init__(self, group_name: str = str()) -> None:
+        self.group_name = group_name
 
     @property
     def group_name(self) -> str:

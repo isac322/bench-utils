@@ -44,7 +44,6 @@ class StoreRuntime(BaseHandler):
 
         privilege_cfg = PrivilegeConfig.of(context).result
         with drop_privilege(privilege_cfg.user, privilege_cfg.group):
-            # TODO: evaluation between open and aiofile_linux
             with self._result_path.open(mode='r+') as fp:
                 content: Dict[str, float] = json.load(fp)
                 content[BaseBenchmark.of(context).identifier] = message.data

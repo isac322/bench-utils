@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Tuple
 
 from benchmon.configs.containers import BenchConfig
+from benchmon.exceptions import InitRequiredError
 from benchmon.utils.numa_topology import cur_online_sockets
 
 
@@ -30,8 +31,7 @@ def read_result(bench_configs: Tuple[BenchConfig, ...]) -> List[WorkloadResult]:
         monitored = cfg.workspace / 'monitored'
 
         if not monitored.is_dir():
-            # FIXME: detail exception type
-            raise ValueError('run benchmon first!')
+            raise InitRequiredError('run benchmon first!')
 
         perf = read_csv(monitored / 'perf' / f'{cfg.identifier}.csv')
         resctrl = tuple(

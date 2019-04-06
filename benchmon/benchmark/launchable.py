@@ -86,16 +86,16 @@ class LaunchableBenchmark(BaseBenchmark):
             logger.debug(f'Process already killed : {e}')
 
     @property
-    def launched_time(self) -> float:
+    def launched_time(self) -> Optional[float]:
         return self._bench_driver.created_time
 
     @property
-    def pid(self) -> int:
+    def pid(self) -> Optional[int]:
         return self._bench_driver.pid
 
     @property
     def is_running(self) -> bool:
-        return self._bench_driver.is_running
+        return self._bench_driver.is_running()
 
     @property
     def group_name(self) -> str:
