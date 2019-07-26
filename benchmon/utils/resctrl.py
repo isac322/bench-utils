@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+import subprocess
 from pathlib import Path
 from typing import ClassVar, Dict, Iterable, Mapping, Optional, TextIO, Tuple
 
@@ -74,6 +75,10 @@ class ResCtrl:
 
     # FIXME: H/W support check before adjust config to benchmark
     if MOUNT_POINT.exists():
+        if not MOUNT_POINT.is_mount():
+            # TODO: replace with non-shell implementation
+            subprocess.check_call(('mount', '-t', 'resctrl', 'resctrl', '/sys/fs/resctrl'))
+
         FEATURES: ClassVar[Tuple[str, ...]] = tuple(
                 (MOUNT_POINT / 'info' / 'L3_MON' / 'mon_features').read_text('ASCII').strip().split()
         )
