@@ -10,7 +10,7 @@ from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, 
 
 from coloredlogs import ColoredFormatter
 
-from .. import ContextReadable
+from .. import Context, ContextReadable
 from ..exceptions import BenchNotFoundError
 from ..utils.privilege import drop_privilege
 
@@ -19,8 +19,7 @@ if TYPE_CHECKING:
 
     # because of circular import
     from .constraints import BaseConstraint
-    from .. import Context
-    from ..configs.containers import BenchConfig
+    from ..configs.containers import BenchConfig, PrivilegeConfig
     from ..monitors import BaseMonitor
     from ..monitors.pipelines import BasePipeline
 
@@ -86,28 +85,32 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
                 constraints: Tuple[BaseConstraint, ...],
                 monitors: Tuple[_MON_T, ...],
                 pipeline: BasePipeline,
-                context_variable: Context,
+                privilege_config: PrivilegeConfig,
                 logger_level=logging.INFO) -> BaseBenchmark:
         obj: BaseBenchmark = super().__new__(cls)
 
         obj._bench_config = bench_config
         obj._identifier = bench_config.identifier
 
-        obj._monitors: Tuple[_MON_T, ...] = monitors
+        obj._monitors = monitors
         obj._constraints = constraints
         obj._pipeline = pipeline
-        obj._context_variable = context_variable
+        obj._context_variable = Context()
 
         # setup for logger
-        obj._log_path: Path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'
+        obj._log_path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'
 
         logger = logging.getLogger(bench_config.identifier)
         logger.setLevel(logger_level)
 
         # noinspection PyProtectedMember
-        context_variable._assign(cls, obj)
+        obj._context_variable._assign(cls, obj)
         # noinspection PyProtectedMember
-        context_variable._assign(logging.Logger, logger)
+        obj._context_variable._assign(logging.Logger, logger)
+        # noinspection PyProtectedMember
+        obj._context_variable._assign(type(pipeline), pipeline)
+        # noinspection PyProtectedMember
+        obj._context_variable._assign(type(privilege_config), privilege_config)
 
         return obj
 

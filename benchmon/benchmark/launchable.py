@@ -10,7 +10,7 @@ import psutil
 from .base import BaseBenchmark
 from .base_builder import BaseBuilder
 from .drivers import gen_driver
-from .drivers.engines import CGroupEngine
+from .drivers.engines import BaseEngine, CGroupEngine
 from ..monitors.pipelines import DefaultPipeline
 
 if TYPE_CHECKING:
@@ -18,8 +18,7 @@ if TYPE_CHECKING:
     from .drivers import BenchDriver
     from .. import Context
     from ..configs.containers import LaunchableConfig, PrivilegeConfig
-    from ..monitors import BaseMonitor
-    from benchmon.monitors import MonitorData
+    from ..monitors import BaseMonitor, MonitorData
     from ..monitors.pipelines import BasePipeline
 
 
@@ -44,7 +43,7 @@ class LaunchableBenchmark(BaseBenchmark):
                 constraints: Tuple[BaseConstraint, ...],
                 monitors: Tuple[BaseMonitor[MonitorData], ...],
                 pipeline: BasePipeline,
-                context_variable: Context,
+                privilege_config: PrivilegeConfig,
                 logger_level=logging.INFO) -> LaunchableBenchmark:
         obj: LaunchableBenchmark = super().__new__(
                 cls,
@@ -52,9 +51,12 @@ class LaunchableBenchmark(BaseBenchmark):
                 constraints,
                 monitors,
                 pipeline,
-                context_variable,
+                privilege_config,
                 logger_level
         )
+
+        # noinspection PyProtectedMember
+        obj._context_variable._assign(BaseEngine, CGroupEngine)
 
         obj._bench_driver = gen_driver(launchable_config.name)
 
@@ -122,12 +124,6 @@ class LaunchableBenchmark(BaseBenchmark):
         def _init_pipeline(self) -> DefaultPipeline:
             return DefaultPipeline()
 
-        def _init_context_var(self) -> None:
-            super()._init_context_var()
-
-            # noinspection PyProtectedMember
-            self._context._assign(CGroupEngine, CGroupEngine)
-
         def _finalize(self) -> LaunchableBenchmark:
             return LaunchableBenchmark.__new__(
                     LaunchableBenchmark,
@@ -135,6 +131,6 @@ class LaunchableBenchmark(BaseBenchmark):
                     tuple(self._constraints.values()),
                     tuple(self._monitors),
                     self._pipeline,
-                    self._context,
+                    self._privilege_config,
                     self._logger_level
             )
