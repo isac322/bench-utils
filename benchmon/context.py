@@ -20,7 +20,9 @@ class Context:
     def __init__(self) -> None:
         self._variable_dict = dict()
 
-    def _assign(self, cls: Type, val: Any) -> None:
+    def _assign(self, val: Any, cls: Type = None) -> None:
+        if cls is None:
+            cls = type(val)
         self._variable_dict[cls] = val
 
     @property

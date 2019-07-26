@@ -124,7 +124,7 @@ class LaunchableBenchmark(BaseBenchmark):
             super()._init_context_var(benchmark, logger_level)
 
             # noinspection PyProtectedMember
-            benchmark._context_variable._assign(BaseEngine, CGroupEngine)
+            benchmark._context_variable._assign(CGroupEngine, BaseEngine)
 
         def _finalize(self) -> LaunchableBenchmark:
             return LaunchableBenchmark.__new__(
