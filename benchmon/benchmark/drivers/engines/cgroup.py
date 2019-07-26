@@ -33,7 +33,8 @@ class CGroupEngine(BaseEngine):
         if constraint is not None:
             if constraint.cgroup is None:
                 raise InitRequiredError(
-                    f'Initialize the {type(CGroupConstraint).__name__} before running the benchmark.')
+                        f'Initialize the {type(constraint).__name__} before running the benchmark.'
+                )
 
             kwargs['preexec_fn'] = constraint.cgroup.add_current_process
 

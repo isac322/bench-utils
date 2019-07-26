@@ -43,20 +43,15 @@ class LaunchableBenchmark(BaseBenchmark):
                 constraints: Tuple[BaseConstraint, ...],
                 monitors: Tuple[BaseMonitor[MonitorData], ...],
                 pipeline: BasePipeline,
-                privilege_config: PrivilegeConfig,
-                logger_level=logging.INFO) -> LaunchableBenchmark:
+                privilege_config: PrivilegeConfig) -> LaunchableBenchmark:
         obj: LaunchableBenchmark = super().__new__(
                 cls,
                 launchable_config,
                 constraints,
                 monitors,
                 pipeline,
-                privilege_config,
-                logger_level
+                privilege_config
         )
-
-        # noinspection PyProtectedMember
-        obj._context_variable._assign(BaseEngine, CGroupEngine)
 
         obj._bench_driver = gen_driver(launchable_config.name)
 
@@ -121,8 +116,15 @@ class LaunchableBenchmark(BaseBenchmark):
                      logger_level: int = logging.INFO) -> None:
             super().__init__(launchable_config, privilege_config, logger_level)
 
-        def _init_pipeline(self) -> DefaultPipeline:
+        @classmethod
+        def _init_pipeline(cls) -> DefaultPipeline:
             return DefaultPipeline()
+
+        def _init_context_var(self, benchmark: LaunchableBenchmark, logger_level: int) -> None:
+            super()._init_context_var(benchmark, logger_level)
+
+            # noinspection PyProtectedMember
+            benchmark._context_variable._assign(BaseEngine, CGroupEngine)
 
         def _finalize(self) -> LaunchableBenchmark:
             return LaunchableBenchmark.__new__(
@@ -131,6 +133,5 @@ class LaunchableBenchmark(BaseBenchmark):
                     tuple(self._constraints.values()),
                     tuple(self._monitors),
                     self._pipeline,
-                    self._privilege_config,
-                    self._logger_level
+                    self._privilege_config
             )

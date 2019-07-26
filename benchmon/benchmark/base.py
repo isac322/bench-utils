@@ -86,8 +86,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
                 constraints: Tuple[BaseConstraint, ...],
                 monitors: Tuple[_MON_T, ...],
                 pipeline: BasePipeline,
-                privilege_config: PrivilegeConfig,
-                logger_level=logging.INFO) -> BaseBenchmark:
+                privilege_config: PrivilegeConfig) -> BaseBenchmark:
         obj: BaseBenchmark = super().__new__(cls)
 
         obj._bench_config = bench_config
@@ -100,18 +99,6 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
         # setup for logger
         obj._log_path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'
-
-        logger = logging.getLogger(bench_config.identifier)
-        logger.setLevel(logger_level)
-
-        # noinspection PyProtectedMember
-        obj._context_variable._assign(cls, obj)
-        # noinspection PyProtectedMember
-        obj._context_variable._assign(logging.Logger, logger)
-        # noinspection PyProtectedMember
-        obj._context_variable._assign(type(pipeline), pipeline)
-        # noinspection PyProtectedMember
-        obj._context_variable._assign(type(privilege_config), privilege_config)
 
         return obj
 

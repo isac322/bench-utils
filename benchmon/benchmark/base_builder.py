@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import warnings
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Generic, List, TYPE_CHECKING, Type, TypeVar
@@ -65,9 +66,22 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         for constraint in bench_config._init_constraints:
             self.add_constraint(constraint)
 
-    @abstractmethod
-    def _init_pipeline(self) -> BasePipeline:
+    @classmethod
+    def _init_pipeline(cls) -> BasePipeline:
         pass
+
+    def _init_context_var(self, benchmark: _BT, logger_level: int) -> None:
+        logger = logging.getLogger(self._bench_config.identifier)
+        logger.setLevel(logger_level)
+
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(type(benchmark), benchmark)
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(logging.Logger, logger)
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(type(self._pipeline), self._pipeline)
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(type(self._privilege_config), self._privilege_config)
 
     def add_handler(self, handler: BaseHandler) -> BaseBuilder[_BT]:
         """
@@ -144,6 +158,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
             self.add_monitor(IdleMonitor())
 
         benchmark = self._finalize()
+        self._init_context_var(benchmark, self._logger_level)
 
         self._is_finalized = True
 
