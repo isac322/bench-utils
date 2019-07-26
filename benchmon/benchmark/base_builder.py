@@ -75,13 +75,13 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         logger.setLevel(logger_level)
 
         # noinspection PyProtectedMember
-        benchmark._context_variable._assign(type(benchmark), benchmark)
+        benchmark._context_variable._assign(benchmark)
         # noinspection PyProtectedMember
-        benchmark._context_variable._assign(logging.Logger, logger)
+        benchmark._context_variable._assign(logger)
         # noinspection PyProtectedMember
-        benchmark._context_variable._assign(type(self._pipeline), self._pipeline)
+        benchmark._context_variable._assign(self._pipeline)
         # noinspection PyProtectedMember
-        benchmark._context_variable._assign(type(self._privilege_config), self._privilege_config)
+        benchmark._context_variable._assign(self._privilege_config)
 
     def add_handler(self, handler: BaseHandler) -> BaseBuilder[_BT]:
         """
