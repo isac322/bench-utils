@@ -10,7 +10,8 @@ from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, 
 
 from coloredlogs import ColoredFormatter
 
-from .. import ContextReadable
+from .. import Context, ContextReadable
+from ..configs.containers import PrivilegeConfig
 from ..exceptions import BenchNotFoundError
 from ..utils.privilege import drop_privilege
 
@@ -19,7 +20,6 @@ if TYPE_CHECKING:
 
     # because of circular import
     from .constraints import BaseConstraint
-    from .. import Context
     from ..configs.containers import BenchConfig
     from ..monitors import BaseMonitor
     from ..monitors.pipelines import BasePipeline
@@ -86,28 +86,19 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
                 constraints: Tuple[BaseConstraint, ...],
                 monitors: Tuple[_MON_T, ...],
                 pipeline: BasePipeline,
-                context_variable: Context,
-                logger_level=logging.INFO) -> BaseBenchmark:
+                privilege_config: PrivilegeConfig) -> BaseBenchmark:
         obj: BaseBenchmark = super().__new__(cls)
 
         obj._bench_config = bench_config
         obj._identifier = bench_config.identifier
 
-        obj._monitors: Tuple[_MON_T, ...] = monitors
+        obj._monitors = monitors
         obj._constraints = constraints
         obj._pipeline = pipeline
-        obj._context_variable = context_variable
+        obj._context_variable = Context()
 
         # setup for logger
-        obj._log_path: Path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'
-
-        logger = logging.getLogger(bench_config.identifier)
-        logger.setLevel(logger_level)
-
-        # noinspection PyProtectedMember
-        context_variable._assign(cls, obj)
-        # noinspection PyProtectedMember
-        context_variable._assign(logging.Logger, logger)
+        obj._log_path = bench_config.workspace / 'logs' / f'{bench_config.identifier}.log'
 
         return obj
 
@@ -128,7 +119,6 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         # setup for loggers
         logger = logging.getLogger(self._identifier)
 
-        from ..configs.containers import PrivilegeConfig
         privilege_cfg = PrivilegeConfig.of(self._context_variable).result
 
         with drop_privilege(privilege_cfg.user, privilege_cfg.group):

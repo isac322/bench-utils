@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
+from ....configs.containers import PrivilegeConfig
 from ....utils.privilege import drop_privilege
 
 if TYPE_CHECKING:
@@ -25,7 +26,6 @@ class NumaCtlEngine(BaseEngine):
 
     @classmethod
     async def launch(cls, context: Context, *cmd: str, **kwargs) -> asyncio.subprocess.Process:
-        from ....configs.containers import PrivilegeConfig
         privilege_config = PrivilegeConfig.of(context).execute
 
         constraint = CGroupConstraint.of(context)

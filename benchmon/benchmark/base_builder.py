@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
+import logging
 import warnings
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Generic, List, TYPE_CHECKING, Type, TypeVar
 
 from .base import BaseBenchmark
-from .. import Context
 from ..exceptions import AlreadyFinalizedError
 from ..monitors import IdleMonitor
 
 if TYPE_CHECKING:
     from .constraints import BaseConstraint
     from ..configs.containers import BenchConfig, PrivilegeConfig
-    from ..monitors import BaseMonitor
-    from benchmon.monitors import MonitorData
+    from ..monitors import BaseMonitor, MonitorData
     from ..monitors.messages.handlers import BaseHandler
     from ..monitors.pipelines import BasePipeline
 
@@ -49,7 +48,6 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     _bench_config: BenchConfig
     _privilege_config: PrivilegeConfig
     _pipeline: BasePipeline
-    _context: Context
     _logger_level: int
     _monitors: List[BaseMonitor[MonitorData]]
     _constraints: Dict[Type[BaseConstraint], BaseConstraint]
@@ -63,26 +61,27 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         self._constraints = dict()
 
         self._pipeline = self._init_pipeline()
-        self._context = Context()
 
         # noinspection PyProtectedMember
         for constraint in bench_config._init_constraints:
             self.add_constraint(constraint)
 
-    @abstractmethod
-    def _init_pipeline(self) -> BasePipeline:
+    @classmethod
+    def _init_pipeline(cls) -> BasePipeline:
         pass
 
-    # noinspection PyProtectedMember
-    def _init_context_var(self) -> None:
-        """
-        모니터와 제약에서 쓰일 Context 객체를 생성하고, 값들을 설정한다.
+    def _init_context_var(self, benchmark: _BT, logger_level: int) -> None:
+        logger = logging.getLogger(self._bench_config.identifier)
+        logger.setLevel(logger_level)
 
-        :return: 이 객체에서 쓰일 Context 객체
-        :rtype: benchmon.context.Context
-        """
-        self._context._assign(type(self._pipeline), self._pipeline)
-        self._context._assign(type(self._privilege_config), self._privilege_config)
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(type(benchmark), benchmark)
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(logging.Logger, logger)
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(type(self._pipeline), self._pipeline)
+        # noinspection PyProtectedMember
+        benchmark._context_variable._assign(type(self._privilege_config), self._privilege_config)
 
     def add_handler(self, handler: BaseHandler) -> BaseBuilder[_BT]:
         """
@@ -159,7 +158,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
             self.add_monitor(IdleMonitor())
 
         benchmark = self._finalize()
-        self._init_context_var()
+        self._init_context_var(benchmark, self._logger_level)
 
         self._is_finalized = True
 
