@@ -12,7 +12,7 @@
 """
 
 from .base import BaseConfig, HandlerConfig, MonitorConfig
+from .privilege import Privilege, PrivilegeConfig
 from .bench import BenchConfig, LaunchableConfig
 from .perf import PerfConfig, PerfEvent
-from .privilege import Privilege, PrivilegeConfig
 from .rabbit_mq import RabbitMQConfig

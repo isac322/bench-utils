@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from .base import BaseEngine
 from ...constraints import CGroupConstraint
+from ....configs.containers import PrivilegeConfig
 from ....exceptions import InitRequiredError
 from ....utils.privilege import drop_privilege
 
@@ -36,7 +37,6 @@ class CGroupEngine(BaseEngine):
 
             kwargs['preexec_fn'] = constraint.cgroup.add_current_process
 
-        from ....configs.containers import PrivilegeConfig
         privilege_config = PrivilegeConfig.of(context).execute
 
         with drop_privilege(privilege_config.user, privilege_config.group):

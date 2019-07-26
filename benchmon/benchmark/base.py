@@ -11,6 +11,7 @@ from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, 
 from coloredlogs import ColoredFormatter
 
 from .. import Context, ContextReadable
+from ..configs.containers import PrivilegeConfig
 from ..exceptions import BenchNotFoundError
 from ..utils.privilege import drop_privilege
 
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 
     # because of circular import
     from .constraints import BaseConstraint
-    from ..configs.containers import BenchConfig, PrivilegeConfig
+    from ..configs.containers import BenchConfig
     from ..monitors import BaseMonitor
     from ..monitors.pipelines import BasePipeline
 
@@ -131,7 +132,6 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         # setup for loggers
         logger = logging.getLogger(self._identifier)
 
-        from ..configs.containers import PrivilegeConfig
         privilege_cfg = PrivilegeConfig.of(self._context_variable).result
 
         with drop_privilege(privilege_cfg.user, privilege_cfg.group):
