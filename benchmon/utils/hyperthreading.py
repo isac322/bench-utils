@@ -18,7 +18,7 @@ import contextlib
 import os
 from typing import Set
 
-from .hyphen import convert_to_set
+from .ranges import Ranges
 
 
 @contextlib.contextmanager
@@ -37,7 +37,7 @@ def hyper_threading_guard(ht_flag: bool) -> None:
         with open('/sys/devices/system/cpu/online') as fp:
             raw_input: str = fp.readline()
 
-        online_cores: Set[int] = convert_to_set(raw_input)
+        online_cores: Ranges = Ranges.from_str(raw_input)
 
         print('disabling Hyper-Threading...')
 

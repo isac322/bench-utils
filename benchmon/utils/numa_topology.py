@@ -17,7 +17,7 @@
 from pathlib import Path
 from typing import Dict, Mapping, Set
 
-from .hyphen import convert_to_set
+from .ranges import Ranges
 
 _BASE_PATH: Path = Path('/sys/devices/system/node')
 
@@ -27,11 +27,11 @@ def get_mem_topo() -> Set[int]:
 
     with has_memory_path.open() as fp:
         line: str = fp.readline()
-        mem_topo = convert_to_set(line)
+        mem_topo = Ranges.from_str(line)
 
         # TODO: get_mem_topo can be enhanced by using real numa memory access latency
 
-    return mem_topo
+    return mem_topo.to_set()
 
 
 def cur_online_sockets() -> Set[int]:
@@ -39,9 +39,9 @@ def cur_online_sockets() -> Set[int]:
 
     with online_path.open() as fp:
         line: str = fp.readline()
-        sockets = convert_to_set(line)
+        sockets = Ranges.from_str(line)
 
-    return sockets
+    return sockets.to_set()
 
 
 def possible_sockets() -> Set[int]:
@@ -49,9 +49,9 @@ def possible_sockets() -> Set[int]:
 
     with possible_path.open() as fp:
         line: str = fp.readline()
-        sockets = convert_to_set(line)
+        sockets = Ranges.from_str(line)
 
-    return sockets
+    return sockets.to_set()
 
 
 def core_belongs_to(socket_id: int) -> Set[int]:
@@ -59,7 +59,7 @@ def core_belongs_to(socket_id: int) -> Set[int]:
 
     with cpulist_path.open() as fp:
         line: str = fp.readline()
-        return convert_to_set(line)
+        return Ranges.from_str(line).to_set()
 
 
 def _socket_to_core() -> Dict[int, Set[int]]:

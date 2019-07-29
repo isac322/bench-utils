@@ -13,8 +13,8 @@ OS API의 wrapper등이 있다.
 .. moduleauthor:: Byeonghoon Yoo <bh322yoo@gmail.com>
 """
 
+import platform
 import re
-import subprocess
 from typing import Tuple
 
 from .resctrl import ResCtrl
@@ -23,8 +23,7 @@ _linux_version_pattern = re.compile(r'^(\d+)\.(\d+)\.(\d+).*')
 
 
 def linux_version() -> Tuple[int, int, int]:
-    output: str = subprocess.check_output(['uname', '-r'], encoding='UTF-8')
-    matched = _linux_version_pattern.search(output)
+    matched = _linux_version_pattern.search(platform.release())
     groups = matched.groups()
     # noinspection PyTypeChecker
     return tuple(map(int, groups))
