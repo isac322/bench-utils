@@ -8,14 +8,14 @@ from itertools import chain
 from pathlib import Path
 from typing import (
     ClassVar, DefaultDict, Dict, Generic, Iterable, List, MutableMapping,
-    MutableSet, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+    MutableSet, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 )
 
 from ...containers import BenchConfig
 from ....benchmark.constraints import CGroupConstraint, DVFSConstraint, ResCtrlConstraint
 from ....utils import ResCtrl
-from ....utils.hyphen import convert_to_hyphen, convert_to_set
 from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
+from ....utils.ranges import Ranges
 
 if TYPE_CHECKING:
     from ....benchmark.constraints import BaseConstraint
@@ -158,23 +158,23 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
                 config['bound_cores'] = Path('/sys/devices/system/cpu/online').read_text().strip()
                 config['mem_bound_sockets'] = Path('/sys/devices/system/node/online').read_text().strip()
             else:
-                bound_mems = convert_to_set(config['mem_bound_sockets'])
+                bound_mems = Ranges.from_str(config['mem_bound_sockets'])
                 config['bound_cores'] = \
-                    convert_to_hyphen(chain(*(socket_to_core[socket_id] for socket_id in bound_mems)))
+                    Ranges.convert_to_str(chain(*(socket_to_core[socket_id] for socket_id in bound_mems)))
 
-        bound_cores = convert_to_set(config['bound_cores'])
+        bound_cores: Ranges = Ranges.from_str(config['bound_cores'])
 
         # `num_of_threads` deduction
 
         if 'num_of_threads' not in config:
             config['num_of_threads'] = len(bound_cores)
 
-        sockets: Set[int] = set(core_to_socket[core_id] for core_id in bound_cores)
+        sockets: Ranges = Ranges(core_to_socket[core_id] for core_id in bound_cores)
 
         # `mem_bound_sockets` deduction
 
         if 'mem_bound_sockets' not in config:
-            config['mem_bound_sockets'] = convert_to_hyphen(sockets)
+            config['mem_bound_sockets'] = sockets.to_str()
 
         # `cbm_ranges` deduction
 
@@ -226,7 +226,7 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
 
         if 'cpu_freq' in config:
             cpu_freq: int = int(config['cpu_freq'] * 1_000_000)
-            bound_cores = convert_to_set(config['bound_cores'])
-            constrains.append(DVFSConstraint(tuple(bound_cores), cpu_freq))
+            bound_cores = Ranges.from_str(config['bound_cores'])
+            constrains.append(DVFSConstraint(bound_cores.to_tuple(), cpu_freq))
 
         return tuple(constrains)
