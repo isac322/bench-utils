@@ -291,7 +291,7 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
         벤치마크를 일시 정지한다.
         지원하지 않는 벤치마크 종류가 있을 수 있다.
         """
-        pass
+        logging.getLogger(self._identifier).info('pausing...')
 
     @abstractmethod
     def resume(self) -> None:
@@ -299,12 +299,12 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
         벤치마크를 재시작한다.
         지원하지 않는 벤치마크 종류가 있을 수 있다.
         """
-        pass
+        logging.getLogger(self._identifier).info('resuming...')
 
     @abstractmethod
     async def join(self) -> None:
         """ 벤치마크가 실행이 종료될 때 까지 이 메소드의 호출자의 실행을 멈춘다. """
-        pass
+        logging.getLogger(self._identifier).info('joining...')
 
     @abstractmethod
     async def _start(self, context: Context) -> None:
@@ -314,7 +314,7 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
     @abstractmethod
     async def kill(self) -> None:
         """ 벤치마크의 실행을 멈추고 프로세스를 죽인다. """
-        pass
+        logging.getLogger(self._identifier).info('stopping...')
 
     def _remove_logger_handlers(self) -> None:
         logger = logging.getLogger(self._identifier)

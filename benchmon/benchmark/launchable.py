@@ -68,12 +68,12 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
         raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(type(self).__name__))
 
     def pause(self) -> None:
-        logging.getLogger(self._identifier).info('pausing...')
+        super().pause()
 
         self._bench_driver.pause()
 
     def resume(self) -> None:
-        logging.getLogger(self._identifier).info('resuming...')
+        super().resume()
 
         self._bench_driver.resume()
 
@@ -81,8 +81,9 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
         await self._bench_driver.run(context)
 
     async def kill(self) -> None:
+        await super().kill()
+
         logger = logging.getLogger(self._identifier)
-        logger.info('stopping...')
 
         try:
             self._bench_driver.stop()
@@ -112,6 +113,8 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
         return self._bench_driver.all_child_tid()
 
     async def join(self) -> None:
+        await super().join()
+
         await self._bench_driver.join()
 
     class Builder(BaseBuilder['LaunchableBenchmark']):
