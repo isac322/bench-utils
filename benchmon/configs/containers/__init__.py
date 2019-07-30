@@ -13,6 +13,6 @@
 
 from .base import BaseConfig, HandlerConfig, MonitorConfig
 from .privilege import Privilege, PrivilegeConfig
-from .bench import BenchConfig, LaunchableConfig
+from .bench import BenchConfig, LaunchableConfig, SSHConfig
 from .perf import PerfConfig, PerfEvent
 from .rabbit_mq import RabbitMQConfig

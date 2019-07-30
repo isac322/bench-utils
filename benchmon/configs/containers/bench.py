@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Tuple, TypeVar
+from typing import Any, Dict, Optional, TYPE_CHECKING, Tuple, TypeVar
 
 from .base import BaseConfig
 
@@ -41,7 +41,22 @@ class LaunchableConfig(BenchConfig):
 
     name: str
 
-    def generate_builder(self, privilege_config: PrivilegeConfig,
+    def generate_builder(self,
+                         privilege_config: PrivilegeConfig,
                          logger_level: int = logging.INFO) -> LaunchableBenchmark.Builder:
         from ...benchmark import LaunchableBenchmark
         return LaunchableBenchmark.Builder(self, privilege_config, logger_level)
+
+
+@dataclass(frozen=True)
+class SSHConfig(BenchConfig):
+    host: str
+    port: Optional[int]
+    tunnel: Optional[Dict[str, Any]]
+    local_addr: Optional[Tuple[str, int]]
+    options: Optional[Dict[str, Any]]
+
+    def generate_builder(self,
+                         privilege_config: PrivilegeConfig,
+                         logger_level: int = logging.INFO) -> BaseBuilder:
+        pass

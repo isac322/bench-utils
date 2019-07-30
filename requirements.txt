@@ -1,3 +1,4 @@
+asyncssh==1.17.1
 aio-pika==5.6.0
 aiofile_linux
 coloredlogs==10.0
