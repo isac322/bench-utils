@@ -18,6 +18,7 @@
 			"name": "SP",
 			"cbm_ranges": "0-10",
 			"mem_bound_sockets": "0",
+			"cycle_limit": 59.7,
 			"cpu_freq": 2.1
 		},
 		{
@@ -27,6 +28,8 @@
 				"0-20"
 			],
 			"mem_bound_sockets": "0-1",
+			"cycle_limit": 100,
+			"cycle_limit_time_slice": 20000,
 			"cpu_freq": 2.1
 		}
 	],

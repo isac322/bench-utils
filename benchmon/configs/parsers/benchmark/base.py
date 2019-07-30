@@ -11,6 +11,8 @@ from typing import (
     MutableSet, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 )
 
+from libcgroup import CGroup
+
 from ...containers import BenchConfig
 from ....benchmark.constraints import CGroupConstraint, DVFSConstraint, ResCtrlConstraint
 from ....utils import Ranges, ResCtrl
@@ -194,6 +196,17 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
             )
             config['cbm_ranges'] = ranges
 
+        # `cycle limit` deductions
+
+        if 'cycle_limit_time_slice' not in config:
+            root_cgroup = CGroup.from_existing('')
+            config['cycle_limit_time_slice'] = int(root_cgroup.get('cpu.cfs_period_us'))
+
+        if 'cycle_limit' in config:
+            config['cycle_limit'] *= config['cycle_limit_time_slice'] * config['num_of_threads'] / 100
+        else:
+            config['cycle_limit'] = -1
+
         # `type` deduction
 
         if 'type' not in config:
@@ -215,10 +228,11 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
 
         constrains.append(ResCtrlConstraint(config['cbm_ranges']))
 
-        # TODO: add cpu cgroup values
         cgroup_values = {
             'cpuset.cpus': config['bound_cores'],
-            'cpuset.mems': config['mem_bound_sockets']
+            'cpuset.mems': config['mem_bound_sockets'],
+            'cpu.cfs_period_us': int(config['cycle_limit_time_slice']),
+            'cpu.cfs_quota_us': int(config['cycle_limit'])
         }
 
         constrains.append(CGroupConstraint(config['identifier'], 'cpuset', 'cpu', **cgroup_values))

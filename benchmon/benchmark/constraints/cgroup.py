@@ -11,6 +11,7 @@ from libcgroup_bind.groups import DeleteFlag
 
 from .base import BaseConstraint
 from .. import BaseBenchmark
+from ...configs.containers import PrivilegeConfig
 
 if TYPE_CHECKING:
     from ... import Context
@@ -35,7 +36,6 @@ class CGroupConstraint(BaseConstraint):
         self._values = values
 
     async def on_init(self, context: Context) -> None:
-        from ...configs.containers import PrivilegeConfig
         privilege = PrivilegeConfig.of(context).cgroup
 
         self._cgroup = CGroup(self._identifier, *self._controllers,
