@@ -17,6 +17,7 @@ import platform
 import re
 from typing import Tuple
 
+from .ranges import Ranges
 from .resctrl import ResCtrl
 
 _linux_version_pattern = re.compile(r'^(\d+)\.(\d+)\.(\d+).*')

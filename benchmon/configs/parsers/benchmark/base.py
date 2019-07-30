@@ -13,9 +13,8 @@ from typing import (
 
 from ...containers import BenchConfig
 from ....benchmark.constraints import CGroupConstraint, DVFSConstraint, ResCtrlConstraint
-from ....utils import ResCtrl
+from ....utils import Ranges, ResCtrl
 from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
-from ....utils.ranges import Ranges
 
 if TYPE_CHECKING:
     from ....benchmark.constraints import BaseConstraint
