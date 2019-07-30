@@ -6,7 +6,7 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from asyncio import Future
-from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union, Generic
+from typing import ClassVar, Coroutine, Generic, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 
 from coloredlogs import ColoredFormatter
 

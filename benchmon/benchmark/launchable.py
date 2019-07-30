@@ -35,38 +35,6 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
 
     `드라이버` 객체를 하나씩 가진다.
     """
-
-    class _Builder(BaseBuilder['LaunchableBenchmark']):
-        _bench_config: LaunchableConfig
-
-        def __init__(self,
-                     launchable_config: LaunchableConfig,
-                     privilege_config: PrivilegeConfig,
-                     logger_level: int = logging.INFO) -> None:
-            super().__init__(launchable_config, privilege_config, logger_level)
-
-        @classmethod
-        def _init_pipeline(cls) -> DefaultPipeline:
-            return DefaultPipeline()
-
-        def _init_context_var(self, benchmark: LaunchableBenchmark, logger_level: int) -> None:
-            super()._init_context_var(benchmark, logger_level)
-
-            # noinspection PyProtectedMember
-            benchmark._context_variable._assign(CGroupEngine, BaseEngine)
-
-        def _finalize(self) -> LaunchableBenchmark:
-            return LaunchableBenchmark.__new__(
-                    LaunchableBenchmark,
-                    self._bench_config,
-                    tuple(self._constraints.values()),
-                    tuple(self._monitors),
-                    self._pipeline,
-                    self._privilege_config
-            )
-
-    Builder = _Builder
-
     _bench_driver: BenchDriver
 
     @classmethod
@@ -143,3 +111,32 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
 
     async def join(self) -> None:
         await self._bench_driver.join()
+
+    class Builder(BaseBuilder['LaunchableBenchmark']):
+        _bench_config: LaunchableConfig
+
+        def __init__(self,
+                     launchable_config: LaunchableConfig,
+                     privilege_config: PrivilegeConfig,
+                     logger_level: int = logging.INFO) -> None:
+            super().__init__(launchable_config, privilege_config, logger_level)
+
+        @classmethod
+        def _init_pipeline(cls) -> DefaultPipeline:
+            return DefaultPipeline()
+
+        def _init_context_var(self, benchmark: LaunchableBenchmark, logger_level: int) -> None:
+            super()._init_context_var(benchmark, logger_level)
+
+            # noinspection PyProtectedMember
+            benchmark._context_variable._assign(CGroupEngine, BaseEngine)
+
+        def _finalize(self) -> LaunchableBenchmark:
+            return LaunchableBenchmark.__new__(
+                    LaunchableBenchmark,
+                    self._bench_config,
+                    tuple(self._constraints.values()),
+                    tuple(self._monitors),
+                    self._pipeline,
+                    self._privilege_config
+            )
