@@ -14,9 +14,12 @@ from ..monitors import IdleMonitor
 if TYPE_CHECKING:
     from .constraints import BaseConstraint
     from ..configs.containers import BenchConfig, PrivilegeConfig
-    from ..monitors import BaseMonitor, MonitorData
+    from ..monitors import BaseMonitor
     from ..monitors.messages.handlers import BaseHandler
     from ..monitors.pipelines import BasePipeline
+
+    _CST_T = TypeVar('_CST_T', bound=BaseConstraint)
+    _MON_T = TypeVar('_MON_T', bound=BaseMonitor)
 
 _BT = TypeVar('_BT', bound=BaseBenchmark)
 
@@ -49,8 +52,8 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     _privilege_config: PrivilegeConfig
     _pipeline: BasePipeline
     _logger_level: int
-    _monitors: List[BaseMonitor[MonitorData]]
-    _constraints: Dict[Type[BaseConstraint], BaseConstraint]
+    _monitors: List[_MON_T]
+    _constraints: Dict[Type[_CST_T], _CST_T]
 
     def __init__(self, bench_config: BenchConfig, privilege_config: PrivilegeConfig, logger_level: int) -> None:
         self._bench_config = bench_config
@@ -67,6 +70,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
             self.add_constraint(constraint)
 
     @classmethod
+    @abstractmethod
     def _init_pipeline(cls) -> BasePipeline:
         pass
 

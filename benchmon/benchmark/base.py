@@ -6,12 +6,12 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from asyncio import Future
-from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+from typing import ClassVar, Coroutine, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union, Generic
 
 from coloredlogs import ColoredFormatter
 
 from .. import Context, ContextReadable
-from ..configs.containers import PrivilegeConfig
+from ..configs.containers import BenchConfig, PrivilegeConfig
 from ..exceptions import BenchNotFoundError
 from ..utils.privilege import drop_privilege
 
@@ -19,15 +19,19 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     # because of circular import
+    from .base_builder import BaseBuilder
     from .constraints import BaseConstraint
-    from ..configs.containers import BenchConfig
     from ..monitors import BaseMonitor
     from ..monitors.pipelines import BasePipeline
 
+    _BLD_T = TypeVar('_BLD_T', bound=BaseBuilder)
+    _CST_T = TypeVar('_CST_T', bound=BaseConstraint)
     _MON_T = TypeVar('_MON_T', bound=BaseMonitor)
 
+_CFG_T = TypeVar('_CFG_T', bound=BenchConfig)
 
-class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
+
+class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
     """
     벤치마크의 실행과 일시 정지, 모니터링을 담당하는 high-level 클래스들의 부모 클래스.
 
@@ -56,14 +60,16 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
 
         * :meth:`start_and_pause` 나 :meth:`monitor` 메소드의 용례와 이름이 부정확하며 서로간의 호출 순서가 존재한다.
     """
+    Builder: ClassVar[Type[_BLD_T]]
 
     _FILE_FORMATTER: ClassVar[ColoredFormatter] = ColoredFormatter(
-            '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s')
+            '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s'
+    )
 
-    _bench_config: BenchConfig
+    _bench_config: _CFG_T
     _identifier: str
     _monitors: Tuple[_MON_T, ...]
-    _constraints: Tuple[BaseConstraint, ...]
+    _constraints: Tuple[_CST_T, ...]
     _pipeline: BasePipeline
     _log_path: Path
     _context_variable: Context
@@ -82,8 +88,8 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         return asyncio.wait(tuple(iterable))
 
     def __new__(cls: Type[BaseBenchmark],
-                bench_config: BenchConfig,
-                constraints: Tuple[BaseConstraint, ...],
+                bench_config: _CFG_T,
+                constraints: Tuple[_CST_T, ...],
                 monitors: Tuple[_MON_T, ...],
                 pipeline: BasePipeline,
                 privilege_config: PrivilegeConfig) -> BaseBenchmark:
@@ -358,7 +364,7 @@ class BaseBenchmark(ContextReadable, metaclass=ABCMeta):
         pass
 
     @property
-    def bench_config(self) -> BenchConfig:
+    def bench_config(self) -> _CFG_T:
         return self._bench_config
 
     @abstractmethod
