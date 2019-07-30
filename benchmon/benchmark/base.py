@@ -91,6 +91,9 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
     def _waits(cls, iterable: Iterable[Union[Future, Coroutine]]) -> Future[Tuple[Set[Future], Set[Future]]]:
         return asyncio.wait(tuple(iterable))
 
+    def __init__(self, **kwargs) -> None:
+        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(type(self).__name__))
+
     def __new__(cls: Type[BaseBenchmark],
                 bench_config: _CFG_T,
                 constraints: Tuple[_CST_T, ...],

@@ -44,7 +44,7 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
         # noinspection PyProtectedMember
         return context._variable_dict.get(cls)
 
-    def __new__(cls: Type[BaseBenchmark],
+    def __new__(cls: Type[LaunchableBenchmark],
                 launchable_config: _CFG_T,
                 constraints: Tuple[_CST_T, ...],
                 monitors: Tuple[_MON_T, ...],
@@ -65,7 +65,7 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
         return obj
 
     def __init__(self, **kwargs) -> None:
-        raise NotImplementedError('Use {0}.Builder to instantiate {0}'.format(type(self).__name__))
+        super().__init__(**kwargs)
 
     def pause(self) -> None:
         super().pause()
