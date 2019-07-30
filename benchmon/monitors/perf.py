@@ -19,13 +19,16 @@ DAT_TYPE = Mapping[str, Union[int, float]]
 
 
 class PerfMonitor(BaseMonitor[PerBenchMessage, DAT_TYPE]):
+    __slots__ = ('_perf_config', '_is_stopped')
+
     _perf_config: PerfConfig
-    _is_stopped: bool = False
+    _is_stopped: bool
 
     def __init__(self, perf_config: PerfConfig) -> None:
         super().__init__()
 
         self._perf_config = perf_config
+        self._is_stopped = False
 
     async def _monitor(self, context: Context) -> None:
         benchmark = BaseBenchmark.of(context)

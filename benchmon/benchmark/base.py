@@ -60,6 +60,10 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
 
         * :meth:`start_and_pause` 나 :meth:`monitor` 메소드의 용례와 이름이 부정확하며 서로간의 호출 순서가 존재한다.
     """
+    __slots__ = (
+        '_bench_config', '_identifier', '_monitors', '_constraints', '_pipeline', '_log_path', '_context_variable'
+    )
+
     Builder: ClassVar[Type[_BLD_T]]
 
     _FILE_FORMATTER: ClassVar[ColoredFormatter] = ColoredFormatter(

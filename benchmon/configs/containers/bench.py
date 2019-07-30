@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class BenchConfig(BaseConfig):
+    __slots__ = ('num_of_threads', 'type', '_init_constraints', 'identifier', 'workspace', 'width_in_log')
+
     num_of_threads: int
     type: str
     _init_constraints: Tuple[_CST_T, ...]
@@ -35,6 +37,8 @@ class BenchConfig(BaseConfig):
 
 @dataclass(frozen=True)
 class LaunchableConfig(BenchConfig):
+    __slots__ = ('name',)
+
     name: str
 
     def generate_builder(self, privilege_config: PrivilegeConfig,

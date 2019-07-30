@@ -19,6 +19,7 @@ from typing import Any, ClassVar, Collection, Iterable, Iterator, Pattern, Set, 
 
 class Ranges(Collection[int]):
     __slots__ = ('_range',)
+
     _RANGE_PATTERN: ClassVar[Pattern[str]] = re.compile(r'^\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$')
     _range: Set[int]
 

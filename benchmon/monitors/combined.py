@@ -34,6 +34,8 @@ async def _gen_message(context: Context, monitor: _MON_T[_DAT_T]) -> _MSG_TYPE:
 
 
 class CombinedOneShotMonitor(BaseMonitor[MergedMessage, _DAT_T], Generic[_DAT_T]):
+    __slots__ = ('_interval', '_monitors', '_data_merger')
+
     _interval: float
     _monitors: Tuple[_MON_T[_DAT_T], ...]
     _data_merger: MERGER_TYPE

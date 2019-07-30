@@ -25,9 +25,18 @@ _MT = TypeVar('_MT')
 
 
 class StoreResCtrl(BaseHandler):
+    __slots__ = ('_event_order', '_aio_blocks', '_workspace')
+
     _event_order: Tuple[str, ...]
-    _aio_blocks: Tuple[WriteCmd, ...] = tuple()
-    _workspace: Path
+    _aio_blocks: Tuple[WriteCmd, ...]
+    _workspace: Optional[Path]
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._event_order = tuple()
+        self._aio_blocks = tuple()
+        self._workspace = None
 
     async def on_init(self, context: Context) -> None:
         benchmark = BaseBenchmark.of(context)

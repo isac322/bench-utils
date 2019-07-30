@@ -21,6 +21,8 @@ _MT = TypeVar('_MT')
 
 
 class StoreRuntime(BaseHandler):
+    __slots__ = ('_result_path',)
+
     _result_path: Path
 
     async def on_init(self, context: Context) -> None:

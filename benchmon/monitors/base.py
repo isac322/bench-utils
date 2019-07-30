@@ -21,6 +21,8 @@ _MSG_T = TypeVar('_MSG_T', bound=BaseMessage)
 
 # parametrize message type too
 class BaseMonitor(ContextReadable, Generic[_MSG_T, _DAT_T], metaclass=ABCMeta):
+    __slots__ = ('_initialized',)
+
     _initialized: bool
 
     @classmethod

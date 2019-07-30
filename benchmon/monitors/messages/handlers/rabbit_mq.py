@@ -26,16 +26,20 @@ class RabbitMQHandler(BaseHandler):
 
         * 아직 완벽하게 테스트 되지 못했기 때문에 주의가 필요하다.
     """
+    __slots__ = ('_creation_q_name', '_host', '_connection', '_channel', '_message_queue')
 
     _creation_q_name: str
     _host: str
-    _connection: Optional[aio_pika.Connection] = None
-    _channel: Optional[aio_pika.Channel] = None
-    _message_queue: Optional[aio_pika.Queue] = None
+    _connection: Optional[aio_pika.Connection]
+    _channel: Optional[aio_pika.Channel]
+    _message_queue: Optional[aio_pika.Queue]
 
     def __init__(self, rabbit_mq_config: RabbitMQConfig) -> None:
         self._creation_q_name = rabbit_mq_config.creation_q_name
         self._host = rabbit_mq_config.host_name
+        self._connection = None
+        self._channel = None
+        self._message_queue = None
 
     async def on_init(self, context: Context) -> None:
         self._connection = await aio_pika.connect_robust(host=self._host)

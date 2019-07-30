@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class Privilege:
+    __slots__ = ('user', 'group')
+
     user: int
     group: int
 
@@ -26,6 +28,8 @@ class PrivilegeConfig(BaseConfig, ContextReadable):
     파일을 생성하기 원할 경우, `execute` 의 `user` 에 `root` 를, `result` 의 `user` 에는 `1000` 을 저장함으로써 프레임워크에서
     상황별로 권한을 바꿀 수 있게 한다.
     """
+    __slots__ = ('execute', 'monitor', 'cgroup', 'result')
+
     execute: Privilege
     monitor: Privilege
     cgroup: Privilege

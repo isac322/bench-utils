@@ -27,6 +27,7 @@ class BenchDriver(metaclass=ABCMeta):
     또한 벤치마크에 따라서 하나의 벤치마크를 실행하여도 여러 프로세스가 Process Tree를 이루며 실행되기도 하는데,
     이 때 어떤 프로세스가 실제로 연산을 하는 벤치마크이며, 그 프로세스의 PID가 무엇인지 찾아야 한다. (:meth:`_find_bench_proc` 메소드)
     """
+    __slots__ = ('_name', '_bench_proc_info', '_wrapper_proc', '_wrapper_proc_info', '_logger', '_last_launched_time')
 
     _registered_drivers: ClassVar[Set[Type[BenchDriver]]] = set()
 
@@ -52,11 +53,11 @@ class BenchDriver(metaclass=ABCMeta):
     """
 
     _name: str
-    _bench_proc_info: Optional[psutil.Process] = None
-    _wrapper_proc: Optional[asyncio.subprocess.Process] = None
-    _wrapper_proc_info: Optional[psutil.Process] = None
-    _logger: Optional[logging.Logger] = None
-    _last_launched_time: Optional[float] = None
+    _bench_proc_info: Optional[psutil.Process]
+    _wrapper_proc: Optional[asyncio.subprocess.Process]
+    _wrapper_proc_info: Optional[psutil.Process]
+    _logger: Optional[logging.Logger]
+    _last_launched_time: Optional[float]
 
     def __init__(self, name: str):
         """
@@ -68,6 +69,11 @@ class BenchDriver(metaclass=ABCMeta):
         :rtype: benchmon.benchmark.drivers.base.BenchDriver
         """
         self._name = name
+        self._bench_proc_info = None
+        self._wrapper_proc = None
+        self._wrapper_proc_info = None
+        self._logger = None
+        self._last_launched_time = None
 
     def __del__(self):
         if self.is_running(deep=True):

@@ -14,13 +14,16 @@ if TYPE_CHECKING:
 
 
 class RDTSCMonitor(AccumulativeMonitor[SystemMessage, int]):
+    __slots__ = ('_prev_data', '_is_stopped')
+
     _prev_data: int
-    _is_stopped: bool = False
+    _is_stopped: bool
 
     def __init__(self, interval: int) -> None:
         super().__init__(interval)
 
         self._prev_data = rdtsc.get_cycles()
+        self._is_stopped = False
 
     async def on_init(self, context: Context) -> None:
         await super().on_init(context)

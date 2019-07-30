@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class RabbitMQConstraint(BaseConstraint):
+    __slots__ = ('_creation_q_name', '_host')
+
     _creation_q_name: str
     _host: str
 

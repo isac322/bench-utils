@@ -18,6 +18,8 @@ _MSG_T = TypeVar('_MSG_T', bound=BaseMessage)
 
 
 class IntervalMonitor(BaseMonitor[_MSG_T, _DAT_T], Generic[_MSG_T, _DAT_T]):
+    __slots__ = ('_interval',)
+
     _interval: float
 
     def __init__(self, interval: int) -> None:

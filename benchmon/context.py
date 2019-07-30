@@ -1,9 +1,9 @@
 # coding: UTF-8
 
 import logging
-from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Type
 
+from abc import ABCMeta, abstractmethod
 from aiofile_linux import AIOContext
 
 # FIXME: hard coded
@@ -15,6 +15,8 @@ def aio_context() -> AIOContext:
 
 
 class Context:
+    __slots__ = ('_variable_dict',)
+
     _variable_dict: Dict[Type, Any]
 
     def __init__(self) -> None:

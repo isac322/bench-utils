@@ -35,6 +35,8 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
 
     `드라이버` 객체를 하나씩 가진다.
     """
+    __slots__ = ('_bench_driver',)
+
     _bench_driver: BenchDriver
 
     @classmethod
@@ -113,6 +115,8 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
         await self._bench_driver.join()
 
     class Builder(BaseBuilder['LaunchableBenchmark']):
+        __slots__ = ('_bench_config',)
+
         _bench_config: LaunchableConfig
 
         def __init__(self,

@@ -71,6 +71,8 @@ class ResCtrl:
                 * 하지만 H/W dependent 할 수도..?
                 * 현재까지 경험에 의하면 root 권한 필요
     """
+    __slots__ = ('_group_name', '_group_path', '_prepare_read', '_monitors')
+
     MOUNT_POINT: ClassVar[Path] = Path('/sys/fs/resctrl')
 
     # FIXME: H/W support check before adjust config to benchmark
@@ -101,11 +103,12 @@ class ResCtrl:
 
     _group_name: str
     _group_path: Path
-    _prepare_read: bool = False
+    _prepare_read: bool
     # tuple of each feature monitors for each socket
     _monitors: Tuple[Dict[Path, Optional[TextIO]], ...]
 
     def __init__(self, group_name: str = str()) -> None:
+        self._prepare_read = False
         self.group_name = group_name
 
     @property

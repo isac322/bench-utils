@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 # TODO: handle pause and resume of Benchmark
 class RuntimeMonitor(BaseMonitor[PerBenchMessage, float]):
+    __slots__ = ('_start_time',)
+
     _start_time: float
 
     async def on_init(self, context: Context) -> None:

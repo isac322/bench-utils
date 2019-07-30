@@ -17,8 +17,10 @@ class ResCtrlConstraint(BaseConstraint):
     :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 의 실행 직후에 해당 벤치마크가 사용할 수 있는 최대 LLC를
     resctrl를 통해 입력받은 값으로 제한하며, 벤치마크의 실행이 종료될 경우 그 resctrl 그룹을 삭제한다.
     """
+    __slots__ = ('_masks', '_group')
+
     _masks: Tuple[str, ...]
-    _group: Optional[ResCtrl] = None
+    _group: Optional[ResCtrl]
 
     def __init__(self, masks: Iterable[str]) -> None:
         """
@@ -26,6 +28,7 @@ class ResCtrlConstraint(BaseConstraint):
         :type masks: typing.Iterable[str]
         """
         self._masks = tuple(masks)
+        self._group = None
 
     async def on_start(self, context: Context) -> None:
         benchmark = BaseBenchmark.of(context)

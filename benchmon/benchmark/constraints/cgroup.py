@@ -21,7 +21,9 @@ class CGroupConstraint(BaseConstraint):
     """
     같은 경로를 가지는 여러 서브 시스템의 cgroup들을 묶어서 하나로 관리하는 constraint
     """
-    _cgroup: Optional[CGroup] = None
+    __slots__ = ('_cgroup', '_identifier', '_controllers', '_values')
+
+    _cgroup: Optional[CGroup]
     _identifier: str
     _controllers: Tuple[str, ...]
     _values: Mapping[str, Union[int, bool, str]]
@@ -31,6 +33,7 @@ class CGroupConstraint(BaseConstraint):
                  first_controller: str,
                  *controllers: str,
                  **values: Union[int, bool, str]) -> None:
+        self._cgroup = None
         self._identifier = identifier
         self._controllers = tuple(chain((first_controller,), controllers))
         self._values = values

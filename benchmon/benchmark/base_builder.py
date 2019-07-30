@@ -47,7 +47,11 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
             .add_handler(PrintHandler())
             .finalize()
     """
-    _is_finalized: bool = False
+    __slots__ = (
+        '_is_finalized', '_bench_config', '_privilege_config', '_pipeline', '_logger_level', '_monitors', '_constraints'
+    )
+
+    _is_finalized: bool
     _bench_config: BenchConfig
     _privilege_config: PrivilegeConfig
     _pipeline: BasePipeline
@@ -56,6 +60,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
     _constraints: Dict[Type[_CST_T], _CST_T]
 
     def __init__(self, bench_config: BenchConfig, privilege_config: PrivilegeConfig, logger_level: int) -> None:
+        self._is_finalized = False
         self._bench_config = bench_config
         self._privilege_config = privilege_config
         self._logger_level = logger_level

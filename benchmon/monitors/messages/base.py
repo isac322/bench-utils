@@ -30,12 +30,16 @@ class BaseMessage(Generic[_MT], metaclass=ABCMeta):
         :mod:`benchmon.monitors.messages.handlers` 모듈
             메시지를 처리하거나 또 다른 메시지를 만들기로 하는 메시지 핸들러
     """
+    __slots__ = ('data',)
+
     data: _MT
 
 
 @dataclass(frozen=True)
 class MonitoredMessage(BaseMessage[_MT], Generic[_MT]):
     """ :class:`모니터 <benchmon.monitors.base.BaseMonitor>` 를 통해 생성된 메시지 """
+    __slots__ = ('source',)
+
     source: BaseMonitor[_MT]
     """ 본 메시지를 생성한 모니터 객체 """
 
@@ -45,6 +49,8 @@ class MergedMessage(BaseMessage[_MT], Generic[_MT]):
     """
     :class:`모니터 <benchmon.monitors.base.BaseMonitor>` 를 통해 생성된 메시지가 다른 모니터에 의해 재가공되고 머지된 메시지.
     """
+    __slots__ = ('source', 'providers')
+
     source: BaseMonitor[_MT]
     """ 본 메시지를 재가공한 모니터 객체 """
     providers: Tuple[BaseMonitor[_MT], ...]
@@ -55,5 +61,7 @@ class MergedMessage(BaseMessage[_MT], Generic[_MT]):
 @dataclass(frozen=True)
 class GeneratedMessage(BaseMessage[_MT], Generic[_MT]):
     """ 모니터가 아닌 :class:`메시지 핸들러 <benchmon.monitors.messages.base.BaseHandler>` 를 통해 생성된 메시지 """
+    __slots__ = ('generator',)
+
     generator: BaseHandler
     """ 본 메시지를 생성한 핸들러 객체 """

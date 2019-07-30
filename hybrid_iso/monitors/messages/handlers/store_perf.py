@@ -18,8 +18,15 @@ if TYPE_CHECKING:
 
 
 class StorePerf(BaseHandler):
-    _dest_file: Optional[TextIO] = None
+    __slots__ = ('_dest_file', '_event_order')
+
+    _dest_file: Optional[TextIO]
     _event_order: Tuple[str, ...]
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._dest_file = None
 
     def _generate_value_stream(self, message: PERF_MSG_TYPE) -> Iterable[Union[float, int]]:
         for event_name in self._event_order:

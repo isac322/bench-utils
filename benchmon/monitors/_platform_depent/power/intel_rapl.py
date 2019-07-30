@@ -19,6 +19,8 @@ DAT_TYPE = Tuple[Dict[str, Union[str, int, Dict[str, int]]], ...]
 
 
 class PowerMonitor(BaseMonitor[SystemMessage, DAT_TYPE]):
+    __slots__ = ('_monitors',)
+
     _base_dir: ClassVar[Path] = Path('/sys/class/powercap/intel-rapl')
 
     _monitors: Dict[Path, Tuple[int, Dict[Path, int]]]

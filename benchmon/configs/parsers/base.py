@@ -22,6 +22,8 @@ class BaseParser(Generic[_DT], metaclass=ABCMeta):
     이 클래스만으로는 외부의 설정을 읽지 못하고 :mod:`benchmon.configs` 안에 있는 설정 파일만 읽어야 한다.
     :class:`LocalReadParser` 같이 외부의 설정파일을 읽고 싶은 경우 다른 종류의 파서 클래스를 정의하고 구현해야한다.
     """
+    __slots__ = ('_cached',)
+
     _cached: Optional[_DT]
 
     def __init__(self) -> None:
@@ -68,6 +70,8 @@ class LocalReadParser(BaseParser[_DT], ABC):
     """
     :class:`BaseParser` 와 다르게 외부에 존재하는 local `config.json` 파일을 읽어서 파싱한다.
     """
+    __slots__ = ('_local_config', '_workspace')
+
     _local_config: Mapping[str, Any]
     _workspace: Path
 

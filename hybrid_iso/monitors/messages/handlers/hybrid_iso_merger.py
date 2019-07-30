@@ -17,6 +17,8 @@ _MT = TypeVar('_MT')
 
 
 class HybridIsoMerger(BaseHandler):
+    __slots__ = ('_merge_dict',)
+
     _merge_dict: Dict[Type[BaseMonitor[MonitorData]], Optional[MonitoredMessage]]
 
     def __init__(self) -> None:

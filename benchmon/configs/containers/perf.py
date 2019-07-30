@@ -9,6 +9,8 @@ from .base import MonitorConfig
 @dataclass(frozen=True)
 class PerfEvent:
     """ perf에서 모니터링 할 이벤트의 별명과 perf에서 쓰이는 실제 이벤트 표기법을 묶어서 저장하는 컨테이너. """
+    __slots__ = ('event', 'alias')
+
     event: str
     """ perf에서 쓰이는 실제 이벤트 표기법 """
     alias: str
@@ -21,6 +23,7 @@ class PerfConfig(MonitorConfig):
     :class:`~benchmon.monitors.perf.PerfMonitor` 객체를 생성할 때 쓰이는 정보.
     어떤 이벤트를 얼만큼의 주기로 모니터링 해야할지가 적혀있다.
     """
+    __slots__ = ('interval', 'events')
 
     interval: int
     events: Tuple[PerfEvent, ...]

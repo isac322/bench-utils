@@ -18,6 +18,8 @@ _MSG_T = TypeVar('_MSG_T', bound=BaseMessage)
 
 
 class AccumulativeMonitor(IntervalMonitor[_MSG_T, _DAT_T], Generic[_MSG_T, _DAT_T]):
+    __slots__ = ('_prev_data',)
+
     _prev_data: Optional[_DAT_T]
 
     def __init__(self, interval: int) -> None:

@@ -16,6 +16,8 @@ class DVFSConstraint(BaseConstraint):
     :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 의 실행전에 특정 코어들의 CPU frequency를
     입력받은 값으로 설정하며, 벤치마크의 실행이 종료될 경우 그 코어들의 CPU frequency를 원래대로 복구시킨다.
     """
+    __slots__ = ('_target_freq', '_core_ids', '_orig_freq')
+
     _target_freq: int
     _core_ids: Tuple[int, ...]
     _orig_freq: Dict[int, int]

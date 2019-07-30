@@ -16,5 +16,7 @@ _MT = TypeVar('_MT')
 @dataclass(frozen=True)
 class PerBenchMessage(MonitoredMessage[_MT], Generic[_MT]):
     """ :class:`벤치마크 <benchmon.benchmark.base.BaseBenchmark>` 를 모니터링한 결과로 생성된 메시지 """
+    __slots__ = ('bench',)
+
     bench: BaseBenchmark
     """ 대상 벤치마크 """

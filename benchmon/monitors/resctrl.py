@@ -16,12 +16,15 @@ DAT_TYPE = Tuple[Mapping[str, int], ...]
 
 
 class ResCtrlMonitor(AccumulativeMonitor[MonitoredMessage, DAT_TYPE]):
-    _is_stopped: bool = False
+    __slots__ = ('_is_stopped', '_group')
+
+    _is_stopped: bool
     _group: ResCtrl
 
     def __init__(self, interval: int) -> None:
         super().__init__(interval)
 
+        self._is_stopped = False
         self._group = ResCtrl()
 
     async def on_init(self, context: Context) -> None:
