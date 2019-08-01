@@ -20,11 +20,11 @@ class SSHParser(BaseBenchParser[SSHConfig]):
     _PARSABLE_TYPES: ClassVar[Tuple[str, ...]] = ('ssh',)
 
     @classmethod
-    def parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[SSHConfig]:
+    def _parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[SSHConfig]:
         cfg_dict: DefaultDict[str, List[BenchJson]] = defaultdict(list)
         for cfg in map(cls._deduct_config, configs):
-            cfg_dict[cfg['name']].append(cfg)
-            cfg['identifier'] = cfg['name']
+            cfg_dict[cfg['host']].append(cfg)
+            cfg['identifier'] = cfg['host']
 
         entries: OrderedSet[str] = OrderedSet(cls._entry_prefix_map.keys())
         for benches in cfg_dict.values():
@@ -51,6 +51,7 @@ class SSHParser(BaseBenchParser[SSHConfig]):
 
         for config in configs:
             yield SSHConfig(
+                    config['bench_class'],
                     config['num_of_threads'],
                     config['type'],
                     cls._gen_constraints(config),
