@@ -30,5 +30,7 @@
 
 from .base import BaseBenchParser
 from .launchable import LaunchableParser
+from .ssh_remote import SSHParser
 
 BaseBenchParser.register_parser(LaunchableParser)
+BaseBenchParser.register_parser(SSHParser)

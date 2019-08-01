@@ -51,6 +51,7 @@ class LaunchableConfig(BenchConfig):
 @dataclass(frozen=True)
 class SSHConfig(BenchConfig):
     host: str
+    command: str
     port: Optional[int]
     tunnel: Optional[Dict[str, Any]]
     local_addr: Optional[Tuple[str, int]]

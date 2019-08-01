@@ -102,8 +102,7 @@ class SSHBenchmark(BaseBenchmark[_CFG_T], ABC):
         self._ssh_proc.wait()
 
     async def _start(self, context: Context) -> None:
-        pass
-        # TODO
+        self._ssh_proc = await self._ssh_conn.create_process(self._bench_config.command)
 
     async def kill(self) -> None:
         await super().kill()
