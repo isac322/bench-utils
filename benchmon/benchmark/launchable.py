@@ -38,6 +38,7 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
     __slots__ = ('_bench_driver',)
 
     _bench_driver: BenchDriver
+    _NICKNAME = 'launchable'
 
     @classmethod
     def of(cls, context: Context) -> Optional[LaunchableBenchmark]:

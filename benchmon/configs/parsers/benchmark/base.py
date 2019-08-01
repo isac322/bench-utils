@@ -8,12 +8,13 @@ from itertools import chain
 from pathlib import Path
 from typing import (
     ClassVar, DefaultDict, Dict, Generic, Iterable, List, MutableMapping,
-    MutableSet, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+    MutableSet, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
 )
 
 from libcgroup import CGroup
 
 from ...containers import BenchConfig
+from ....benchmark import BaseBenchmark
 from ....benchmark.constraints import CGroupConstraint, DVFSConstraint, ResCtrlConstraint
 from ....utils import Ranges, ResCtrl
 from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_core
@@ -21,9 +22,10 @@ from ....utils.numa_topology import core_to_socket, possible_sockets, socket_to_
 if TYPE_CHECKING:
     from ....benchmark.constraints import BaseConstraint
 
+_BT = TypeVar('_BT', bound=BaseBenchmark)
 _CT = TypeVar('_CT', bound=BenchConfig)
 
-BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...]]]
+BenchJson = Dict[str, Union[float, str, int, Tuple[str, ...], Type[_BT]]]
 
 
 class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
@@ -45,6 +47,7 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
     )
     _registered_parser: ClassVar[MutableMapping[str, Type[BaseBenchParser]]] = dict()
     _PARSABLE_TYPES: ClassVar[Tuple[str, ...]]
+    _DEFAULT_BENCH_TYPE: ClassVar[Optional[Type[_BT]]] = None
 
     @classmethod
     def register_parser(cls, parser: Type[BaseBenchParser]) -> None:
@@ -69,11 +72,11 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
         """
         등록된 파서를 찾아온다.
 
-        :raises ValueError: benchmon에 등록된 파서중에서 `bench_type` 을 파싱 할 수 있는 파서를 찾을 수 없을 때
+        :raises ValueError: benchmon에 등록된 파서중에서 `bench_nickname` 을 파싱 할 수 있는 파서를 찾을 수 없을 때
 
         :param bench_type: 파서를 찾을 벤치마크 타입
         :type bench_type: str
-        :return: 찾아진 `bench_type` 를 파싱할 수 있는 파서
+        :return: 찾아진 `bench_nickname` 를 파싱할 수 있는 파서
         :rtype: typing.Type[benchmon.configs.parsers.benchmark.base.BaseBenchParser]
         """
         if bench_type not in BaseBenchParser._registered_parser:
@@ -82,8 +85,37 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
         return BaseBenchParser._registered_parser[bench_type]
 
     @classmethod
-    @abstractmethod
     def parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[_CT]:
+        """
+        이 클래스 가 파싱할 수 있는 벤치마크 설정들을 입력으로 받아서 :class:`~benchmon.configs.containers.bench.BenchConfig`
+        를 만들어낸다.
+
+        :param configs: 파싱 할 벤치마크 설정들
+        :type configs: typing.Tuple[typing.Dict[str, typing.Union[float, str, int, typing.Tuple[str, ...]]], ...]
+        :param workspace: `config.json` 이 위치한 폴더의 경로
+        :type workspace: pathlib.Path
+        :return: 파싱 결과
+        :rtype: typing.Iterable[benchmon.configs.containers.bench.BenchConfig]
+        """
+        return cls._parse(tuple(map(cls._deduct_benchmark, configs)), workspace)
+
+    @classmethod
+    def _deduct_benchmark(cls, config: BenchJson) -> BenchJson:
+        if 'bench_class' not in config:
+            if cls._DEFAULT_BENCH_TYPE is None:
+                raise ValueError(
+                        f'`bench_class` value is not set and `_DEFAULT_BENCH_TYPE` of {cls.__name__} is not set.'
+                )
+            else:
+                config['bench_class'] = cls._DEFAULT_BENCH_TYPE
+        else:
+            config['bench_class'] = BaseBenchmark.get_bench_from_nickname(config['bench_class'])
+
+        return config
+
+    @classmethod
+    @abstractmethod
+    def _parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[_CT]:
         """
         이 클래스 가 파싱할 수 있는 벤치마크 설정들을 입력으로 받아서 :class:`~benchmon.configs.containers.bench.BenchConfig`
         를 만들어낸다.
@@ -107,7 +139,7 @@ class BaseBenchParser(Generic[_CT], metaclass=ABCMeta):
         :param configs: identifier를 붙일 벤치마크 설정들
         :type configs: typing.Tuple[typing.Dict[str, typing.Union[float, str, int, typing.Tuple[str, ...]]], ...]
         :param entries: identifier로 구분할 설정 값 이름들
-        :type entries: typing.MutableSet[int]
+        :type entries: typing.MutableSet[str]
         """
         counting_dict: Dict[str, DefaultDict[str, List[BenchJson]]] = {e: defaultdict(list) for e in entries}
 
