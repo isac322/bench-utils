@@ -9,6 +9,7 @@ from ordered_set import OrderedSet
 
 from .base import BaseBenchParser
 from ...containers import LaunchableConfig
+from ....benchmark import LaunchableBenchmark
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -21,9 +22,10 @@ class LaunchableParser(BaseBenchParser[LaunchableConfig]):
     파서로 `launchable` 가 지정된 벤치마크를 파싱할 수 있는 파서.
     """
     _PARSABLE_TYPES: ClassVar[Tuple[str, ...]] = ('launchable',)
+    _DEFAULT_BENCH_TYPE = LaunchableBenchmark
 
     @classmethod
-    def parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[LaunchableConfig]:
+    def _parse(cls, configs: Tuple[BenchJson, ...], workspace: Path) -> Iterable[LaunchableConfig]:
         cfg_dict: DefaultDict[str, List[BenchJson]] = defaultdict(list)
         for cfg in map(cls._deduct_config, configs):
             cfg_dict[cfg['name']].append(cfg)
@@ -53,5 +55,13 @@ class LaunchableParser(BaseBenchParser[LaunchableConfig]):
         max_id_len = max(map(lambda x: len(x['identifier']), configs))
 
         for config in configs:
-            yield LaunchableConfig(config['num_of_threads'], config['type'], cls._gen_constraints(config),
-                                   config['identifier'], workspace, max_id_len, config['name'])
+            yield LaunchableConfig(
+                    config['bench_class'],
+                    config['num_of_threads'],
+                    config['type'],
+                    cls._gen_constraints(config),
+                    config['identifier'],
+                    workspace,
+                    max_id_len,
+                    config['name']
+            )

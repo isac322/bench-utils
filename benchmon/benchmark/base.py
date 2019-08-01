@@ -6,7 +6,9 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from asyncio import Future
-from typing import ClassVar, Coroutine, Generic, Iterable, Optional, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+from typing import (
+    ClassVar, Coroutine, Generic, Iterable, MutableMapping, Optional, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Union
+)
 
 from coloredlogs import ColoredFormatter
 
@@ -69,6 +71,8 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
     _FILE_FORMATTER: ClassVar[ColoredFormatter] = ColoredFormatter(
             '%(asctime)s.%(msecs)03d [%(levelname)s] (%(funcName)s:%(lineno)d in %(filename)s) $ %(message)s'
     )
+    _registered_bench: ClassVar[MutableMapping[str, Type[BaseBenchmark]]] = dict()
+    _NICKNAME: ClassVar[str]
 
     _bench_config: _CFG_T
     _identifier: str
@@ -86,6 +90,42 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
                 return v
 
         raise BenchNotFoundError('Context variable should have exactly one Benchmark')
+
+    @classmethod
+    def register_nickname(cls, bench: Type[BaseBenchmark]) -> None:
+        """
+        벤치마크 `bench` 를 등록한다.
+        이 클래스의 모든 자식 클래스는 이 메소드를 통해서 자신을 파서로 등록해야 benchmon에서 자동으로 그 벤치마크를 찾을 수 있다.
+
+        :param bench: 등록할 벤치마크
+        :type bench: typing.Type[benchmon.benchmark.base.BaseBenchmark]
+        """
+        if not issubclass(bench, BaseBenchmark):
+            raise ValueError(f'{bench} is not registrable benchmark')
+        elif bench._NICKNAME in cls._registered_bench:
+            raise ValueError(
+                    f'{bench} has types that overlap with existing registered types: '
+                    f'{cls._registered_bench[bench._NICKNAME]}'
+            )
+
+        cls._registered_bench[bench._NICKNAME] = bench
+
+    @classmethod
+    def get_bench_from_nickname(cls, bench_nickname: str) -> Type[BaseBenchmark]:
+        """
+        등록된 벤치마크 클래스를 찾아온다.
+
+        :raises ValueError: benchmon에 등록된 벤치마크 중에서 `bench_nickname` 을 찾을 수 없을 때
+
+        :param bench_nickname: 찾을 벤치마크 타입
+        :type bench_nickname: str
+        :return: 찾아진 `bench_nickname` 의 클래스
+        :rtype: typing.Type[benchmon.benchmark.base.BaseBenchmark]
+        """
+        if bench_nickname not in cls._registered_bench:
+            raise ValueError(f'{bench_nickname} is not a registered benchmark type')
+
+        return cls._registered_bench[bench_nickname]
 
     @classmethod
     def _waits(cls, iterable: Iterable[Union[Future, Coroutine]]) -> Future[Tuple[Set[Future], Set[Future]]]:

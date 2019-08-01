@@ -19,7 +19,8 @@
 			"cbm_ranges": "0-10",
 			"mem_bound_sockets": "0",
 			"cycle_limit": 59.7,
-			"cpu_freq": 2.1
+			"cpu_freq": 2.1,
+			"bench_class": "launchable"
 		},
 		{
 			"name": "SP",
