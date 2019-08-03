@@ -50,7 +50,10 @@ class CGroupConstraint(BaseConstraint):
             self._cgroup.set_value(key, val)
 
     async def on_start(self, context: Context) -> None:
-        self._cgroup.move_to(BaseBenchmark.of(context).group_name)
+        new_group_path = BaseBenchmark.of(context).group_name
+
+        if new_group_path != self._identifier:
+            self._cgroup.move_to(new_group_path)
 
     async def on_destroy(self, context: Context) -> None:
         if self._cgroup is not None:
