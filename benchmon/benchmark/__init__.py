@@ -54,5 +54,6 @@
 from .base import BaseBenchmark
 from .base_builder import BaseBuilder
 from .launchable import LaunchableBenchmark
+from .ssh_remote import SSHBenchmark
 
 BaseBenchmark.register_nickname(LaunchableBenchmark)
