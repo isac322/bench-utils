@@ -143,14 +143,14 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _finalize(self) -> _BT:
+    async def _finalize(self) -> _BT:
         """
         :meth:`finalize` 안에서 호출되며, 이 클래스의 자식 클레스에서는 :meth:`finalize` 메소드보다 이 메소드를 override해서
         그 클래스가 finalize 전에 해야할 동작을 서술하는것이 좋다.
         """
         pass
 
-    def finalize(self) -> _BT:
+    async def finalize(self) -> _BT:
         """
         벤치마크 객체를 실제로 생성한다.
 
@@ -166,7 +166,7 @@ class BaseBuilder(Generic[_BT], metaclass=ABCMeta):
         if len(self._monitors) is 0:
             self.add_monitor(IdleMonitor())
 
-        benchmark = self._finalize()
+        benchmark = await self._finalize()
         self._init_context_var(benchmark, self._logger_level)
 
         self._is_finalized = True

@@ -139,7 +139,7 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
             # noinspection PyProtectedMember
             benchmark._context_variable._assign(CGroupEngine, BaseEngine)
 
-        def _finalize(self) -> LaunchableBenchmark:
+        async def _finalize(self) -> LaunchableBenchmark:
             return LaunchableBenchmark.__new__(
                     LaunchableBenchmark,
                     self._bench_config,

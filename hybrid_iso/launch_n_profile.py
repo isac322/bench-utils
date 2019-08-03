@@ -8,7 +8,7 @@ import signal
 import sys
 from itertools import chain
 from pathlib import Path
-from typing import Iterable, TYPE_CHECKING, Tuple
+from typing import Iterable, List, TYPE_CHECKING, Tuple
 
 from benchmon.configs.parsers import BenchParser, PerfParser, PrivilegeParser, RabbitMQParser
 from benchmon.monitors import PerfMonitor, PowerMonitor, RDTSCMonitor, ResCtrlMonitor, RuntimeMonitor
@@ -32,23 +32,23 @@ async def launch(workspace: Path, silent: bool, verbose: bool) -> bool:
     launcher_config: LauncherConfig = LauncherParser(workspace).parse()
     privilege_config: PrivilegeConfig = PrivilegeParser(workspace).parse()
 
-    benches: Tuple[BaseBenchmark, ...] = tuple(
-            bench_cfg.generate_builder(privilege_config, logging.DEBUG if verbose else logging.INFO)
-                .add_constraint(RabbitMQConstraint(rabbit_mq_config))
-                .add_monitor(RDTSCMonitor(perf_config.interval))
-                .add_monitor(ResCtrlMonitor(perf_config.interval))
-                .add_monitor(PerfMonitor(perf_config))
-                .add_monitor(RuntimeMonitor())
-                .add_monitor(PowerMonitor())
-                .add_handler(StorePerf())
-                .add_handler(StoreRuntime())
-                .add_handler(StoreResCtrl())
-                # .add_handler(PrintHandler())
-                .add_handler(HybridIsoMerger())
-                .add_handler(RabbitMQHandler(rabbit_mq_config))
-                .finalize()
-            for bench_cfg in BenchParser(workspace).parse()
-    )
+    benches: List[BaseBenchmark] = [
+        await bench_cfg.generate_builder(privilege_config, logging.DEBUG if verbose else logging.INFO)
+            .add_constraint(RabbitMQConstraint(rabbit_mq_config))
+            .add_monitor(RDTSCMonitor(perf_config.interval))
+            .add_monitor(ResCtrlMonitor(perf_config.interval))
+            .add_monitor(PerfMonitor(perf_config))
+            .add_monitor(RuntimeMonitor())
+            .add_monitor(PowerMonitor())
+            .add_handler(StorePerf())
+            .add_handler(StoreRuntime())
+            .add_handler(StoreResCtrl())
+            # .add_handler(PrintHandler())
+            .add_handler(HybridIsoMerger())
+            .add_handler(RabbitMQHandler(rabbit_mq_config))
+            .finalize()
+        for bench_cfg in BenchParser(workspace).parse()
+    ]
 
     current_tasks: Tuple[asyncio.Task, ...] = tuple()
     is_cancelled: bool = False
