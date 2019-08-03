@@ -118,28 +118,3 @@ class SSHBenchmark(BaseBenchmark[_CFG_T], ABC):
     @property
     def is_running(self) -> bool:
         return self._ssh_proc.returncode is None
-
-    class Builder(BaseBuilder['SSHBenchmark']):
-        __slots__ = ('_bench_config',)
-
-        _bench_config: SSHConfig
-
-        def __init__(self,
-                     ssh_config: SSHConfig,
-                     privilege_config: PrivilegeConfig,
-                     logger_level: int = logging.INFO) -> None:
-            super().__init__(ssh_config, privilege_config, logger_level)
-
-        @classmethod
-        def _init_pipeline(cls) -> DefaultPipeline:
-            return DefaultPipeline()
-
-        def _finalize(self) -> SSHBenchmark:
-            return SSHBenchmark.__new__(
-                    SSHBenchmark,
-                    self._bench_config,
-                    tuple(self._constraints.values()),
-                    tuple(self._monitors),
-                    self._pipeline,
-                    self._privilege_config
-            )

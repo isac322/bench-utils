@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, TYPE_CHECKING, Tuple, Type, TypeVar
+from typing import Optional, TYPE_CHECKING, Tuple, TypeVar
 
 import psutil
 
@@ -45,28 +45,16 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
         # noinspection PyProtectedMember
         return context._variable_dict.get(cls)
 
-    def __new__(cls: Type[LaunchableBenchmark],
-                launchable_config: _CFG_T,
-                constraints: Tuple[_CST_T, ...],
-                monitors: Tuple[_MON_T, ...],
-                pipeline: BasePipeline,
-                privilege_config: PrivilegeConfig) -> LaunchableBenchmark:
-        # noinspection PyTypeChecker
-        obj: LaunchableBenchmark = super().__new__(
-                cls,
-                launchable_config,
-                constraints,
-                monitors,
-                pipeline,
-                privilege_config
-        )
+    def __init__(self,
+                 launchable_config: _CFG_T,
+                 constraints: Tuple[_CST_T, ...],
+                 monitors: Tuple[_MON_T, ...],
+                 pipeline: BasePipeline,
+                 privilege_config: PrivilegeConfig,
+                 bench_driver: BenchDriver) -> None:
+        super().__init__(launchable_config, constraints, monitors, pipeline, privilege_config)
 
-        obj._bench_driver = gen_driver(launchable_config.name)
-
-        return obj
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+        self._bench_driver = bench_driver
 
     def pause(self) -> None:
         super().pause()
@@ -139,12 +127,12 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
             # noinspection PyProtectedMember
             benchmark._context_variable._assign(CGroupEngine, BaseEngine)
 
-        def _finalize(self) -> LaunchableBenchmark:
-            return LaunchableBenchmark.__new__(
-                    LaunchableBenchmark,
+        async def _finalize(self) -> LaunchableBenchmark:
+            return LaunchableBenchmark(
                     self._bench_config,
                     tuple(self._constraints.values()),
                     tuple(self._monitors),
                     self._pipeline,
-                    self._privilege_config
+                    self._privilege_config,
+                    gen_driver(self._bench_config.name)
             )
