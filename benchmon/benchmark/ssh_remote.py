@@ -5,17 +5,14 @@ from __future__ import annotations
 import logging
 import signal
 from abc import ABC
-from typing import Optional, TYPE_CHECKING, Tuple, Type, TypeVar
-
-import asyncssh
-from asyncssh import SSHClientConnection, SSHClientConnectionOptions, SSHClientProcess
+from typing import Optional, TYPE_CHECKING, Tuple, TypeVar
 
 from .base import BaseBenchmark
-from .base_builder import BaseBuilder
 from ..configs.containers import SSHConfig
-from ..monitors.pipelines import DefaultPipeline
 
 if TYPE_CHECKING:
+    from asyncssh import SSHClientConnection, SSHClientProcess
+
     from .constraints import BaseConstraint
     from .. import Context
     from ..configs.containers import PrivilegeConfig
@@ -44,37 +41,19 @@ class SSHBenchmark(BaseBenchmark[_CFG_T], ABC):
 
         return None
 
-    def __new__(cls: Type[SSHBenchmark],
-                ssh_config: _CFG_T,
-                constraints: Tuple[_CST_T, ...],
-                monitors: Tuple[_MON_T, ...],
-                pipeline: BasePipeline,
-                privilege_config: PrivilegeConfig) -> SSHBenchmark:
-        # noinspection PyTypeChecker
-        obj: SSHBenchmark = super().__new__(cls, ssh_config, constraints, monitors, pipeline, privilege_config)
+    def __init__(self,
+                 ssh_config: _CFG_T,
+                 constraints: Tuple[_CST_T, ...],
+                 monitors: Tuple[_MON_T, ...],
+                 pipeline: BasePipeline,
+                 privilege_config: PrivilegeConfig,
+                 tunnel_conn: Optional[SSHClientConnection],
+                 ssh_conn: SSHClientConnection) -> None:
+        super().__init__(ssh_config, constraints, monitors, pipeline, privilege_config)
 
-        if obj._bench_config.tunnel is not None:
-            options = obj._bench_config.tunnel
-            obj._tunnel_conn = await asyncssh.connect(
-                    options['host'],
-                    port=options.get('port'),
-                    local_addr=options.get('local_addr'),
-                    options=SSHClientConnectionOptions(**options.get('options'))
-            )
-        else:
-            obj._tunnel_conn = None
-
-        obj._ssh_conn = await asyncssh.connect(
-                obj._bench_config.host,
-                port=obj._bench_config.port,
-                tunnel=obj._tunnel_conn,
-                local_addr=obj._bench_config.local_addr,
-                options=SSHClientConnectionOptions(**obj._bench_config.options)
-        )
-
-        obj._ssh_proc = None
-
-        return obj
+        self._tunnel_conn = tunnel_conn
+        self._ssh_conn = ssh_conn
+        self._ssh_proc = None
 
     def __del__(self) -> None:
         if self.is_running:
