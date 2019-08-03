@@ -89,17 +89,17 @@ class SSHBenchmark(BaseBenchmark[_CFG_T], ABC):
     def pause(self) -> None:
         super().pause()
 
-        self._ssh_proc.send_signal(signal.SIGSTOP)
+        self._ssh_proc.channel.send_signal(signal.SIGSTOP)
 
     def resume(self) -> None:
         super().resume()
 
-        self._ssh_proc.send_signal(signal.SIGCONT)
+        self._ssh_proc.channel.send_signal(signal.SIGCONT)
 
     async def join(self) -> None:
         await super().join()
 
-        self._ssh_proc.wait()
+        await self._ssh_proc.wait()
 
     async def _start(self, context: Context) -> None:
         self._ssh_proc = await self._ssh_conn.create_process(self._bench_config.command)
