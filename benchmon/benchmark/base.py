@@ -135,8 +135,7 @@ class BaseBenchmark(Generic[_CFG_T], ContextReadable, metaclass=ABCMeta):
                  bench_config: _CFG_T,
                  constraints: Tuple[_CST_T, ...],
                  monitors: Tuple[_MON_T, ...],
-                 pipeline: BasePipeline,
-                 privilege_config: PrivilegeConfig) -> None:
+                 pipeline: BasePipeline) -> None:
         self._bench_config = bench_config
         self._identifier = bench_config.identifier
 

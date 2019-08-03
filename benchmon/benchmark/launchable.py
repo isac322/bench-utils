@@ -50,9 +50,8 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
                  constraints: Tuple[_CST_T, ...],
                  monitors: Tuple[_MON_T, ...],
                  pipeline: BasePipeline,
-                 privilege_config: PrivilegeConfig,
                  bench_driver: BenchDriver) -> None:
-        super().__init__(launchable_config, constraints, monitors, pipeline, privilege_config)
+        super().__init__(launchable_config, constraints, monitors, pipeline)
 
         self._bench_driver = bench_driver
 
@@ -133,6 +132,5 @@ class LaunchableBenchmark(BaseBenchmark[_CFG_T]):
                     tuple(self._constraints.values()),
                     tuple(self._monitors),
                     self._pipeline,
-                    self._privilege_config,
                     gen_driver(self._bench_config.name)
             )

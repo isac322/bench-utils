@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
     from .constraints import BaseConstraint
     from .. import Context
-    from ..configs.containers import PrivilegeConfig
     from ..monitors import BaseMonitor
     from ..monitors.pipelines import BasePipeline
 
@@ -46,10 +45,9 @@ class SSHBenchmark(BaseBenchmark[_CFG_T], ABC):
                  constraints: Tuple[_CST_T, ...],
                  monitors: Tuple[_MON_T, ...],
                  pipeline: BasePipeline,
-                 privilege_config: PrivilegeConfig,
                  tunnel_conn: Optional[SSHClientConnection],
                  ssh_conn: SSHClientConnection) -> None:
-        super().__init__(ssh_config, constraints, monitors, pipeline, privilege_config)
+        super().__init__(ssh_config, constraints, monitors, pipeline)
 
         self._tunnel_conn = tunnel_conn
         self._ssh_conn = ssh_conn
