@@ -1,5 +1,5 @@
 asyncssh==1.17.1
-aio-pika==5.6.0
+aio-pika==5.6.1
 aiofile_linux
 coloredlogs==10.0
 libcgroup
