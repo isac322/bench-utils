@@ -34,16 +34,15 @@
 			"cpu_freq": 2.1
 		},
 		{
-			"ssh": {
-				"host": "bc2",
+			"host": "bc2",
+			"options": {
 				"username": "dcslab",
-				"password": "dcs%%*#",
-				"working_directory": "/home/dcslab/bhyoo/projects/dynamic_ab",
-				"command": ". ./venv/bin/activate; ./dab.py i script5.json"
+				"client_host_keysign": true
 			},
+			"command": "/home/dcslab/bhyoo/projects/dynamic_ab/venv/bin/python /home/dcslab/bhyoo/projects/dynamic_ab/dab.py i /home/dcslab/bhyoo/projects/dynamic_ab/script5.json",
 			"bound_cores": "0-7",
 			"cpu_freq": 2.1,
-			"parser": "tomcat"
+			"parser": "ssh"
 		}
 	],
 	"perf": {
